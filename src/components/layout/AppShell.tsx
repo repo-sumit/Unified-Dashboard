@@ -66,15 +66,15 @@ export function AppShell() {
             {/* PM SHRI is meaningless at teacher/principal scope — Cluster and above only */}
             {isOfficer && <PmShriFilter className="hidden sm:inline-flex" />}
             <LanguageToggle />
-            <div className="hidden items-center gap-2 sm:flex">
-              <div className="text-right leading-tight">
-                <div className="text-xs font-semibold text-neutral-800">{tn(user.name, user.name_gu)}</div>
-                <div className="text-2xs text-neutral-400">{t(`roles.${user.role}`)}</div>
-              </div>
-              <button onClick={onLogout} title={t("nav.logout")} aria-label={t("nav.logout")} className="grid h-8 w-8 place-items-center rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200">
-                <LogOut size={16} />
-              </button>
+            {/* name + role: desktop only */}
+            <div className="hidden text-right leading-tight sm:block">
+              <div className="text-xs font-semibold text-neutral-800">{tn(user.name, user.name_gu)}</div>
+              <div className="text-2xs text-neutral-400">{t(`roles.${user.role}`)}</div>
             </div>
+            {/* logout: always reachable, including on mobile */}
+            <button onClick={onLogout} title={t("nav.logout")} aria-label={t("nav.logout")} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200">
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
         {/* mobile breadcrumb row */}

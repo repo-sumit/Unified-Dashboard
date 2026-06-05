@@ -37,6 +37,16 @@ export function MultiSelect({
     .map((g) => ({ ...g, options: g.options.filter((o) => o.label.toLowerCase().includes(q.toLowerCase())) }))
     .filter((g) => g.options.length);
 
+  // global Select all / Clear all across every (filtered) group, respecting max
+  const allFilteredIds = filtered.flatMap((g) => g.options.map((o) => o.id));
+  const allOn = allFilteredIds.length > 0 && allFilteredIds.every((id) => sel.has(id));
+  const toggleAll = () => {
+    const next = new Set(sel);
+    if (allOn) allFilteredIds.forEach((id) => next.delete(id));
+    else for (const id of allFilteredIds) { if (next.size >= max) break; next.add(id); }
+    onChange([...next]);
+  };
+
   return (
     <div className="relative">
       <button
@@ -53,9 +63,18 @@ export function MultiSelect({
           <div className="absolute left-0 z-40 mt-1.5 max-h-80 w-72 overflow-auto rounded-xl border border-line bg-white p-2 shadow-raised">
             <div className="sticky top-0 -mx-2 -mt-2 mb-1 bg-white px-2 pb-1.5 pt-2">
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`${t("common.search")}…`} className="w-full rounded-lg border border-line bg-neutral-50 px-2.5 py-1.5 text-xs outline-none focus:border-primary-400" />
-              {selected.length > 0 && (
-                <button onClick={() => onChange([])} className="mt-1 inline-flex items-center gap-1 text-2xs font-semibold text-neutral-400 hover:text-rag-redText"><Minus size={12} /> {t("common.clear")} ({selected.length})</button>
-              )}
+              <div className="mt-1 flex items-center justify-between gap-2 px-0.5">
+                <button onClick={toggleAll} disabled={!allFilteredIds.length} className="text-2xs font-semibold text-primary-600 hover:underline disabled:opacity-40">
+                  {allOn ? t("common.clearAll") : t("common.selectAll")}
+                </button>
+                {selected.length > 0 ? (
+                  <button onClick={() => onChange([])} className="inline-flex items-center gap-1 text-2xs font-semibold text-neutral-400 hover:text-rag-redText">
+                    <Minus size={12} /> {t("common.clear")} ({selected.length}/{max})
+                  </button>
+                ) : (
+                  <span className="text-2xs tnum text-neutral-400">0/{max}</span>
+                )}
+              </div>
             </div>
             {filtered.map((g) => {
               const allOn = g.options.every((o) => sel.has(o.id));
