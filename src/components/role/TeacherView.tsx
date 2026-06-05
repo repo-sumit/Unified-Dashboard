@@ -93,7 +93,7 @@ export function TeacherView({ entity, greeting }: { entity: Entity; greeting: st
         </Card>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* TPD journey */}
         <Card className="card-pad">
           <div className="flex items-center gap-2"><GraduationCap size={18} className="text-violet-600" /><SectionLabel>{t("teacher.tpdJourney")}</SectionLabel></div>
@@ -131,7 +131,7 @@ export function TeacherView({ entity, greeting }: { entity: Entity; greeting: st
       {/* classroom KPIs (the section's applicable learning indicators) */}
       <div>
         <SectionLabel className="mb-2">{t("teacher.classroomKpis")}</SectionLabel>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {scoredDomains.flatMap((d) => d.records.filter((r) => r.value != null)).map((r) => (
             <KpiCard key={r.kpi.id} rec={r} name={tn(r.kpi.name, r.kpi.name_gu)} lang={lang} onClick={() => navigate(`/app/kpi/${r.kpi.id}`)} />
           ))}

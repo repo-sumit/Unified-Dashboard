@@ -55,8 +55,8 @@ export default function ScorecardHome() {
 
       {/* HERO — overall score + what changed (one clear story) */}
       <Card className="card-pad sm:p-6">
-        <div className="grid items-center gap-5 sm:grid-cols-[auto,1fr]">
-          <div className="flex flex-col items-center gap-2">
+        <div className="grid grid-cols-1 items-center gap-5 sm:grid-cols-[auto,1fr]">
+          <div className="flex min-w-0 flex-col items-center gap-2">
             <RatingRing percent={sc.overallPercent} grade={sc.grade} lang={lang} sublabel={t("common.grade")} />
             <div className="flex items-center gap-2">
               {sc.grade && <RatingBadge grade={sc.grade} size="md" />}
@@ -80,7 +80,7 @@ export default function ScorecardHome() {
             </div>
 
             {/* biggest concern + most improved */}
-            <div className="mt-3 grid gap-2">
+            <div className="mt-3 grid grid-cols-1 gap-2">
               {concern && (
                 <CalloutCard callout={concern} lang={lang} onClick={() => concern.domainId && navigate(`/app/domain/${concern.domainId}`)} />
               )}
@@ -94,9 +94,9 @@ export default function ScorecardHome() {
 
       {/* domain rows — you vs the level above */}
       <Card className="card-pad">
-        <div className="mb-1 flex items-center justify-between">
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
           <SectionLabel>{t("scorecard.domainWise")}</SectionLabel>
-          {sc.parent && <span className="text-2xs text-neutral-400">{t("scorecard.youVsParent", { level: parentLevelLabel })}</span>}
+          {sc.parent && <span className="shrink-0 text-2xs text-neutral-400">{t("scorecard.youVsParent", { level: parentLevelLabel })}</span>}
         </div>
         <div className="-mx-2 divide-y divide-line/60">
           {scoredDomains.map((ds) => (
@@ -149,7 +149,7 @@ export default function ScorecardHome() {
             <SectionLabel>{t("scorecard.explore")} · {t(`levels.${childLevel}`)}</SectionLabel>
             <button onClick={() => navigate("/app/leaderboard")} className="text-xs font-semibold text-primary-600 hover:underline">{t("common.viewAll")}</button>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {children.slice(0, 6).map((c) => (
               <button key={c.entity.id} onClick={() => { setScope(c.entity.id); navigate("/app"); }} className="flex items-center gap-3 rounded-xl border border-line/70 px-3 py-2.5 text-left hover:bg-neutral-50">
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-neutral-50 text-xs font-bold text-neutral-500 tnum">{c.rank}</span>

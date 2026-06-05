@@ -31,24 +31,25 @@ export default function Export() {
 
       {/* printable scorecard */}
       <Card className="card-pad sm:p-6">
-        <div className="flex items-center justify-between gap-3 border-b border-line pb-4">
-          <div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-500 text-white text-sm font-extrabold">VSK</span>
-              <div>
-                <div className="text-base font-extrabold text-neutral-900">{tn(entity.name, entity.name_gu)}</div>
-                <div className="text-2xs text-neutral-400">{t(`levels.${entity.level}`)} · {sc.framework.name} · {t("common.week")} {locNum(periodNo, lang)}</div>
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-500 text-white text-sm font-extrabold">VSK</span>
+              <div className="min-w-0">
+                <div className="truncate text-base font-extrabold text-neutral-900" title={tn(entity.name, entity.name_gu)}>{tn(entity.name, entity.name_gu)}</div>
+                <div className="truncate text-2xs text-neutral-400">{t(`levels.${entity.level}`)} · {sc.framework.name} · {t("common.week")} {locNum(periodNo, lang)}</div>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <RatingRing percent={sc.overallPercent} grade={sc.grade} size={104} stroke={10} lang={lang} />
             {sc.grade && <RatingBadge grade={sc.grade} size="lg" />}
           </div>
         </div>
 
-        {/* domain table */}
-        <table className="mt-4 w-full text-sm">
+        {/* domain table — contained horizontal scroll on narrow screens (no page-level overflow) */}
+        <div className="mt-4 overflow-x-auto">
+        <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-2xs uppercase tracking-wider text-neutral-400">
               <th className="py-2">{t("export.domain")}</th>
@@ -77,6 +78,7 @@ export default function Export() {
             </tr>
           </tbody>
         </table>
+        </div>
 
         {/* GSQAC live data for schools */}
         {entity.meta.gsqac && (

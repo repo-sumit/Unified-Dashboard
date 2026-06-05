@@ -11,7 +11,7 @@ export function InfoTooltip({ text, className, size = 13 }: { text: string; clas
       </button>
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-40 mb-1.5 w-56 -translate-x-1/2 rounded-lg bg-neutral-900 px-3 py-2 text-2xs font-medium leading-snug text-white opacity-0 shadow-raised transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute bottom-full left-1/2 z-40 mb-1.5 hidden w-[min(14rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-lg bg-neutral-900 px-3 py-2 text-2xs font-medium leading-snug text-white shadow-raised group-hover:block group-focus-within:block"
       >
         {text}
       </span>
@@ -25,7 +25,7 @@ export function Tooltip({ text, children }: { text: string; children: ReactNode 
       {children}
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-40 mb-1.5 w-52 -translate-x-1/2 rounded-lg bg-neutral-900 px-3 py-2 text-2xs font-medium leading-snug text-white opacity-0 shadow-raised transition-opacity duration-150 group-hover:opacity-100"
+        className="pointer-events-none absolute bottom-full left-1/2 z-40 mb-1.5 hidden w-[min(13rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-lg bg-neutral-900 px-3 py-2 text-2xs font-medium leading-snug text-white shadow-raised group-hover:block group-focus-within:block"
       >
         {text}
       </span>

@@ -1,15 +1,26 @@
 import { cn } from "@/lib/cn";
-import type { DomainScore } from "@/types";
+import type { DomainScore, RagStatus } from "@/types";
 import { rag, accent } from "@/lib/colors";
 import { pct, locNum } from "@/lib/format";
 import type { Lang } from "@/i18n";
 import { Icon, ChevronRight } from "./Icon";
 import { EmptyNA } from "./atoms";
 
+/** In a "vs benchmark" row the colour reflects the GAP, not the absolute grade:
+ *  at/ahead → green, slightly behind → amber, well behind → red. (A strong score
+ *  that is still behind the benchmark must not read green.) */
+function gapStatus(value: number, parent: number): RagStatus {
+  const gap = value - parent;
+  if (gap >= -0.5) return "green";
+  if (gap >= -8) return "amber";
+  return "red";
+}
+
 /**
- * One domain row for the scorecard home: icon + name, your % bar (RAG
- * coloured) with the parent-average marked as a tick, and the gap delta.
- * The "you vs the level above" comparison the brief asks for.
+ * One domain row for the scorecard home: icon + name, your % bar with the
+ * parent-average marked as a tick, and the gap delta. When a parent benchmark
+ * is present the bar/figures are coloured by the gap vs that benchmark ("you vs
+ * the level above"); with no benchmark it falls back to the absolute grade RAG.
  */
 export function DomainBar({
   ds, parentPercent, parentLabel, name, onClick, lang = "en",
@@ -23,7 +34,8 @@ export function DomainBar({
 }) {
   const a = accent(ds.domain.accent);
   const value = ds.percent;
-  const status = ds.status;
+  // benchmark-relative colour when comparing; absolute grade colour otherwise
+  const status: RagStatus = value != null && parentPercent != null ? gapStatus(value, parentPercent) : ds.status;
 
   return (
     <button
@@ -36,11 +48,11 @@ export function DomainBar({
 
       <span className="min-w-0 flex-1">
         <span className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-semibold text-neutral-900">{name}</span>
+          <span className="min-w-0 truncate text-sm font-semibold text-neutral-900" title={name}>{name}</span>
           {value == null ? (
-            <span className="text-xs font-bold text-rag-naText">{lang === "gu" ? "લાગુ નથી" : "NA"}</span>
+            <span className="shrink-0 text-xs font-bold text-rag-naText">{lang === "gu" ? "લાગુ નથી" : "NA"}</span>
           ) : (
-            <span className={cn("text-sm font-extrabold tnum", rag(status).text)}>{pct(value, lang)}</span>
+            <span className={cn("shrink-0 text-sm font-extrabold tnum", rag(status).text)}>{pct(value, lang)}</span>
           )}
         </span>
 
@@ -63,7 +75,7 @@ export function DomainBar({
 
         {value != null && parentPercent != null && (
           <span className="mt-1 block text-2xs text-neutral-400">
-            {parentLabel ?? "Avg"} {locNum(Math.round(parentPercent), lang)}% · {gapLabel(value, parentPercent, lang)}
+            {parentLabel ?? "Avg"} {locNum(Math.round(parentPercent), lang)}% · <span className={cn("font-semibold", rag(status).text)}>{gapLabel(value, parentPercent, lang)}</span>
           </span>
         )}
       </span>

@@ -115,7 +115,7 @@ export default function CompareView() {
             </div>
 
             {comparing ? (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {rows.map(({ kpi, cur, comps }) => {
                   const bars: CompareBar[] = [
                     { key: "cur", label: shortName(entity), value: cmpVal(kpi, entity, cur?.value), status: cur?.status ?? "na", isCurrent: true },
@@ -134,7 +134,7 @@ export default function CompareView() {
                 })}
               </div>
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {rows.map(({ kpi, cur }) =>
                   cur ? (
                     <KpiCard key={kpi.id} rec={cur} name={tn(kpi.name, kpi.name_gu)} lang={lang} onClick={() => navigate(`/app/kpi/${kpi.id}`)} />

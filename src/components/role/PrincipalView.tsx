@@ -27,7 +27,6 @@ export function PrincipalView({ entity, greeting }: { entity: Entity; greeting: 
   // never navigable. State averages are the published public reference figures.
   const state = useOverallBenchmark("st-gj");
   const gsqac = useKpiRecord("gsqac_score", entity.id);
-  const gsqacImprove = useKpiRecord("gsqac_improvement", entity.id);
   const chronic = useKpiRecord("att_chronic", entity.id);
   const { t, tn, lang } = useT();
   const navigate = useNavigate();
@@ -82,24 +81,24 @@ export function PrincipalView({ entity, greeting }: { entity: Entity; greeting: 
       <div className="flex items-center gap-3">
         <VskBadge size={40} />
         <div className="min-w-0">
-          <h1 className="text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">{greeting}!</h1>
-          <p className="mt-0.5 truncate text-sm text-neutral-500">{tn(entity.name, entity.name_gu)} · {entity.meta.code}{entity.meta.pmShri ? " · PM SHRI" : ""}</p>
+          <h1 className="truncate text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">{greeting}!</h1>
+          <p className="mt-0.5 truncate text-sm text-neutral-500" title={`${tn(entity.name, entity.name_gu)} · ${entity.meta.code}${entity.meta.pmShri ? " · PM SHRI" : ""}`}>{tn(entity.name, entity.name_gu)} · {entity.meta.code}{entity.meta.pmShri ? " · PM SHRI" : ""}</p>
         </div>
       </div>
 
       {/* hero: school score + School vs State */}
-      <div className="grid gap-4 lg:grid-cols-5">
-        <Card className="card-pad flex flex-col items-center justify-center gap-2 lg:col-span-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <Card className="card-pad flex min-w-0 flex-col items-center justify-center gap-2 lg:col-span-2">
           <SectionLabel>{t("scorecard.overall")}</SectionLabel>
           <RatingRing percent={sc.overallPercent} grade={sc.grade} lang={lang} sublabel={t("common.grade")} />
           {sc.grade && <RatingBadge grade={sc.grade} size="md" />}
         </Card>
 
-        <Card className="card-pad lg:col-span-3">
-          <div className="mb-1 flex items-center justify-between">
+        <Card className="card-pad min-w-0 lg:col-span-3">
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
             <SectionLabel>{t("principal.schoolVsState")}</SectionLabel>
             {state?.overallPercent != null && (
-              <span className="text-2xs text-neutral-400">{t("principal.school")} {pct(sc.overallPercent, lang)} · {t("principal.state")} {pct(state.overallPercent, lang)}</span>
+              <span className="shrink-0 text-2xs text-neutral-400">{t("principal.school")} {pct(sc.overallPercent, lang)} · {t("principal.state")} {pct(state.overallPercent, lang)}</span>
             )}
           </div>
           <div className="-mx-2 divide-y divide-line/60">
@@ -111,7 +110,7 @@ export function PrincipalView({ entity, greeting }: { entity: Entity; greeting: 
       </div>
 
       {/* GSQAC scoreboard + dropout */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="card-pad">
           <div className="flex items-center gap-2"><Award size={18} className="text-pink-600" /><SectionLabel>{t("principal.gsqacScoreboard")}</SectionLabel></div>
           <div className="mt-3 flex items-end gap-2">
@@ -119,8 +118,13 @@ export function PrincipalView({ entity, greeting }: { entity: Entity; greeting: 
             <span className="mb-1 text-lg font-semibold text-neutral-400">/ {locNum(1000, lang)}</span>
           </div>
           {gsqac?.value != null && <ProgressBar value={gsqac.value} status={gsqac.status} className="mt-2" height={10} label={t("principal.gsqacScoreboard")} />}
-          {gsqacImprove?.value != null && (
-            <p className="mt-2 text-xs text-neutral-500">{t("principal.improvementLastCycle")}: <b className="text-rag-greenText">+{locNum(Math.abs(Math.round(gsqacImprove.value)), lang)}%</b></p>
+          {gsqac?.deltaMoM != null && Math.abs(gsqac.deltaMoM) >= 0.1 && (
+            <p className="mt-2 text-xs text-neutral-500">
+              {t("principal.improvementLastCycle")}:{" "}
+              <b className={gsqac.deltaMoM >= 0 ? "text-rag-greenText" : "text-rag-redText"}>
+                {gsqac.deltaMoM >= 0 ? "+" : "-"}{locNum(Math.abs(Math.round(gsqac.deltaMoM * 10) / 10), lang)} {t("common.points")}
+              </b>
+            </p>
           )}
         </Card>
 
@@ -136,12 +140,13 @@ export function PrincipalView({ entity, greeting }: { entity: Entity; greeting: 
       {/* compliance benchmarks (RYG) */}
       <Card className="card-pad">
         <div className="flex items-center gap-2"><ShieldCheck size={18} className="text-emerald-600" /><SectionLabel>{t("principal.complianceTitle")}</SectionLabel></div>
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        {/* 2-col on phone/tablet (5th card spans the orphan slot), 5-col on desktop — no gaps, equal heights */}
+        <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-5">
           <Compliance label={t("principal.ptr")} value={`${locNum(ptr, lang)}:1`} hint={t("principal.ptrTarget")} status={ptrStatus} />
           <Compliance label={t("principal.classCapacity")} value={locNum(maxClass, lang)} hint={t("principal.classCapTarget")} status={classStatus} />
           <Compliance label={t("principal.enrolment")} value={locNum(enrolment, lang)} hint={t("principal.enrolTarget")} status={enrolStatus} />
           <Compliance label={t("principal.avgTraining")} value={`${locNum(avgTraining, lang)}h`} hint={t("principal.avgTrainTarget")} status={trainStatus} />
-          <Compliance label={t("principal.chronicAbs")} value={locNum(chronicCount, lang)} hint={t("principal.sevenDayWindow")} status={chronicCount <= enrolment * 0.05 ? "green" : chronicCount <= enrolment * 0.1 ? "amber" : "red"} />
+          <Compliance className="col-span-2 lg:col-span-1" label={t("principal.chronicAbs")} value={locNum(chronicCount, lang)} hint={t("principal.sevenDayWindow")} status={chronicCount <= enrolment * 0.05 ? "green" : chronicCount <= enrolment * 0.1 ? "amber" : "red"} />
         </div>
       </Card>
 
@@ -185,7 +190,7 @@ export function PrincipalView({ entity, greeting }: { entity: Entity; greeting: 
       </Card>
 
       {/* RYG status matrix + Teacher Actions (visible to principal) */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="card-pad">
           <SectionLabel>{t("principal.statusMatrix")}</SectionLabel>
           <table className="mt-3 w-full text-left text-sm">
@@ -219,12 +224,12 @@ export function PrincipalView({ entity, greeting }: { entity: Entity; greeting: 
   );
 }
 
-function Compliance({ label, value, hint, status }: { label: string; value: string; hint: string; status: RagStatus }) {
+function Compliance({ label, value, hint, status, className }: { label: string; value: string; hint: string; status: RagStatus; className?: string }) {
   return (
-    <div className={cn("rounded-xl border p-3", rag(status).border, rag(status).soft)}>
-      <div className="flex items-center justify-between"><span className="text-2xs font-semibold text-neutral-500">{label}</span><StatusDot status={status} /></div>
+    <div className={cn("flex h-full flex-col rounded-xl border p-3", rag(status).border, rag(status).soft, className)}>
+      <div className="flex items-start justify-between gap-1"><span className="min-w-0 text-2xs font-semibold text-neutral-500">{label}</span><StatusDot status={status} className="mt-0.5 shrink-0" /></div>
       <div className={cn("mt-1 text-xl font-extrabold tnum", rag(status).text)}>{value}</div>
-      <div className="text-2xs text-neutral-400">{hint}</div>
+      <div className="mt-auto pt-0.5 text-2xs text-neutral-400">{hint}</div>
     </div>
   );
 }

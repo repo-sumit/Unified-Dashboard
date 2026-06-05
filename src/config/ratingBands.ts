@@ -6,13 +6,13 @@ import type { RatingBand } from "@/types";
  * All thresholds are config — switching a framework swaps these rows.
  */
 export const GSQAC_BANDS: RatingBand[] = [
-  { grade: "A++++", min: 90, group: "A" },
-  { grade: "A+++", min: 85, group: "A" },
-  { grade: "A++", min: 80, group: "A" },
-  { grade: "A+", min: 75, group: "A" },
-  { grade: "A", min: 70, group: "A" },
-  { grade: "B", min: 50, group: "B" },
-  { grade: "C", min: 30, group: "C" },
+  { grade: "A++++", min: 97, group: "A" },
+  { grade: "A+++", min: 93, group: "A" },
+  { grade: "A++", min: 89, group: "A" },
+  { grade: "A+", min: 85, group: "A" },
+  { grade: "A", min: 75, group: "A" },
+  { grade: "B", min: 60, group: "B" },
+  { grade: "C", min: 40, group: "C" },
   { grade: "D", min: 0, group: "D" },
 ];
 
