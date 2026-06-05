@@ -85,7 +85,7 @@ export default function Login() {
                   <Row label={t("login.name")} value={tn(pending.name, pending.name_gu)} />
                   <Row label={t("login.userId")} value={pending.login_id} />
                   <Row label={t("login.designation")} value={lang === "gu" ? t(`roles.${pending.role}`) : pending.designation} />
-                  <Row label={t("login.scope")} value={scopeEntity ? tn(scopeEntity.name, scopeEntity.name_gu) : "—"} />
+                  <Row label={t("Grade")} value={scopeEntity ? tn(scopeEntity.name, scopeEntity.name_gu) : "—"} />
                   <Row label={t("login.role")} value={t(`roles.${pending.role}`)} />
                 </dl>
                 <div className="mt-5 space-y-2.5">

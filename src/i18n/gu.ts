@@ -24,7 +24,7 @@ export const gu: Dict = {
     cluster: "ક્લસ્ટર ID", block: "બ્લોક ID", district: "જિલ્લા ID", state: "રાજ્ય ID",
     idPh: "તમારું ID દાખલ કરો", passcode: "પાસકોડ", passcodePh: "પાસકોડ દાખલ કરો",
     continue: "ચાલુ રાખો", verifyTitle: "તમારી વિગતો ચકાસો", verifySub: "ચાલુ રાખવા નીચેની વિગતો ખાતરી કરો",
-    name: "નામ", role: "ભૂમિકા", designation: "હોદ્દો", scope: "કાર્યક્ષેત્ર",
+    name: "નામ", role: "ભૂમિકા", designation: "હોદ્દો", Grade: "કાર્યક્ષેત્ર",
     signIn: "ચાલુ રાખો અને સાઇન ઇન કરો", goBack: "પાછા જાઓ",
     permTitle: "VSK સ્કોરકાર્ડ તમારી પ્રોફાઇલ ઍક્સેસ કરવા માંગે છે", permBody: "VSK ગુજરાતને તમારી ભૂમિકા અને કાર્યક્ષેત્ર વાંચવાની મંજૂરી આપો.",
     giveAccess: "ઍક્સેસ આપો", cancel: "રદ કરો",
