@@ -43,7 +43,7 @@ export function AppShell() {
             <img src="/logo-vsk.png" alt="Vidya Samiksha Kendra" className="h-9 w-9 object-contain" />
             <span className="hidden leading-none sm:block">
               <span className="block text-base font-extrabold tracking-tight text-neutral-900">{t("app.name")}</span>
-              <span className="block text-[10px] font-medium text-neutral-400">{t("app.tagline")}</span>
+              <span className="block text-2xs font-medium text-neutral-400">{t("app.tagline")}</span>
             </span>
           </Link>
           <div className="ml-1 hidden min-w-0 flex-1 md:block">
@@ -55,7 +55,7 @@ export function AppShell() {
             <div className="hidden items-center gap-2 sm:flex">
               <div className="text-right leading-tight">
                 <div className="text-xs font-semibold text-neutral-800">{tn(user.name, user.name_gu)}</div>
-                <div className="text-[10px] text-neutral-400">{t(`roles.${user.role}`)}</div>
+                <div className="text-2xs text-neutral-400">{t(`roles.${user.role}`)}</div>
               </div>
               <button onClick={onLogout} title={t("nav.logout")} aria-label={t("nav.logout")} className="grid h-8 w-8 place-items-center rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200">
                 <LogOut size={16} />
@@ -107,7 +107,7 @@ export function AppShell() {
             const active = isActive(n.to, n.end);
             const I = n.icon;
             return (
-              <Link key={n.to} to={n.to} className={cn("flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-semibold", active ? "text-primary-600" : "text-neutral-400")}>
+              <Link key={n.to} to={n.to} className={cn("flex flex-1 flex-col items-center gap-0.5 py-2 text-2xs font-semibold", active ? "text-primary-600" : "text-neutral-400")}>
                 <I size={20} />
                 {t(`nav.${n.key}`)}
               </Link>

@@ -153,7 +153,7 @@ function DemoTable({ onPick }: { onPick: (id: string, second: string) => void })
         >
           <span className="font-semibold text-neutral-700">{t(`roles.${d.role}`)}</span>
           <span className="text-neutral-500">
-            {d.login_id} · {d.passcode ? `PIN ${d.passcode}` : `School ${d.school_id}`}
+            {d.login_id} · {d.passcode ? `${t("login.passcode")} ${d.passcode}` : `${t("login.schoolId")} ${d.school_id}`}
           </span>
           <ChevronRight size={13} className="text-neutral-300" />
         </button>

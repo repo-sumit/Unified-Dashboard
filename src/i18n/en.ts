@@ -7,6 +7,8 @@ export const en = {
     weightage: "Weightage", achieved: "achieved", currentPeriod: "Current period", grade: "Grade",
     loading: "Loading…", notFound: "Nothing here", close: "Close", apply: "Apply",
     liveData: "live data", score: "score", notTracked: "Not tracked at this level",
+    clear: "Clear", selectAll: "Select all", clearAll: "Clear all", noMatches: "No matches",
+    scoreAria: "Score {n} of {outOf}, grade {grade}", noDataAria: "No data — not tracked at this level",
   },
   status: { green: "On track", amber: "Needs attention", red: "At risk", na: "Not tracked" },
   roles: {
@@ -30,7 +32,7 @@ export const en = {
     invalid: "We couldn't verify those details. Check your ID / passcode and try again.",
     demoHint: "Demo logins",
   },
-  nav: { home: "Scorecard", domains: "Domains", compare: "Compare", sections: "Sections", leaderboard: "Leaderboard", export: "Export", logout: "Log out", language: "ગુજરાતી", menu: "Menu" },
+  nav: { home: "Scorecard", domains: "Domains", compare: "Compare", sections: "Sections", leaderboard: "Leaderboard", export: "Export", logout: "Log out", language: "ગુજરાતી", menu: "Menu", toggleLanguage: "Switch language" },
   scorecard: {
     overall: "Overall score", rating: "Rating", domainWise: "Domain-wise score", youVsParent: "You vs {level} average",
     needsAttention: "Needs attention", mostImproved: "Most improved", closeGap: "Close the gap",
@@ -71,13 +73,14 @@ export const en = {
     classroomPulse: "Classroom Pulse", studentsAtRisk: "Students At Risk", evalStatus: "Evaluation status",
     improvementPrev: "Improvement compared to previous evaluations", needsImprovement: "Needs Improvement",
     onTrackHeader: "You're on track", trainingModules: "Recommended training modules", viewModule: "Open module", students: "students",
+    moduleFln: "FLN Foundations", moduleMaths: "Activity-based Maths", moduleAssess: "Formative Assessment",
   },
   principal: {
     schoolVsState: "School vs State average", school: "School", state: "State",
     gsqacScoreboard: "GSQAC Accreditation Scoreboard", improvementLastCycle: "Improvement compared to last cycle",
     complianceTitle: "Compliance benchmarks", ptr: "Pupil-Teacher Ratio", ptrTarget: "Target 27:1",
     classCapacity: "Class capacity", classCapTarget: "Max 30 / class", enrolment: "Total enrolment", enrolTarget: "Floor 150+",
-    avgTraining: "Avg school training hours", chronicAbs: "Chronic absentees (7-day)",
+    avgTraining: "Avg school training hours", chronicAbs: "Chronic absentees (7-day)", avgTrainTarget: "≥ 50h", sevenDayWindow: "7-day",
     attendanceGap: "Attendance submission gaps", allSubmitted: "All classes have submitted today — nothing pending.",
     notSubmitted: "Not submitted", submitted: "Submitted", downloadNames: "Download Names", classId: "Class", teacherName: "Teacher",
     dropout: "Drop-out reduction", fewerDropouts: "{n} fewer drop-outs than last year", statusMatrix: "Status overview",

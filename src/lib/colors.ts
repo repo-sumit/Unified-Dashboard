@@ -27,19 +27,19 @@ export function gradeGroupOf(grade: string): "A" | "B" | "C" | "D" {
   return c === "A" ? "A" : c === "B" ? "B" : c === "C" ? "C" : "D";
 }
 
-/** SwiftChat soft card tints (domain accents). */
+/** Soft domain-accent tints — bg/ring reference the `tint` theme tokens
+ *  (no raw hex in classes); `hex` is the chart-fill colour (a JS value). */
 export const ACCENT: Record<string, { bg: string; ring: string; icon: string; hex: string }> = {
-  blue: { bg: "bg-[#EAF4FE]", ring: "ring-[#A4E2FA]", icon: "text-sky-600", hex: "#38BDF8" },
-  mint: { bg: "bg-[#E8FBEF]", ring: "ring-[#CFFBDB]", icon: "text-emerald-600", hex: "#34D399" },
-  purple: { bg: "bg-[#F1ECFF]", ring: "ring-[#D7C9FF]", icon: "text-violet-600", hex: "#A78BFA" },
-  orange: { bg: "bg-[#FFF1E9]", ring: "ring-[#FFD4BB]", icon: "text-orange-600", hex: "#FB923C" },
-  green: { bg: "bg-[#EAFBE3]", ring: "ring-[#CCEFBF]", icon: "text-green-700", hex: "#22C55E" },
-  yellow: { bg: "bg-[#FFF8E6]", ring: "ring-[#FDE1AC]", icon: "text-amber-600", hex: "#FBBF24" },
-  pink: { bg: "bg-[#FFEDF8]", ring: "ring-[#FCD5F1]", icon: "text-pink-600", hex: "#F472B6" },
-  cream: { bg: "bg-[#FFFBEA]", ring: "ring-[#FFF5D0]", icon: "text-yellow-700", hex: "#EAB308" },
-  // 6A framework additions
-  lightblue: { bg: "bg-[#E7F5FE]", ring: "ring-[#BFE6FB]", icon: "text-sky-500", hex: "#38BDF8" },
-  grey: { bg: "bg-[#EEF1F6]", ring: "ring-[#D5DBE6]", icon: "text-slate-500", hex: "#94A3B8" },
+  blue: { bg: "bg-tint-blueBg", ring: "ring-tint-blueRing", icon: "text-sky-600", hex: "#38BDF8" },
+  mint: { bg: "bg-tint-mintBg", ring: "ring-tint-mintRing", icon: "text-emerald-600", hex: "#34D399" },
+  purple: { bg: "bg-tint-purpleBg", ring: "ring-tint-purpleRing", icon: "text-violet-600", hex: "#A78BFA" },
+  orange: { bg: "bg-tint-orangeBg", ring: "ring-tint-orangeRing", icon: "text-orange-600", hex: "#FB923C" },
+  green: { bg: "bg-tint-greenBg", ring: "ring-tint-greenRing", icon: "text-green-700", hex: "#22C55E" },
+  yellow: { bg: "bg-tint-yellowBg", ring: "ring-tint-yellowRing", icon: "text-amber-600", hex: "#FBBF24" },
+  pink: { bg: "bg-tint-pinkBg", ring: "ring-tint-pinkRing", icon: "text-pink-600", hex: "#F472B6" },
+  cream: { bg: "bg-tint-creamBg", ring: "ring-tint-creamRing", icon: "text-yellow-700", hex: "#EAB308" },
+  lightblue: { bg: "bg-tint-lightblueBg", ring: "ring-tint-lightblueRing", icon: "text-sky-500", hex: "#38BDF8" },
+  grey: { bg: "bg-tint-greyBg", ring: "ring-tint-greyRing", icon: "text-slate-500", hex: "#94A3B8" },
 };
 
 export function accent(key?: string) {

@@ -23,7 +23,8 @@ export function ComparisonBars({
 }: { bars: CompareBar[]; unit?: Unit; lang?: Lang; height?: number; max?: number }) {
   const vals = bars.map((b) => b.value ?? 0);
   const top = max ?? Math.max(100, ...vals);
-  const summary = bars.map((b) => `${b.label} ${b.value == null ? "NA" : formatValue(b.value, unit, lang)}`).join(", ");
+  const naLabel = lang === "gu" ? "લાગુ નથી" : "NA";
+  const summary = bars.map((b) => `${b.label} ${b.value == null ? naLabel : formatValue(b.value, unit, lang)}`).join(", ");
   return (
     <div className="flex items-end gap-2 sm:gap-3" style={{ height }} role="img" aria-label={summary}>
       {bars.map((b) => {
@@ -32,7 +33,7 @@ export function ComparisonBars({
         return (
           <div key={b.key} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
             <span className={cn("text-xs font-bold tnum", b.value == null ? "text-rag-naText" : c.text)}>
-              {b.value == null ? (lang === "gu" ? "NA" : "NA") : formatValue(b.value, unit, lang)}
+              {b.value == null ? naLabel : formatValue(b.value, unit, lang)}
             </span>
             <div className="relative flex w-full max-w-[56px] items-end justify-center">
               {b.value == null ? (
@@ -47,7 +48,7 @@ export function ComparisonBars({
             <span className={cn("max-w-full truncate text-center text-2xs font-semibold", b.isCurrent ? "text-primary-600" : "text-neutral-500")}>
               {b.label}
             </span>
-            {b.sublabel && <span className="max-w-full truncate text-center text-[9px] text-neutral-400">{b.sublabel}</span>}
+            {b.sublabel && <span className="max-w-full truncate text-center text-2xs text-neutral-400">{b.sublabel}</span>}
           </div>
         );
       })}

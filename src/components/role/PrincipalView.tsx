@@ -138,8 +138,8 @@ export function PrincipalView({ entity, greeting }: { entity: Entity; greeting: 
           <Compliance label={t("principal.ptr")} value={`${locNum(ptr, lang)}:1`} hint={t("principal.ptrTarget")} status={ptrStatus} />
           <Compliance label={t("principal.classCapacity")} value={locNum(maxClass, lang)} hint={t("principal.classCapTarget")} status={classStatus} />
           <Compliance label={t("principal.enrolment")} value={locNum(enrolment, lang)} hint={t("principal.enrolTarget")} status={enrolStatus} />
-          <Compliance label={t("principal.avgTraining")} value={`${locNum(avgTraining, lang)}h`} hint="≥ 50h" status={trainStatus} />
-          <Compliance label={t("principal.chronicAbs")} value={locNum(chronicCount, lang)} hint="7-day" status={chronicCount <= enrolment * 0.05 ? "green" : chronicCount <= enrolment * 0.1 ? "amber" : "red"} />
+          <Compliance label={t("principal.avgTraining")} value={`${locNum(avgTraining, lang)}h`} hint={t("principal.avgTrainTarget")} status={trainStatus} />
+          <Compliance label={t("principal.chronicAbs")} value={locNum(chronicCount, lang)} hint={t("principal.sevenDayWindow")} status={chronicCount <= enrolment * 0.05 ? "green" : chronicCount <= enrolment * 0.1 ? "amber" : "red"} />
         </div>
       </Card>
 
@@ -222,7 +222,7 @@ function Compliance({ label, value, hint, status }: { label: string; value: stri
     <div className={cn("rounded-xl border p-3", rag(status).border, rag(status).soft)}>
       <div className="flex items-center justify-between"><span className="text-2xs font-semibold text-neutral-500">{label}</span><StatusDot status={status} /></div>
       <div className={cn("mt-1 text-xl font-extrabold tnum", rag(status).text)}>{value}</div>
-      <div className="text-[10px] text-neutral-400">{hint}</div>
+      <div className="text-2xs text-neutral-400">{hint}</div>
     </div>
   );
 }

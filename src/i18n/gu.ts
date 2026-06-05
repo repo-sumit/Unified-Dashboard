@@ -9,6 +9,8 @@ export const gu: Dict = {
     weightage: "વેઇટેજ", achieved: "પ્રાપ્ત", currentPeriod: "વર્તમાન સમયગાળો", grade: "ગ્રેડ",
     loading: "લોડ થઈ રહ્યું છે…", notFound: "અહીં કંઈ નથી", close: "બંધ કરો", apply: "લાગુ કરો",
     liveData: "વાસ્તવિક ડેટા", score: "સ્કોર", notTracked: "આ સ્તરે ટ્રેક થતું નથી",
+    clear: "સાફ કરો", selectAll: "બધા પસંદ કરો", clearAll: "બધા સાફ કરો", noMatches: "કોઈ મેળ નથી",
+    scoreAria: "{outOf} માંથી {n} સ્કોર, ગ્રેડ {grade}", noDataAria: "ડેટા નથી — આ સ્તરે ટ્રેક થતું નથી",
   },
   status: { green: "સારી સ્થિતિ", amber: "ધ્યાન જરૂરી", red: "જોખમમાં", na: "ટ્રેક થતું નથી" },
   roles: {
@@ -32,7 +34,7 @@ export const gu: Dict = {
     invalid: "વિગતો ચકાસી શકાઈ નહીં. તમારું ID / પાસકોડ તપાસો અને ફરી પ્રયાસ કરો.",
     demoHint: "ડેમો લોગિન",
   },
-  nav: { home: "સ્કોરકાર્ડ", domains: "ડોમેન", compare: "સરખામણી", sections: "વિભાગો", leaderboard: "લીડરબોર્ડ", export: "નિકાસ", logout: "લોગ આઉટ", language: "English", menu: "મેનુ" },
+  nav: { home: "સ્કોરકાર્ડ", domains: "ડોમેન", compare: "સરખામણી", sections: "વિભાગો", leaderboard: "લીડરબોર્ડ", export: "નિકાસ", logout: "લોગ આઉટ", language: "English", menu: "મેનુ", toggleLanguage: "ભાષા બદલો" },
   scorecard: {
     overall: "એકંદર સ્કોર", rating: "રેટિંગ", domainWise: "ડોમેન મુજબ સ્કોર", youVsParent: "તમે vs {level} સરેરાશ",
     needsAttention: "ધ્યાન જરૂરી", mostImproved: "સૌથી વધુ સુધારો", closeGap: "તફાવત ભરો",
@@ -73,13 +75,14 @@ export const gu: Dict = {
     classroomPulse: "વર્ગખંડ પલ્સ", studentsAtRisk: "જોખમમાં વિદ્યાર્થીઓ", evalStatus: "મૂલ્યાંકન સ્થિતિ",
     improvementPrev: "અગાઉના મૂલ્યાંકન કરતાં સુધારો", needsImprovement: "સુધારાની જરૂર",
     onTrackHeader: "તમે સારી સ્થિતિમાં છો", trainingModules: "ભલામણ કરેલ તાલીમ મોડ્યુલ", viewModule: "મોડ્યુલ ખોલો", students: "વિદ્યાર્થીઓ",
+    moduleFln: "FLN પાયા", moduleMaths: "પ્રવૃત્તિ-આધારિત ગણિત", moduleAssess: "રચનાત્મક મૂલ્યાંકન",
   },
   principal: {
     schoolVsState: "શાળા vs રાજ્ય સરેરાશ", school: "શાળા", state: "રાજ્ય",
     gsqacScoreboard: "GSQAC માન્યતા સ્કોરબોર્ડ", improvementLastCycle: "ગયા ચક્ર કરતાં સુધારો",
     complianceTitle: "અનુપાલન બેન્ચમાર્ક", ptr: "વિદ્યાર્થી-શિક્ષક ગુણોત્તર", ptrTarget: "લક્ષ્ય ૨૭:૧",
     classCapacity: "વર્ગ ક્ષમતા", classCapTarget: "મહત્તમ ૩૦ / વર્ગ", enrolment: "કુલ નોંધણી", enrolTarget: "ન્યૂનતમ ૧૫૦+",
-    avgTraining: "સરેરાશ શાળા તાલીમ કલાક", chronicAbs: "સતત ગેરહાજર (૭-દિવસ)",
+    avgTraining: "સરેરાશ શાળા તાલીમ કલાક", chronicAbs: "સતત ગેરહાજર (૭-દિવસ)", avgTrainTarget: "≥ ૫૦ કલાક", sevenDayWindow: "૭-દિવસ",
     attendanceGap: "હાજરી સબમિશન ગેપ", allSubmitted: "આજે બધા વર્ગોએ સબમિટ કર્યું — કંઈ બાકી નથી.",
     notSubmitted: "સબમિટ નથી", submitted: "સબમિટ થયું", downloadNames: "નામ ડાઉનલોડ કરો", classId: "વર્ગ", teacherName: "શિક્ષક",
     dropout: "ડ્રોપઆઉટ ઘટાડો", fewerDropouts: "ગયા વર્ષ કરતાં {n} ઓછા ડ્રોપઆઉટ", statusMatrix: "સ્થિતિ ઝાંખી",

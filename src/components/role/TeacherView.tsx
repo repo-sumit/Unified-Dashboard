@@ -60,9 +60,9 @@ export function TeacherView({ entity, greeting }: { entity: Entity; greeting: st
               <div className="font-bold text-neutral-900">{t("teacher.needsImprovement")}</div>
               <p className="mt-0.5 text-sm text-neutral-600">{t("teacher.improvementPrev")}: <b className="text-rag-greenText">+{locNum(evalUp, lang)}%</b></p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <ModuleLink label="FLN Foundations" />
-                <ModuleLink label="Activity-based Maths" />
-                <ModuleLink label="Formative Assessment" />
+                <ModuleLink label={t("teacher.moduleFln")} />
+                <ModuleLink label={t("teacher.moduleMaths")} />
+                <ModuleLink label={t("teacher.moduleAssess")} />
               </div>
             </div>
           </div>

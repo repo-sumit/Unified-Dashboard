@@ -86,6 +86,19 @@ export default {
           muted: "#F4F6FA",
           sunken: "#ECEFF5",
         },
+        // ── domain accent tints (soft bg + ring) — referenced by lib/colors ──
+        tint: {
+          blueBg: "#EAF4FE", blueRing: "#A4E2FA",
+          greenBg: "#EAFBE3", greenRing: "#CCEFBF",
+          yellowBg: "#FFF8E6", yellowRing: "#FDE1AC",
+          orangeBg: "#FFF1E9", orangeRing: "#FFD4BB",
+          pinkBg: "#FFEDF8", pinkRing: "#FCD5F1",
+          mintBg: "#E8FBEF", mintRing: "#CFFBDB",
+          purpleBg: "#F1ECFF", purpleRing: "#D7C9FF",
+          creamBg: "#FFFBEA", creamRing: "#FFF5D0",
+          lightblueBg: "#E7F5FE", lightblueRing: "#BFE6FB",
+          greyBg: "#EEF1F6", greyRing: "#D5DBE6",
+        },
         line: { DEFAULT: "#E2E6EE", subtle: "#EFF1F6", strong: "#C9CFDB" },
       },
       fontFamily: {

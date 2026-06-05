@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { GRADE_GROUP, gradeGroupOf } from "@/lib/colors";
-import type { Lang } from "@/i18n";
+import { useT, type Lang } from "@/i18n";
 import { locNum } from "@/lib/format";
 
 /**
@@ -12,6 +12,7 @@ import { locNum } from "@/lib/format";
 export function RatingRing({
   percent, grade, size = 168, stroke = 14, lang = "en", outOf = 100, sublabel,
 }: { percent: number | null; grade: string | null; size?: number; stroke?: number; lang?: Lang; outOf?: number; sublabel?: string }) {
+  const { t } = useT();
   const na = percent == null || grade == null;
   const group = gradeGroupOf(grade ?? "D");
   const hex = na ? "#9CA3AF" : GRADE_GROUP[group].hex;
@@ -46,7 +47,7 @@ export function RatingRing({
         height={size}
         className="-rotate-90"
         role="img"
-        aria-label={na ? "No data — not tracked at this level" : `Score ${Math.round(percent as number)} of ${outOf}, grade ${grade}`}
+        aria-label={na ? t("common.noDataAria") : t("common.scoreAria", { n: Math.round(percent as number), outOf, grade: grade ?? "" })}
       >
         <defs>
           <linearGradient id={gid} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -66,7 +67,7 @@ export function RatingRing({
         {na ? (
           <div>
             <div className="text-2xl font-extrabold leading-none text-rag-naText">NA</div>
-            <div className="mt-1.5 text-2xs font-medium text-neutral-400">{sublabel ?? "Not tracked here"}</div>
+            <div className="mt-1.5 text-2xs font-medium text-neutral-400">{sublabel ?? t("common.notTracked")}</div>
           </div>
         ) : (
           <div className="leading-none">
@@ -77,7 +78,7 @@ export function RatingRing({
               <span className="font-semibold text-neutral-400" style={{ fontSize: size * 0.1 }}>/{locNum(outOf, lang)}</span>
             </div>
             <div className="mt-1.5 font-bold uppercase tracking-[0.18em] text-neutral-400" style={{ fontSize: Math.max(9, size * 0.06) }}>
-              {sublabel ?? "Grade"}
+              {sublabel ?? t("common.grade")}
             </div>
           </div>
         )}

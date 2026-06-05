@@ -9,7 +9,7 @@ import { ChevronRight } from "../ui/Icon";
 /** Scope trail: user's home → … → current entity, each step navigable. */
 export function Breadcrumb({ className }: { className?: string }) {
   const { trail, setScope } = useScope();
-  const { lang } = useT();
+  const { t, lang } = useT();
   const navigate = useNavigate();
   if (trail.length === 0) return null;
 
@@ -19,7 +19,7 @@ export function Breadcrumb({ className }: { className?: string }) {
   };
 
   return (
-    <nav className={cn("flex flex-wrap items-center gap-1 text-xs", className)} aria-label="Scope">
+    <nav className={cn("flex flex-wrap items-center gap-1 text-xs", className)} aria-label={t("scorecard.yourScope")}>
       {trail.map((e, i) => {
         const last = i === trail.length - 1;
         const label = lang === "gu" && e.name_gu ? e.name_gu : e.name;
@@ -33,7 +33,7 @@ export function Breadcrumb({ className }: { className?: string }) {
                 last ? "text-neutral-900" : "text-neutral-500 hover:bg-neutral-100 hover:text-primary-600",
               )}
             >
-              <span className="text-[10px] font-medium text-neutral-400">{LEVEL_LABELS[e.level][lang === "gu" ? "gu" : "en"]} · </span>
+              <span className="text-2xs font-medium text-neutral-400">{LEVEL_LABELS[e.level][lang === "gu" ? "gu" : "en"]} · </span>
               {label}
             </button>
             {!last && <ChevronRight size={12} className="text-neutral-300" />}
