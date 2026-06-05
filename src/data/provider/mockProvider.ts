@@ -40,6 +40,7 @@ class MockProviderImpl implements DataProvider {
   private usersByLogin = new Map<string, AppUser>();
   /** memo for the recursive rollup — deterministic data, so cache freely. */
   private memo = new Map<string, number | null>();
+  private filterMode: "all" | "pmshri" | "non" = "all";
 
   constructor() {
     for (const e of ENTITIES) this.byId.set(e.id, e);
@@ -94,8 +95,23 @@ class MockProviderImpl implements DataProvider {
     if (!e) res = [];
     else if (e.level === "school") res = [e];
     else res = this.getDescendants(id, "school");
+    res = res.filter((s) => this.schoolPass(s)); // honour the PM SHRI filter
     this.schoolCache.set(id, res);
     return res;
+  }
+
+  // ── PM SHRI institutional filter ────────────────────────────────────
+  setSchoolFilter(mode: "all" | "pmshri" | "non") {
+    if (mode === this.filterMode) return;
+    this.filterMode = mode;
+    this.memo.clear();
+    this.schoolCache.clear();
+  }
+
+  private schoolPass(e: Entity): boolean {
+    if (this.filterMode === "all") return true;
+    const isPm = !!e.meta.pmShri;
+    return this.filterMode === "pmshri" ? isPm : !isPm;
   }
 
   // ── auth ───────────────────────────────────────────────────────────
@@ -104,12 +120,11 @@ class MockProviderImpl implements DataProvider {
   resolveLogin(role: Role, loginId: string, secondField: string) {
     const u = this.getUserByLogin(loginId);
     if (!u || !u.active || u.role !== role) return undefined;
-    const officer = role === "crc" || role === "brc" || role === "deo" || role === "state";
-    if (officer) {
-      return u.passcode && u.passcode === secondField.trim() ? u : undefined;
+    // teacher → validate against School ID; everyone else → PIN/passcode.
+    if (role === "teacher") {
+      return u.school_id && secondField.trim() && u.school_id === secondField.trim() ? u : undefined;
     }
-    // teacher / principal: match school id
-    return u.school_id && secondField.trim() && u.school_id === secondField.trim() ? u : undefined;
+    return u.passcode && u.passcode === secondField.trim() ? u : undefined;
   }
 
   // ── value generation (deterministic cascade) ────────────────────────
@@ -182,8 +197,9 @@ class MockProviderImpl implements DataProvider {
     } else if (this.isLeafLevel(entity.level, mode)) {
       result = this.leafValue(entity, kpi, pIndex);
     } else {
-      // parent = aggregate of its direct children (skipping NA children)
+      // parent = aggregate of its direct children (skipping NA + filtered-out schools)
       const kids = this.getChildren(entity.id)
+        .filter((c) => c.level !== "school" || this.schoolPass(c))
         .map((c) => this.aggregate(c, kpi, pIndex))
         .filter((v): v is number => v != null);
       if (!kids.length) result = null;

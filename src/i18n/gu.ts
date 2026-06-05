@@ -1,7 +1,7 @@
 import type { Dict } from "./en";
 
 export const gu: Dict = {
-  app: { name: "VSK ગુજરાત", tagline: "શાળા પ્રદર્શન સ્કોરકાર્ડ", interim: "વચગાળાનું લોગિન — SSO ટૂંક સમયમાં" },
+  app: { name: "Unified Portal", tagline: "વિદ્યા સમીક્ષા કેન્દ્ર · ગુજરાત", interim: "વચગાળાનું લોગિન — SSO ટૂંક સમયમાં" },
   common: {
     na: "લાગુ નથી", back: "પાછળ", all: "બધા", of: "/", points: "પોઈન્ટ", week: "અઠવાડિયું", more: "વધુ",
     viewAll: "બધું જુઓ", search: "શોધો", schools: "શાળાઓ", you: "તમે", average: "સરેરાશ",
@@ -17,16 +17,17 @@ export const gu: Dict = {
   },
   levels: { state: "રાજ્ય", district: "જિલ્લો", block: "બ્લોક", cluster: "ક્લસ્ટર", school: "શાળા", grade: "ધોરણ", section: "વિભાગ" },
   login: {
-    welcome: "VSK ગુજરાતમાં આપનું સ્વાગત છે",
+    welcome: "Unified Portal માં આપનું સ્વાગત છે",
     subtitle: "તમારું પ્રદર્શન સ્કોરકાર્ડ જોવા સાઇન ઇન કરો",
     userId: "યુઝર ID", userIdPh: "તમારું યુઝર ID દાખલ કરો",
     schoolId: "શાળા ID", schoolIdPh: "તમારી શાળા ID દાખલ કરો",
     cluster: "ક્લસ્ટર ID", block: "બ્લોક ID", district: "જિલ્લા ID", state: "રાજ્ય ID",
-    idPh: "તમારું ID દાખલ કરો", passcode: "પાસકોડ", passcodePh: "પાસકોડ દાખલ કરો",
+    idPh: "તમારું ID દાખલ કરો (અમે ભૂમિકા શોધી લઈશું)", passcode: "PIN", passcodePh: "PIN દાખલ કરો",
+    idHint: "માન્ય ID દાખલ કરો — શિક્ષક ૮ · શાળા ૧૧ · ક્લસ્ટર ૧૦ · બ્લોક ૬ · જિલ્લો ૪ · રાજ્ય ૨ અંક.",
     continue: "ચાલુ રાખો", verifyTitle: "તમારી વિગતો ચકાસો", verifySub: "ચાલુ રાખવા નીચેની વિગતો ખાતરી કરો",
     name: "નામ", role: "ભૂમિકા", designation: "હોદ્દો", Grade: "કાર્યક્ષેત્ર",
     signIn: "ચાલુ રાખો અને સાઇન ઇન કરો", goBack: "પાછા જાઓ",
-    permTitle: "VSK સ્કોરકાર્ડ તમારી પ્રોફાઇલ ઍક્સેસ કરવા માંગે છે", permBody: "VSK ગુજરાતને તમારી ભૂમિકા અને કાર્યક્ષેત્ર વાંચવાની મંજૂરી આપો.",
+    permTitle: "Unified Portal તમારી પ્રોફાઇલ ઍક્સેસ કરવા માંગે છે", permBody: "Unified Portal ને તમારી ભૂમિકા અને કાર્યક્ષેત્ર વાંચવાની મંજૂરી આપો.",
     giveAccess: "ઍક્સેસ આપો", cancel: "રદ કરો",
     invalid: "વિગતો ચકાસી શકાઈ નહીં. તમારું ID / પાસકોડ તપાસો અને ફરી પ્રયાસ કરો.",
     demoHint: "ડેમો લોગિન",
@@ -56,4 +57,25 @@ export const gu: Dict = {
   },
   export: { title: "સ્કોરકાર્ડ નિકાસ કરો", download: "ડાઉનલોડ / પ્રિન્ટ", generatedOn: "વર્તમાન સમયગાળા માટે બનાવેલ", note: "PDF તરીકે સાચવવા તમારા બ્રાઉઝરના પ્રિન્ટ ડાયલોગનો ઉપયોગ કરો.", domain: "ડોમેન", overall: "એકંદર" },
   framework: { label: "ફ્રેમવર્ક", switch: "ફ્રેમવર્ક બદલો" },
+  greeting: { morning: "સુપ્રભાત", afternoon: "નમસ્કાર", evening: "શુભ સાંજ" },
+  pmShri: { label: "PM SHRI", all: "બધી શાળાઓ", pmshri: "PM SHRI શાળાઓ", non: "બિન-PM SHRI શાળાઓ", aspire: "આકાંક્ષી ટ્રેકર" },
+  atRisk: { label: "જોખમમાં", tooltip: "બહુવિધ શૈક્ષણિક અને વર્તણૂકીય માપદંડોના આધારે સર્વગ્રાહી રીતે ઓળખાયેલ." },
+  teacher: {
+    tpdJourney: "તમારી TPD યાત્રા", progress: "પ્રગતિ", target: "લક્ષ્ય", hrs: "કલાક", sevenDay: "૭-દિવસની સંલગ્નતા",
+    classroomPulse: "વર્ગખંડ પલ્સ", studentsAtRisk: "જોખમમાં વિદ્યાર્થીઓ", evalStatus: "મૂલ્યાંકન સ્થિતિ",
+    improvementPrev: "અગાઉના મૂલ્યાંકન કરતાં સુધારો", needsImprovement: "સુધારાની જરૂર",
+    onTrackHeader: "તમે સારી સ્થિતિમાં છો", trainingModules: "ભલામણ કરેલ તાલીમ મોડ્યુલ", viewModule: "મોડ્યુલ ખોલો", students: "વિદ્યાર્થીઓ",
+  },
+  principal: {
+    schoolVsState: "શાળા vs રાજ્ય સરેરાશ", school: "શાળા", state: "રાજ્ય",
+    gsqacScoreboard: "GSQAC માન્યતા સ્કોરબોર્ડ", improvementLastCycle: "ગયા ચક્ર કરતાં સુધારો",
+    complianceTitle: "અનુપાલન બેન્ચમાર્ક", ptr: "વિદ્યાર્થી-શિક્ષક ગુણોત્તર", ptrTarget: "લક્ષ્ય ૨૭:૧",
+    classCapacity: "વર્ગ ક્ષમતા", classCapTarget: "મહત્તમ ૩૦ / વર્ગ", enrolment: "કુલ નોંધણી", enrolTarget: "ન્યૂનતમ ૧૫૦+",
+    avgTraining: "સરેરાશ શાળા તાલીમ કલાક", chronicAbs: "સતત ગેરહાજર (૭-દિવસ)",
+    attendanceGap: "હાજરી સબમિશન ગેપ", allSubmitted: "આજે બધા વર્ગોએ સબમિટ કર્યું — કંઈ બાકી નથી.",
+    notSubmitted: "સબમિટ નથી", submitted: "સબમિટ થયું", downloadNames: "નામ ડાઉનલોડ કરો", classId: "વર્ગ", teacherName: "શિક્ષક",
+    dropout: "ડ્રોપઆઉટ ઘટાડો", fewerDropouts: "ગયા વર્ષ કરતાં {n} ઓછા ડ્રોપઆઉટ", statusMatrix: "સ્થિતિ ઝાંખી",
+    schoolActions: "શાળાની સુધારણા ક્રિયાઓ", teacherActions: "શિક્ષકો માટે સુધારણા ક્રિયાઓ", flag: "ફ્લેગ",
+  },
+  common2: { school: "શાળા", state: "રાજ્ય", vsTarget: "લક્ષ્ય સામે", students: "વિદ્યાર્થીઓ" },
 };

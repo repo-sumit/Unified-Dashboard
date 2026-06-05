@@ -31,4 +31,7 @@ export interface DataProvider {
   // ── values (raw, shaped like kpi_values) ──
   /** the cascading value series for one entity × KPI across the given periods. */
   getValueSeries(entity: Entity, kpi: KpiDef, periods: Period[]): RawSeries;
+
+  /** global PM SHRI filter — scopes which schools feed the aggregate rollups. */
+  setSchoolFilter(mode: "all" | "pmshri" | "non"): void;
 }

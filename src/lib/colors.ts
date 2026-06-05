@@ -37,6 +37,9 @@ export const ACCENT: Record<string, { bg: string; ring: string; icon: string; he
   yellow: { bg: "bg-[#FFF8E6]", ring: "ring-[#FDE1AC]", icon: "text-amber-600", hex: "#FBBF24" },
   pink: { bg: "bg-[#FFEDF8]", ring: "ring-[#FCD5F1]", icon: "text-pink-600", hex: "#F472B6" },
   cream: { bg: "bg-[#FFFBEA]", ring: "ring-[#FFF5D0]", icon: "text-yellow-700", hex: "#EAB308" },
+  // 6A framework additions
+  lightblue: { bg: "bg-[#E7F5FE]", ring: "ring-[#BFE6FB]", icon: "text-sky-500", hex: "#38BDF8" },
+  grey: { bg: "bg-[#EEF1F6]", ring: "ring-[#D5DBE6]", icon: "text-slate-500", hex: "#94A3B8" },
 };
 
 export function accent(key?: string) {

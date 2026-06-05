@@ -1,5 +1,5 @@
 /**
- * Core domain types for the VSK Gujarat KPI scorecard.
+ * Core domain types for the Unified Portal (Vidya Samiksha Kendra, Gujarat).
  *
  * These mirror the Supabase tables (entities, app_users, domains,
  * kpi_definitions, kpi_values) so swapping MockProvider → SupabaseProvider
@@ -39,7 +39,15 @@ export interface EntityMeta {
   grade_no?: number;
   section_label?: string;
   teacher_name?: string;
+  teacher_id?: string;
+  /** students in a section/class (class-capacity compliance). */
+  students?: number;
   total_schools?: number;
+  /** PM SHRI scheme school (for the global institutional filter). */
+  pmShri?: boolean;
+  /** compliance telemetry surfaced in the Principal view. */
+  enrolment?: number;
+  teachers?: number;
   /** 0..1 internal performance anchor — drives deterministic mock values. */
   anchor?: number;
   /** Real GSQAC roll-up for schools sliced from the live CSV. */
@@ -99,6 +107,9 @@ export interface KpiDef {
   domain_id: string;
   name: string;
   name_gu: string;
+  /** clarified "what this measures" description (shown in KPI detail). */
+  description?: string;
+  description_gu?: string;
   unit: Unit;
   direction: Direction;
   data_source: string;

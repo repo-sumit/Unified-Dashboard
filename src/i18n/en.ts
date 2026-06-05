@@ -1,5 +1,5 @@
 export const en = {
-  app: { name: "VSK Gujarat", tagline: "School Performance Scorecard", interim: "Interim login — SSO coming" },
+  app: { name: "Unified Portal", tagline: "Vidya Samiksha Kendra · Gujarat", interim: "Interim login — SSO coming" },
   common: {
     na: "NA", back: "Back", all: "All", of: "of", points: "pts", week: "Week", more: "more",
     viewAll: "View all", search: "Search", schools: "schools", you: "You", average: "Avg",
@@ -15,16 +15,17 @@ export const en = {
   },
   levels: { state: "State", district: "District", block: "Block", cluster: "Cluster", school: "School", grade: "Grade", section: "Section" },
   login: {
-    welcome: "Welcome to VSK Gujarat",
+    welcome: "Welcome to Unified Portal",
     subtitle: "Sign in to see your performance scorecard",
     userId: "User ID", userIdPh: "Enter your User ID",
     schoolId: "School ID", schoolIdPh: "Enter your School ID",
     cluster: "Cluster ID", block: "Block ID", district: "District ID", state: "State ID",
-    idPh: "Enter your ID", passcode: "Passcode", passcodePh: "Enter passcode",
+    idPh: "Enter your ID (we detect your role)", passcode: "PIN", passcodePh: "Enter PIN",
+    idHint: "Enter a valid ID — Teacher 8 · School 11 · Cluster 10 · Block 6 · District 4 · State 2 digits.",
     continue: "Continue", verifyTitle: "Confirm your details", verifySub: "Please confirm your details below to continue",
     name: "Name", role: "Role", designation: "Designation", Grade: "Scope",
     signIn: "Continue & Sign In", goBack: "Go Back",
-    permTitle: "VSK Scorecard wants to access your profile", permBody: "Allow VSK Gujarat to read your role and scope from your account.",
+    permTitle: "Unified Portal wants to access your profile", permBody: "Allow Unified Portal to read your role and scope from your account.",
     giveAccess: "Give access", cancel: "Cancel",
     invalid: "We couldn't verify those details. Check your ID / passcode and try again.",
     demoHint: "Demo logins",
@@ -54,6 +55,27 @@ export const en = {
   },
   export: { title: "Export scorecard", download: "Download / Print", generatedOn: "Generated for current period", note: "Use your browser's print dialog to save as PDF.", domain: "Domain", overall: "Overall" },
   framework: { label: "Framework", switch: "Switch framework" },
+  greeting: { morning: "Good morning", afternoon: "Good afternoon", evening: "Good evening" },
+  pmShri: { label: "PM SHRI", all: "All Schools", pmshri: "PM SHRI Schools", non: "Non-PM SHRI Schools", aspire: "Aspirational tracker" },
+  atRisk: { label: "At Risk", tooltip: "Identified holistically based on multiple academic and behavioural parameters." },
+  teacher: {
+    tpdJourney: "Your TPD Journey", progress: "Progress", target: "target", hrs: "hrs", sevenDay: "7-day engagement",
+    classroomPulse: "Classroom Pulse", studentsAtRisk: "Students At Risk", evalStatus: "Evaluation status",
+    improvementPrev: "Improvement compared to previous evaluations", needsImprovement: "Needs Improvement",
+    onTrackHeader: "You're on track", trainingModules: "Recommended training modules", viewModule: "Open module", students: "students",
+  },
+  principal: {
+    schoolVsState: "School vs State average", school: "School", state: "State",
+    gsqacScoreboard: "GSQAC Accreditation Scoreboard", improvementLastCycle: "Improvement compared to last cycle",
+    complianceTitle: "Compliance benchmarks", ptr: "Pupil-Teacher Ratio", ptrTarget: "Target 27:1",
+    classCapacity: "Class capacity", classCapTarget: "Max 30 / class", enrolment: "Total enrolment", enrolTarget: "Floor 150+",
+    avgTraining: "Avg school training hours", chronicAbs: "Chronic absentees (7-day)",
+    attendanceGap: "Attendance submission gaps", allSubmitted: "All classes have submitted today — nothing pending.",
+    notSubmitted: "Not submitted", submitted: "Submitted", downloadNames: "Download Names", classId: "Class", teacherName: "Teacher",
+    dropout: "Drop-out reduction", fewerDropouts: "{n} fewer drop-outs than last year", statusMatrix: "Status overview",
+    schoolActions: "Improvement Actions of the School", teacherActions: "Improvement Actions for Teachers", flag: "Flag",
+  },
+  common2: { school: "School", state: "State", vsTarget: "vs target", students: "students" },
 } as const;
 
 /** A parallel dictionary (e.g. gu) must mirror the shape but may use any

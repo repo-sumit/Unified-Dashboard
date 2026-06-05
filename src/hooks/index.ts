@@ -20,6 +20,11 @@ export function useFramework() {
   return useMemo(() => getFramework(frameworkId), [frameworkId]);
 }
 
+/** the active PM SHRI filter — every data hook applies it before computing. */
+export function usePmShri() {
+  return useSession((s) => s.pmShri);
+}
+
 /** the user's scope + current (possibly drilled-down) entity + helpers. */
 export function useScope() {
   const user = useSession((s) => s.user);
@@ -33,13 +38,12 @@ export function useScope() {
   const entity = useMemo(() => (currentId ? dataProvider.getEntity(currentId) : undefined), [currentId]);
   const homeEntity = useMemo(() => (homeId ? dataProvider.getEntity(homeId) : undefined), [homeId]);
 
-  /** breadcrumb from the user's home scope down to the current entity. */
   const trail = useMemo<Entity[]>(() => {
     if (!entity || !homeId) return entity ? [entity] : [];
     const chain = [entity, ...dataProvider.getAncestors(entity.id)];
     const homeIdx = chain.findIndex((e) => e.id === homeId);
     const bounded = homeIdx >= 0 ? chain.slice(0, homeIdx + 1) : chain;
-    return bounded.reverse(); // home → … → current
+    return bounded.reverse();
   }, [entity, homeId]);
 
   const children = useMemo(() => (currentId ? dataProvider.getChildren(currentId) : []), [currentId]);
@@ -50,32 +54,56 @@ export function useScope() {
 
 export function useScorecard(entityId: string | null | undefined) {
   const fw = useFramework();
-  return useMemo(() => (entityId ? getScorecard(fw, entityId, PERIODS) : null), [fw, entityId]);
+  const pmShri = usePmShri();
+  return useMemo(() => {
+    dataProvider.setSchoolFilter(pmShri);
+    return entityId ? getScorecard(fw, entityId, PERIODS) : null;
+  }, [fw, entityId, pmShri]);
 }
 
 export function useKpiRecord(kpiId: string | undefined, entityId: string | null | undefined) {
   const fw = useFramework();
-  return useMemo(() => (kpiId && entityId ? getKpiRecord(fw, kpiId, entityId, PERIODS) : null), [fw, kpiId, entityId]);
+  const pmShri = usePmShri();
+  return useMemo(() => {
+    dataProvider.setSchoolFilter(pmShri);
+    return kpiId && entityId ? getKpiRecord(fw, kpiId, entityId, PERIODS) : null;
+  }, [fw, kpiId, entityId, pmShri]);
 }
 
 export function usePeerLeaderboard(entityId: string | null | undefined) {
   const fw = useFramework();
-  return useMemo(() => (entityId ? getPeerLeaderboard(fw, entityId, PERIODS) : []), [fw, entityId]);
+  const pmShri = usePmShri();
+  return useMemo(() => {
+    dataProvider.setSchoolFilter(pmShri);
+    return entityId ? getPeerLeaderboard(fw, entityId, PERIODS) : [];
+  }, [fw, entityId, pmShri]);
 }
 
 export function useChildLeaderboard(entityId: string | null | undefined) {
   const fw = useFramework();
-  return useMemo(() => (entityId ? getChildLeaderboard(fw, entityId, PERIODS) : []), [fw, entityId]);
+  const pmShri = usePmShri();
+  return useMemo(() => {
+    dataProvider.setSchoolFilter(pmShri);
+    return entityId ? getChildLeaderboard(fw, entityId, PERIODS) : [];
+  }, [fw, entityId, pmShri]);
 }
 
 export function useOverallCascade(entityId: string | null | undefined) {
   const fw = useFramework();
-  return useMemo(() => (entityId ? getOverallCascade(fw, entityId, PERIODS) : []), [fw, entityId]);
+  const pmShri = usePmShri();
+  return useMemo(() => {
+    dataProvider.setSchoolFilter(pmShri);
+    return entityId ? getOverallCascade(fw, entityId, PERIODS) : [];
+  }, [fw, entityId, pmShri]);
 }
 
 export function useKpiCascade(kpiId: string | undefined, entityId: string | null | undefined) {
   const fw = useFramework();
-  return useMemo(() => (kpiId && entityId ? getKpiCascade(fw, kpiId, entityId, PERIODS) : []), [fw, kpiId, entityId]);
+  const pmShri = usePmShri();
+  return useMemo(() => {
+    dataProvider.setSchoolFilter(pmShri);
+    return kpiId && entityId ? getKpiCascade(fw, kpiId, entityId, PERIODS) : [];
+  }, [fw, kpiId, entityId, pmShri]);
 }
 
 export function useEntity(id: string | null | undefined) {

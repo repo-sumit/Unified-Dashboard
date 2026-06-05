@@ -5,7 +5,7 @@ import { useT } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { Breadcrumb } from "./Breadcrumb";
 import { LanguageToggle } from "./LanguageToggle";
-import { FrameworkSwitcher } from "./FrameworkSwitcher";
+import { PmShriFilter } from "./PmShriFilter";
 import type { LucideIcon } from "lucide-react";
 import { BarChart3, ChartNoAxesColumn, Download, LogOut, Trophy, Users } from "../ui/Icon";
 
@@ -40,14 +40,17 @@ export function AppShell() {
       <header className="sticky top-0 z-30 border-b border-line/70 bg-white/90 backdrop-blur no-print">
         <div className="mx-auto flex max-w-content items-center gap-3 px-4 py-2.5">
           <Link to="/app" className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-500 text-white"><BarChart3 size={18} /></span>
-            <span className="hidden text-base font-extrabold tracking-tight text-neutral-900 sm:block">{t("app.name")}</span>
+            <img src="/logo-vsk.png" alt="Vidya Samiksha Kendra" className="h-9 w-9 object-contain" />
+            <span className="hidden leading-none sm:block">
+              <span className="block text-base font-extrabold tracking-tight text-neutral-900">{t("app.name")}</span>
+              <span className="block text-[10px] font-medium text-neutral-400">{t("app.tagline")}</span>
+            </span>
           </Link>
           <div className="ml-1 hidden min-w-0 flex-1 md:block">
             <Breadcrumb />
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <FrameworkSwitcher className="hidden sm:inline-flex" />
+            <PmShriFilter className="hidden sm:inline-flex" />
             <LanguageToggle />
             <div className="hidden items-center gap-2 sm:flex">
               <div className="text-right leading-tight">

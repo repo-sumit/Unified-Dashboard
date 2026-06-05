@@ -1,6 +1,14 @@
 {
-  "generatedFrom": "GSQAC/gsqac 2024-25.csv (real, sliced)",
-  "generatedAtNote": "static seed — regenerate with `npm run seed`",
+  "generatedFrom": "GSQAC/gsqac 2024-25.csv (real names + scores; nested synthetic codes)",
+  "idFormats": {
+    "state": 2,
+    "district": 4,
+    "block": 6,
+    "cluster": 10,
+    "school": 11,
+    "teacher": 8,
+    "student": 18
+  },
   "shape": {
     "districts": 3,
     "blocksPerDistrict": 2,
@@ -8,64 +16,65 @@
     "schoolsPerCluster": 4
   },
   "counts": {
+    "total": 1828,
     "state": 1,
     "district": 3,
     "block": 6,
     "cluster": 18,
     "school": 72,
     "grade": 576,
-    "section": 1152,
-    "total": 1828
+    "section": 1152
   },
   "districts": [
     "Kachchh",
     "Banaskantha",
     "Ahmedabad"
   ],
+  "pmShriSchools": 7,
   "demoLogins": [
     {
       "role": "teacher",
-      "login_id": "TUTL101",
-      "name": "Kiran Makwana",
+      "login_id": "24000009",
+      "name": "Kiran Bhatt",
       "designation": "Teacher",
-      "school_id": "24010111201",
+      "school_id": "24010100011",
       "passcode": null
     },
     {
       "role": "principal",
-      "login_id": "PRIN201",
-      "name": "Bharat Pandya",
+      "login_id": "24010100011",
+      "name": "Priya Dave",
       "designation": "Principal",
-      "school_id": "24010111201",
-      "passcode": null
+      "school_id": "24010100011",
+      "passcode": "1111"
     },
     {
       "role": "crc",
-      "login_id": "NARACRC",
-      "name": "Parmar Geetaben",
-      "designation": "CRC Coordinator",
+      "login_id": "2401010001",
+      "name": "Anjali Gohil",
+      "designation": "Cluster Resource Coordinator",
       "school_id": null,
       "passcode": "1234"
     },
     {
       "role": "brc",
-      "login_id": "LAKHAPBRC",
-      "name": "Suresh Thakor",
+      "login_id": "240101",
+      "name": "Hetal Patel",
       "designation": "Block Resource Coordinator (BEO)",
       "school_id": null,
       "passcode": "2345"
     },
     {
       "role": "deo",
-      "login_id": "KACHCHDEO",
-      "name": "Dr. Rekha Mehta",
+      "login_id": "2401",
+      "name": "Jignesh Vasava",
       "designation": "District Education Officer",
       "school_id": null,
       "passcode": "3456"
     },
     {
       "role": "state",
-      "login_id": "GJSTATE",
+      "login_id": "24",
       "name": "State VSK Cell",
       "designation": "State Project Director",
       "school_id": null,

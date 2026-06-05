@@ -1,10 +1,10 @@
-# VSK Gujarat — KPI Scorecard Mini-App
+# Unified Portal — Vidya Samiksha Kendra (Gujarat)
 
-A **gamified, story-first KPI scorecard** for the Gujarat school-education system. A teacher, principal, or cluster/block/district/state officer logs in and instantly sees: *how am I doing, on what, am I improving, and how do I compare to my peers and the levels above me — down to the section of a class?*
+One platform for school-performance KPIs across every level of the Gujarat education system. A user logs in and instantly sees a **role-specific, story-first dashboard**: how am I doing, on what, am I improving, and how do I compare to peers and the levels above me — down to the section of a class.
 
-Built as a **config-driven, KPI-agnostic** product: adding a KPI is a data change, never a redesign. Switching the framework (VSK 6A ↔ GSQAC ↔ Himachal SQAF) is a config-row swap that re-renders the entire dashboard.
+Config-driven and **KPI-agnostic**: the whole dashboard renders from `domains` / `kpi_definitions` / `kpi_values`, so adding a KPI is a data change, not a redesign. Built on the canonical **6A KPI framework** (35 KPIs across A1–A6 + District tracking) with **real GSQAC data** folded into the A5 (Accreditation & School Quality) domain.
 
-> Prototype on **real GSQAC data** (33,236 schools, sliced) for the School-Quality domain; the rest is realistic deterministic mock data shaped exactly like the live tables.
+> Bilingual (English + ગુજરાતી). Mobile-first → desktop. Anonymised demo data.
 
 ---
 
@@ -12,90 +12,97 @@ Built as a **config-driven, KPI-agnostic** product: adding a KPI is a data chang
 
 ```bash
 cd app
-npm install
-npm run seed     # (re)generate seed JSON from ../GSQAC/gsqac 2024-25.csv  [optional — output is committed]
-npm run dev      # http://localhost:5173
+npm install            # if "npm" is blocked in PowerShell, use: npm.cmd install
+npm run seed           # (re)generate seed JSON from ../GSQAC/gsqac 2024-25.csv  (output is committed)
+npm run dev            # http://localhost:5173
 ```
 
-Build / verify:
+Verify:
 
 ```bash
-npm run typecheck   # tsc --noEmit
-npm run build       # tsc + vite build → dist/
-node scripts/smoke.mjs   # runtime check of the data + engine layer (no browser)
+npm run typecheck      # tsc --noEmit
+npm run build          # tsc + vite build → dist/
+node scripts/smoke.mjs # runtime check of the data + engine (no browser)
 ```
 
-### Demo logins (any role)
+### Login — role is inferred from the ID's digit-length
 
-The login screen has a **"Demo logins ▾"** helper that fills the fields for the selected role. Resolved from `src/data/seed/meta.json`:
+No role picker: type an ID and the app detects the role, then asks for the right second field. **DEO logs in with the 4-digit District ID + PIN**; the same level-ID + PIN pattern applies to State/Block/Cluster; Teacher uses Teacher ID + School ID. (Use the **"Demo logins ▾"** helper on the login screen.)
 
-| Role | ID | 2nd field |
-|---|---|---|
-| Teacher | `TUTL101` | School ID `24010111201` |
-| Principal | `PRIN201` | School ID `24010111201` |
-| Cluster (CRC) | `NARACRC` | Passcode `1234` |
-| Block (BRC) | `LAKHAPBRC` | Passcode `2345` |
-| District (DEO) | `KACHCHDEO` | Passcode `3456` |
-| State | `GJSTATE` | Passcode `0000` |
+| Level | Digits | Demo ID | 2nd field |
+|---|---|---|---|
+| State | 2 | `24` | PIN `0000` |
+| District (DEO) | 4 | `2401` | PIN `3456` |
+| Block (BRC/BEO) | 6 | `240101` | PIN `2345` |
+| Cluster (CRC) | 10 | `2401010001` | PIN `1234` |
+| School / Principal | 11 | `24010100011` | PIN `1111` |
+| Teacher | 8 | `24000009` | School ID `24010100011` |
+| Student (UDISE) | 18 | — | (not a login) |
 
-> Officer passcodes live in `app_users` and are **admin-editable only** — there is no user-facing password reset (interim model; SSO is a clean seam for later).
+IDs nest by prefix (school `24010100011` → cluster `2401010001` → block `240101` → district `2401` → state `24`). Codes are nested-synthetic; **names and GSQAC scores are real** (sliced from `gsqac 2024-25.csv`). There is **no SSO consent step** — after confirming details you land straight on the dashboard.
+
+---
+
+## What each role sees (access-control matrix)
+
+| | Teacher | Principal | Officer (Cluster→State) |
+|---|---|---|---|
+| Greeting (time-based) | ✓ | ✓ | ✓ |
+| TPD tracker (38/50 hrs) + 7-day trend | personal | — | — |
+| Classroom Pulse — Students "At Risk" (ⓘ tooltip) | ✓ | — | — |
+| Threshold "Needs Improvement" header + training links | ✓ | — | — |
+| School vs **State** average | hidden | ✓ | (cascade view) |
+| GSQAC Accreditation Scoreboard (e.g. 720/1000) | hidden | ✓ | — |
+| Compliance benchmarks (PTR 27:1 · class max 30 · enrolment 150+ · chronic · avg training) | hidden | ✓ | — |
+| Attendance-gap detector + **Download Names** | hidden | ✓ | — |
+| Drop-out reduction ("14 fewer than last year") | hidden | ✓ | — |
+| Improvement Actions **for Teachers** | hidden | ✓ | — |
+| Improvement Actions **of the School** | hidden | hidden | hidden |
+| Cascading scorecard · leaderboard · section compare · export | — | ✓ | ✓ |
+
+Officers (Cluster/Block/District/State) get the cascading scorecard (overall ring + grade, domain bars vs the level above, leaderboard, section comparison, export).
+
+---
+
+## Global features
+
+- **PM SHRI filter** (top nav): All / PM SHRI / Non-PM SHRI — an aspirational institutional tracker that scopes the aggregate rollups.
+- **Vocabulary & sentiment migration** (non-punitive): EWS → **"At Risk"** (with the holistic-identification tooltip); "Schools Below Benchmark"/"Low-Performing Schools" → support-framed labels; "Delta" → "Improvement across cycles".
+- **Time-based greeting** on login + home.
+- **Bilingual** En/ગુ with Gujarati numerals; **anonymised** people-names.
 
 ---
 
 ## Architecture (data-first)
 
-KPIs are stored in **LONG / metadata-driven** form. The five tables in `supabase/schema.sql` are mirrored 1:1 by the `DataProvider` seam:
+KPIs are stored LONG / metadata-driven. The five tables in `supabase/schema.sql` are mirrored 1:1 by the `DataProvider` seam:
 
 ```
-entities         org tree (state→district→block→cluster→school→grade→section)
-app_users        login → role → scope (entity_id) resolution
-domains          framework config (id, weightage, rating_bands)
-kpi_definitions  one row per KPI (unit, direction, level_representation)
-kpi_values       the facts (one per entity × kpi × period)
+entities · app_users · domains · kpi_definitions · kpi_values
 ```
 
 ```
 src/
-  config/      frameworks (VSK 6A, GSQAC, SQAF) · KPI catalog · rating bands · periods
-  data/
-    seed/      entities.json · appUsers.json · meta.json  (sliced from the real CSV)
-    provider/  DataProvider interface · MockProvider (deterministic) · SupabaseProvider (stub)
-  engine/      RAG · Δ WoW/MoM · trend · cascading rollups · domain & overall score · grade · leaderboard · story
-  i18n/        en + gu dictionaries (no inline copy)
-  hooks/       compose provider + engine for the screens
-  components/  ui primitives (RatingRing, KpiCard, DomainBar, ComparisonBars, Leaderboard …) + layout (AppShell)
-  screens/     Login · ScorecardHome · DomainView · KpiDetail · CascadeComparison · SectionComparison · Leaderboard · Export
+  config/      the single 6A framework · 35-KPI catalog · rating bands · periods
+  data/        seed JSON (real names + scores, nested codes) · MockProvider (deterministic, PM-SHRI-aware) · SupabaseProvider stub
+  engine/      RAG · Δ WoW/MoM · trend · bottom-up cascading rollups · domain & overall score · grade · leaderboard · story
+  i18n/        en + gu dictionaries
+  hooks/       compose provider + engine (apply the PM SHRI filter)
+  components/  ui primitives + layout (AppShell, PM SHRI filter) + role/ (TeacherView, PrincipalView)
+  screens/     Login · ScorecardHome (role-routed) · DomainView · KpiDetail · CascadeComparison · SectionComparison · Leaderboard · Export
 ```
 
-**Everything derived lives in `engine/`, not in the DB:** Δ WoW / Δ MoM, trend arrow, RAG status, domain score (weighted rollup), overall score = Σ(weightage × domain %) → letter grade, and cascading rollups (which walk `entities.parent_id`).
+Everything derived lives in `engine/` (Δ, RAG, rollups, overall = Σ weightage×domain% → grade). Rollups are genuine bottom-up aggregations (a school = mean of its sections, a district = mean of its blocks). The **single framework** is config: adding a domain/KPI renders it everywhere with no code change — the switcher was removed, not the modularity.
 
-### Why MockProvider is deterministic, not bundled rows
+### Swap mock → live (Supabase)
+1. Run `supabase/schema.sql` then the generated `supabase/seed.sql`.
+2. Load `domains`/`kpi_definitions` from `src/config` and `kpi_values` from the data lake.
+3. Set `VITE_DATA_PROVIDER=supabase` (+ URL/key) and flesh out `src/data/provider/supabaseProvider.ts`.
 
-`MockProvider` computes every value as a pure function of `(entityId, kpiId, period)` anchored to each entity's real GSQAC performance. That means **adding a `kpi_definition` row makes it render everywhere with zero code change** (the modularity mandate), the demo is stable across reloads, and there's no 400k-row JSON to ship. Swap `VITE_DATA_PROVIDER=supabase` to read the live `kpi_values` table instead — same shapes, no component edits.
-
-### Cascading & section level (100%)
-
-Every KPI rolls Section → Grade → School → Cluster → Block → District → State per its `level_representation` (`avg` / `count` / `class` / `NA`), sourced from OGM 3.0. Where a level genuinely has no data, the UI renders an explicit **"NA"** tile — never a blank. **Section comparison** (7-A vs 7-B vs grade/school average on any class-level KPI) is a first-class screen.
-
----
-
-## Design
-
-Follows the **SwiftChat Design System** (`Screenshots/swiftchat-design-system.md`) — brand blue `#386AF6`, Montserrat (Latin) + **Mukta** (Gujarati, auto-switched via `<html lang>`), 8-pt spacing, pill/`radius` scale. The Scorecard Home is modelled on the **School Report Card** (overall /100 ring + grade + domain bars vs the level above), and the cascade view on the report-cards' "Performance Comparison" grouped bars. Mobile-first, responsive to desktop, bilingual, accessible (focus rings, labels, contrast).
+### Deploy (Vercel)
+`vercel.json` is included (SPA rewrites + `npm run build` → `dist/`). Import the repo with root `app/`.
 
 ---
 
-## Deploy
-
-### Vercel
-`vercel.json` is included (SPA rewrites + `npm run build` → `dist/`). Import the repo, set the root to `app/`, deploy. Optional env: `VITE_DEFAULT_FRAMEWORK`.
-
-### Supabase (go-live)
-1. Run `supabase/schema.sql` then `supabase/seed.sql` (auto-generated entities + app_users).
-2. Load `domains` / `kpi_definitions` from `src/config` and `kpi_values` from your data lake.
-3. Set `VITE_DATA_PROVIDER=supabase` + `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, and flesh out `src/data/provider/supabaseProvider.ts` (every method maps to a documented query).
-
----
-
-## Non-goals (per the brief)
-No chat/AI, no data-entry/writes, no real SSO/OAuth, no app-to-app redirection, no student-level drill-down by default. Clean seams are left for SSO and source-app redirection.
+## Non-goals
+No chat/AI, no data-entry/writes, no real SSO/OAuth, no app-to-app redirection, no student-level drill-down by default. Clean seams left for SSO and source-app redirection.

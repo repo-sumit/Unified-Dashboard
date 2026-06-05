@@ -1,9 +1,9 @@
 {
-  "name": "vsk-gujarat-scorecard",
+  "name": "unified-portal",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "VSK Gujarat — gamified, story-first KPI scorecard dashboard (config-driven, cascading, bilingual).",
+  "description": "Unified Portal — Vidya Samiksha Kendra (Gujarat) one-platform school-performance KPI dashboard (config-driven, cascading, bilingual).",
   "scripts": {
     "seed": "node scripts/generateSeed.mjs",
     "dev": "vite",

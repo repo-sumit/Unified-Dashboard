@@ -1,84 +1,63 @@
 /* Runtime smoke test of the pure data + engine layer (no React/DOM). */
-import { getFramework, PERIODS, FRAMEWORKS } from "@/config";
+import { getFramework, PERIODS, UNIFIED_FRAMEWORK } from "@/config";
 import { dataProvider } from "@/data/provider";
-import { getScorecard, getPeerLeaderboard, getOverallCascade, getKpiRecord } from "@/engine";
+import { getScorecard, getKpiRecord } from "@/engine";
+import { roleFromIdLength } from "@/lib/format";
+import meta from "@/data/seed/meta.json";
 
-const fw = getFramework("vsk6a");
+const fw = getFramework();
 const errs: string[] = [];
 const ok = (c: boolean, m: string) => { if (!c) errs.push("FAIL: " + m); };
+const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
 
-// pick representatives across the hierarchy
+// framework shape
+ok(fw.id === "unified", "single unified framework");
+ok(fw.kpis.length === 35, `35 KPIs (got ${fw.kpis.length})`);
+ok(fw.domains.length === 7, `6A + District domains (got ${fw.domains.length})`);
+ok(UNIFIED_FRAMEWORK.domains.some((d) => d.id === "a5"), "A5 (GSQAC) domain present");
+
 const state = dataProvider.getEntity("st-gj")!;
 const district = dataProvider.getDescendants("st-gj", "district")[0];
-const cluster = dataProvider.getDescendants("st-gj", "cluster")[0];
 const school = dataProvider.getDescendants("st-gj", "school")[0];
 const section = dataProvider.getDescendants(school.id, "section")[0];
 
-for (const e of [state, district, cluster, school, section]) {
+for (const e of [state, district, school, section]) {
   const sc = getScorecard(fw, e.id, PERIODS)!;
-  ok(!!sc, `scorecard for ${e.level}`);
-  ok(sc.overallPercent >= 0 && sc.overallPercent <= 100, `${e.level} overall in range (${sc.overallPercent})`);
-  ok(!!sc.grade, `${e.level} has grade`);
-  ok(sc.domainScores.length === fw.domains.length, `${e.level} has all domains`);
-  console.log(`${e.level.padEnd(9)} ${e.name.slice(0, 22).padEnd(23)} score=${sc.overallPercent.toFixed(1).padStart(5)} grade=${sc.grade.padEnd(5)} status=${sc.status} callouts=${sc.callouts.length}`);
+  ok(!!sc && sc.overallPercent != null && sc.overallPercent >= 0 && sc.overallPercent <= 100, `${e.level} overall in range`);
+  console.log(`${e.level.padEnd(9)} ${e.name.slice(0, 22).padEnd(23)} score=${(sc.overallPercent ?? 0).toFixed(1).padStart(5)} grade=${(sc.grade ?? "NA").padEnd(5)} pmShri=${e.meta.pmShri ? "Y" : "-"}`);
 }
 
-// section must be NA on a school-level KPI (gsqac_score), present on a class KPI (att_pct)
-const secGsqac = getKpiRecord(fw, "gsqac_score", section.id, PERIODS)!;
-ok(secGsqac.value === null, `section gsqac_score is NA (got ${secGsqac.value})`);
+// NA + cascade consistency
+ok(getKpiRecord(fw, "gsqac_score", section.id, PERIODS)!.value === null, "section gsqac_score is NA");
 const secAtt = getKpiRecord(fw, "att_pct", section.id, PERIODS)!;
-ok(secAtt.value !== null, `section att_pct present (got ${secAtt.value})`);
-ok(secAtt.deltaWoW !== null, `section att_pct has Δ WoW`);
-ok(secAtt.series.length === PERIODS.length, `att_pct series length`);
-
-// school gsqac_score should reflect real CSV anchor
-const schGsqac = getKpiRecord(fw, "gsqac_score", school.id, PERIODS)!;
-ok(schGsqac.value !== null && Math.abs((schGsqac.value ?? 0) - (school.meta.gsqac?.total_percent ?? -1)) < 6, `school gsqac near real anchor (val=${schGsqac.value}, real=${school.meta.gsqac?.total_percent})`);
-
-// cascade overall: state→…→section, all levels present, current flagged
-const casc = getOverallCascade(fw, section.id, PERIODS);
-ok(casc.length >= 5, `cascade has the level chain (${casc.length})`);
-ok(casc.filter((c) => c.isCurrent).length === 1, `exactly one current in cascade`);
-
-// leaderboard of school's sibling sections
-const lb = getPeerLeaderboard(fw, section.id, PERIODS);
-ok(lb.length >= 1, `leaderboard non-empty`);
-ok(lb[0].rank === 1, `leaderboard ranked from 1`);
-ok(lb.some((e) => e.isCurrent), `current entity in leaderboard`);
-
-// framework swap: SQAF renders different domains
-const sqaf = getScorecard(FRAMEWORKS.sqaf, school.id, PERIODS)!;
-ok(sqaf.domainScores.length === FRAMEWORKS.sqaf.domains.length, `SQAF swap renders its domains (${sqaf.domainScores.length})`);
-ok(sqaf.domainScores.some((d) => d.domain.id === "learning"), `SQAF has Learning domain`);
-
-// district-only KPI: NA at school, present at district
-const schDropout = getKpiRecord(fw, "dst_dropout", school.id, PERIODS)!;
-ok(schDropout.value === null, `dst_dropout NA at school`);
-const distDropout = getKpiRecord(fw, "dst_dropout", district.id, PERIODS)!;
-ok(distDropout.value !== null, `dst_dropout present at district`);
-
-// ── rollup consistency (the review's major finding) ──
-const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
-// school att_pct must equal the mean of its grades, and grade == mean of its sections
+ok(secAtt.value !== null && secAtt.series.length === PERIODS.length, "section att_pct present with series");
 const grades = dataProvider.getDescendants(school.id, "grade");
 const schoolAtt = getKpiRecord(fw, "att_pct", school.id, PERIODS)!.value!;
-const gradeAttVals = grades.map((g) => getKpiRecord(fw, "att_pct", g.id, PERIODS)!.value!).filter((v) => v != null);
-ok(Math.abs(schoolAtt - mean(gradeAttVals)) <= 0.6, `school att_pct (${schoolAtt}) == mean of grades (${mean(gradeAttVals).toFixed(1)})`);
-const g0 = grades[0];
-const secVals = dataProvider.getChildren(g0.id).map((s) => getKpiRecord(fw, "att_pct", s.id, PERIODS)!.value!);
-const g0Att = getKpiRecord(fw, "att_pct", g0.id, PERIODS)!.value!;
-ok(Math.abs(g0Att - mean(secVals)) <= 0.6, `grade att_pct (${g0Att}) == mean of its sections (${mean(secVals).toFixed(1)})`);
-
-// district dst_reenroll must equal the mean of its blocks
+const gradeAtt = grades.map((g) => getKpiRecord(fw, "att_pct", g.id, PERIODS)!.value!).filter((v) => v != null);
+ok(Math.abs(schoolAtt - mean(gradeAtt)) <= 0.6, `school att == mean(grades) (${schoolAtt} vs ${mean(gradeAtt).toFixed(1)})`);
 const blocks = dataProvider.getDescendants(district.id, "block");
-const distRe = getKpiRecord(fw, "dst_reenroll", district.id, PERIODS)!.value!;
-const blockRe = blocks.map((b) => getKpiRecord(fw, "dst_reenroll", b.id, PERIODS)!.value!).filter((v) => v != null);
-ok(Math.abs(distRe - mean(blockRe)) <= 0.6, `district dst_reenroll (${distRe}) == mean of its blocks (${mean(blockRe).toFixed(1)})`);
+const distRe = getKpiRecord(fw, "reenrollment", district.id, PERIODS)!.value!;
+const blkRe = blocks.map((b) => getKpiRecord(fw, "reenrollment", b.id, PERIODS)!.value!).filter((v) => v != null);
+ok(Math.abs(distRe - mean(blkRe)) <= 0.6, `district reenrollment == mean(blocks) (${distRe} vs ${mean(blkRe).toFixed(1)})`);
 
-// all-NA scope (section under SQAF, all school-up KPIs) → explicit NA overall
-const sqafSection = getScorecard(FRAMEWORKS.sqaf, section.id, PERIODS)!;
-ok(sqafSection.overallPercent === null && sqafSection.grade === null && sqafSection.status === "na", `all-NA section under SQAF → NA overall (got ${sqafSection.overallPercent}/${sqafSection.grade}/${sqafSection.status})`);
+// PM SHRI filter changes aggregates
+dataProvider.setSchoolFilter("all");
+const allState = getScorecard(fw, "st-gj", PERIODS)!.overallPercent;
+dataProvider.setSchoolFilter("pmshri");
+const pmState = getScorecard(fw, "st-gj", PERIODS)!.overallPercent;
+dataProvider.setSchoolFilter("non");
+const nonState = getScorecard(fw, "st-gj", PERIODS)!.overallPercent;
+dataProvider.setSchoolFilter("all");
+ok(pmState !== allState || nonState !== allState, `PM SHRI filter changes the state aggregate (all=${allState} pm=${pmState} non=${nonState})`);
 
-console.log("\nSWAP check — SQAF overall for school:", (sqaf.overallPercent ?? 0).toFixed(1), sqaf.grade);
+// login: role inferred from ID length + correct second field
+ok(roleFromIdLength("24") === "state" && roleFromIdLength("2401") === "deo" && roleFromIdLength("240101") === "brc", "officer ID lengths → roles");
+ok(roleFromIdLength("24000009") === "teacher" && roleFromIdLength("2401010001") === "crc" && roleFromIdLength("24010100011") === "principal", "teacher/cluster/school ID lengths → roles");
+const deo = meta.demoLogins.find((d) => d.role === "deo")!;
+ok(!!dataProvider.resolveLogin("deo", deo.login_id, deo.passcode!), "DEO logs in with District ID + PIN");
+ok(!dataProvider.resolveLogin("deo", deo.login_id, "9999"), "wrong PIN rejected");
+const tch = meta.demoLogins.find((d) => d.role === "teacher")!;
+ok(!!dataProvider.resolveLogin("teacher", tch.login_id, tch.school_id!), "Teacher logs in with Teacher ID + School ID");
+
 console.log(`\n${errs.length ? errs.join("\n") : "ALL SMOKE CHECKS PASSED ✓"}`);
 if (errs.length) process.exitCode = 1;

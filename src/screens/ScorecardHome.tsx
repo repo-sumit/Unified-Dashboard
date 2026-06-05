@@ -3,8 +3,10 @@ import { useScope, useScorecard, useChildLeaderboard } from "@/hooks";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { rag } from "@/lib/colors";
-import { pct, locNum } from "@/lib/format";
+import { pct, locNum, greetingKey } from "@/lib/format";
 import { CURRENT_PERIOD } from "@/config";
+import { TeacherView } from "@/components/role/TeacherView";
+import { PrincipalView } from "@/components/role/PrincipalView";
 import { Card, SectionLabel, Badge } from "@/components/ui/atoms";
 import { RatingRing } from "@/components/ui/RatingRing";
 import { RatingBadge } from "@/components/ui/RatingBadge";
@@ -13,13 +15,18 @@ import { CalloutCard } from "@/components/ui/Callout";
 import { ChevronRight, ChartNoAxesColumn, Trophy, Users } from "@/components/ui/Icon";
 
 export default function ScorecardHome() {
-  const { entity, currentId, setScope, childLevel } = useScope();
+  const { user, entity, currentId, setScope, childLevel } = useScope();
   const sc = useScorecard(currentId);
   const children = useChildLeaderboard(currentId);
   const { t, tn, lang } = useT();
   const navigate = useNavigate();
 
   if (!entity || !sc) return null;
+
+  const greeting = t(`greeting.${greetingKey()}`);
+  // role-specific dashboards (Epics 2 & 3) on the user's own scope
+  if (user?.role === "teacher" && entity.level === "section") return <TeacherView entity={entity} greeting={greeting} />;
+  if (user?.role === "principal" && entity.level === "school") return <PrincipalView entity={entity} greeting={greeting} />;
 
   const parentLevelLabel = sc.parent ? t(`levels.${sc.parent.entity.level}`) : t("common.average");
   const scoredDomains = sc.domainScores.filter((d) => d.weightage > 0);
@@ -33,6 +40,7 @@ export default function ScorecardHome() {
       {/* scope header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
+          {user && <p className="text-sm font-medium text-neutral-500">{greeting}, {tn(user.name, user.name_gu).split(" ")[0]}</p>}
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">{tn(entity.name, entity.name_gu)}</h1>
             <Badge className="bg-neutral-100 text-neutral-500">{t(`levels.${entity.level}`)}</Badge>
