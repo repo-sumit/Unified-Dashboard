@@ -32,6 +32,9 @@ export const SupabaseProvider: DataProvider = {
   getSiblings(_id: string): Entity[] { throw new Error(NOT_WIRED); },
   getDescendants(_id: string, _level?: Level): Entity[] { throw new Error(NOT_WIRED); },
   getSchoolDescendants(_id: string): Entity[] { throw new Error(NOT_WIRED); },
+  // PRODUCTION: select count(*), count(*) filter (where gsqac is not null), sum(enrolment)
+  // from the school descendants of $1 (recursive CTE), honouring the PM-Shri filter.
+  getScopeStats(_id: string): { schools: number; gsqacReal: number; enrolment: number } { throw new Error(NOT_WIRED); },
   // PRODUCTION: scope must be enforced server-side via Postgres RLS on entities /
   // kpi_values (a policy that the requested entity is the JWT user's home entity or
   // a descendant of it), not just by this client predicate — client checks are bypassable.

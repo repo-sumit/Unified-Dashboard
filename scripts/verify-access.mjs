@@ -70,13 +70,15 @@ const browser = await chromium.launch();
   ok("block: tamper→own cluster allowed", (await tamperReload(page, "cluster-2401010005")) === "cluster-2401010005");
   await tamperReload(page, "block-240101"); // reset to home
 
-  // Compare picker: peers + subtree only, never ancestors
+  // Compare slots: options scoped to same level (peer Blocks) or one below (Clusters),
+  // never ancestors (District/State).
   await page.goto(`${BASE}/app/compare`, { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: /Add comparison/ }).click();
+  await page.waitForTimeout(300);
+  await page.getByRole("button", { name: /Unit 1/ }).first().click();
   await page.waitForTimeout(250);
-  const panel = await page.locator(".shadow-raised").last().innerText().catch(() => "");
-  ok("block compare: offers Peers group", /Peers/i.test(panel), panel.replace(/\n/g, " ").slice(0, 80));
-  ok("block compare: no District/State options", !/\bDistrict\b/i.test(panel) && !/\bState\b/i.test(panel));
+  const optText = (await page.getByRole("option").allInnerTexts().catch(() => [])).join(" | ");
+  ok("block compare: offers same-level + one-below units", /Cluster/i.test(optText) && /Block/i.test(optText), optText.slice(0, 90));
+  ok("block compare: no District/State options", !/District/i.test(optText) && !/\bState\b/i.test(optText));
   await page.keyboard.press("Escape");
   await shot(page, "ac-block-compare");
 
@@ -121,11 +123,11 @@ const browser = await chromium.launch();
 for (const [label, viewport] of [["desktop", { width: 1280, height: 900 }], ["mobile", { width: 390, height: 844 }]]) {
   const ctx = await browser.newContext({ viewport });
   const page = await ctx.newPage();
-  await loginOfficer(page, "24", "0000"); // State → full subtree, long school list
-  await page.goto(`${BASE}/app/sections`, { waitUntil: "networkidle" });
+  await loginOfficer(page, "24", "0000"); // State → districts populate the Compare slots
+  await page.goto(`${BASE}/app/compare`, { waitUntil: "networkidle" });
   await page.waitForTimeout(400);
 
-  const schoolSel = page.getByRole("button", { name: "School", exact: true }).first();
+  const schoolSel = page.getByRole("button", { name: /Unit 1/ }).first();
   ok(`${label} dropdown: custom Select present (not native)`, (await schoolSel.getAttribute("aria-haspopup")) === "listbox");
   await schoolSel.click();
   await page.waitForTimeout(200);
@@ -143,7 +145,7 @@ for (const [label, viewport] of [["desktop", { width: 1280, height: 900 }], ["mo
   await page.keyboard.press("Enter");
   await page.waitForTimeout(200);
   ok(`${label} dropdown: keyboard select closes list`, (await page.getByRole("option").count()) === 0);
-  await shot(page, `ac-sections-${label}`);
+  await shot(page, `ac-compare-dropdown-${label}`);
   await ctx.close();
 }
 

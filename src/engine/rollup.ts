@@ -41,12 +41,12 @@ export function isCountCompare(kpi: KpiDef): boolean {
   return kpi.unit === "count";
 }
 
-/** Single-KPI cascade across levels — the viewer's own level and the levels
- *  BELOW it (§7: a role sees its own level + below, never above). `chain` is the
- *  representative entity per level, ordered top → section. The current entity
- *  shows its own value; lower levels show that level's average for context.
- *  Non-applicable levels are omitted (no NA bars); count KPIs are normalised to
- *  "avg per school" so levels are comparable (totals would just grow with scope). */
+/** Single-KPI cross-level comparison — the viewer's own level and its ANCESTORS
+ *  up to State (§C: own + upper hierarchy, never descendants). `chain` is the
+ *  entity per level, ordered top → own. The current entity shows its own value;
+ *  ancestor levels show that level's average for context. Non-applicable levels
+ *  are omitted (no NA bars); count KPIs are normalised to "avg per school" so
+ *  levels are comparable (totals would just grow with scope). */
 export function kpiCascade(
   kpi: KpiDef,
   chain: Entity[],

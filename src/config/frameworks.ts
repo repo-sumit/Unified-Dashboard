@@ -16,15 +16,11 @@ const ALL_LEVELS = ["state", "district", "block", "cluster", "school", "grade", 
  */
 const WEIGHTAGE_PLACEHOLDER = true;
 
-/** Administration's 7 sub-domains — the 3-tier seam (Domain > Sub-Domain > Indicator). */
+/** Administration's 3 sub-domains (OGM 3.0) — the 3-tier seam (Domain > Sub-Domain > Indicator). */
 const ADMIN_SUBS: SubDomainDef[] = [
-  { id: "adm_teachers", name: "Teachers (TPD)", name_gu: "શિક્ષકો (TPD)" },
-  { id: "adm_schemes", name: "Scheme & Payment Delivery", name_gu: "યોજના અને ચુકવણી" },
-  { id: "adm_resources", name: "Resource Usage", name_gu: "સંસાધન ઉપયોગ" },
-  { id: "adm_programs", name: "Program Implementation", name_gu: "કાર્યક્રમ અમલીકરણ" },
+  { id: "adm_cpd", name: "Continuous Professional Development", name_gu: "સતત વ્યાવસાયિક વિકાસ (CPD)" },
   { id: "adm_visits", name: "Visits & Observations", name_gu: "મુલાકાત અને નિરીક્ષણ" },
-  { id: "adm_issues", name: "Issue & Risk Resolution", name_gu: "સમસ્યા અને જોખમ નિવારણ" },
-  { id: "adm_retention", name: "Retention & SSA Fund Usage", name_gu: "જાળવણી અને SSA ભંડોળ" },
+  { id: "adm_retention", name: "Retention", name_gu: "જાળવણી" },
 ];
 
 const UNIFIED_DOMAINS: DomainDef[] = [

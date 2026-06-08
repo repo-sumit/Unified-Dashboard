@@ -1,42 +1,41 @@
 import type { Level, Role } from "@/types";
-import { PUBLISHED } from "./kpiCatalog";
+import { PUBLISHED, VSK_KPIS } from "./kpiCatalog";
 
 /**
- * KPI applicability (CSV "—" = NOT APPLICABLE → hidden, never "NA"-clutter).
- * Two layers:
- *  • ROLE set — which indicators a persona's scorecard shows (Teacher is the
- *    only restricted persona; officers/principal see everything that applies).
- *  • LEVEL set — which entity levels an indicator is meaningful at (drives the
- *    cross-level comparison + drill; "—" in the sheet ⇒ no published value ⇒ hidden).
+ * KPI applicability — fully config-driven (no hardcoded id lists). An indicator
+ * is hidden (never shown as NA clutter) when it doesn't apply. Two axes:
+ *  • LEVEL — `kpi.lowestLevel` is the lowest hierarchy level the indicator shows
+ *    at. School-and-above indicators (teacher attendance, MDM, reporting, ALL
+ *    Administration, GSQAC) are hidden at grade/section; classroom indicators
+ *    (student attendance, chronic, ALL assessment) go down to section. (This is
+ *    what stops "Teacher attendance %" appearing on a Section card.)
+ *  • ROLE — `kpi.roleVisibility` (sheet column J "Visible to teacher"). A "No"
+ *    row lists the non-teacher roles, so the teacher persona is excluded even
+ *    where the indicator is otherwise level-applicable (e.g. CET/CGMS).
  */
 
-/** Grade & Section LEVELS → the classroom-level attendance + assessment indicators. */
-export const GRADE_SECTION_KPIS = new Set<string>([
-  "att_teacher", "att_student", "att_mdm", "att_irregular", "att_chronic",
-  "asm_participation", "asm_sat1", "asm_sat2", "asm_cet", "asm_cgms", "asm_nas",
-  "asm_below", "asm_improvement", "asm_orf_fln", "asm_classroom_prep", "asm_sma_remediation",
-]);
-
-/** Teacher persona → their classroom indicators + own TPD + school-quality context. */
-export const TEACHER_KPIS = new Set<string>([
-  ...GRADE_SECTION_KPIS,
-  "att_report", "tpd_hours", "tpd_avg_hours", "module_completion", "sq_gsqac", "sq_improvement",
-]);
+const KPI_BY_ID = new Map(VSK_KPIS.map((k) => [k.id, k]));
+const LEVEL_ORDER: Level[] = ["state", "district", "block", "cluster", "school", "grade", "section"];
+const levelIdx = (l: Level) => LEVEL_ORDER.indexOf(l);
 
 export function kpiAppliesToRole(kpiId: string, role: Role): boolean {
-  if (role === "teacher") return TEACHER_KPIS.has(kpiId);
-  // principal + officers see everything; level applicability hides what's "—"
-  return true;
+  const k = KPI_BY_ID.get(kpiId);
+  if (k?.roleVisibility) return k.roleVisibility.includes(role);
+  return true; // no restriction ⇒ visible to every role (level still gates it)
 }
 
 export function kpiAppliesAtLevel(kpiId: string, level: Level): boolean {
-  if (level === "grade" || level === "section") return GRADE_SECTION_KPIS.has(kpiId);
-  // school and up: applies only where the published table has a value ("—" ⇒ no)
+  const k = KPI_BY_ID.get(kpiId);
+  if (!k) return false;
+  const lowest = k.lowestLevel ?? "section";
+  // applies only at `level` if it is at or ABOVE the indicator's lowest level
+  if (levelIdx(level) > levelIdx(lowest)) return false;
+  // …and only where that level actually carries a value (grade reads section data)
+  if (level === "grade") return PUBLISHED[kpiId]?.section != null;
   return PUBLISHED[kpiId]?.[level] != null;
 }
 
-/** A KPI shows on an entity's scorecard when it applies to BOTH the viewing
- *  role and the entity's level. */
+/** A KPI shows for a (role, level) when it applies to BOTH. */
 export function kpiApplies(kpiId: string, role: Role, level: Level): boolean {
   return kpiAppliesToRole(kpiId, role) && kpiAppliesAtLevel(kpiId, level);
 }

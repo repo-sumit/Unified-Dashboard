@@ -1,19 +1,22 @@
 import { useNavigate } from "react-router-dom";
 import type { DomainScore } from "@/types";
-import { useScope, useScorecard, useChildLeaderboard } from "@/hooks";
+import { useScope, useScorecard, useChildLeaderboard, useScopeStats } from "@/hooks";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { rag, accent } from "@/lib/colors";
 import { pct, locNum, greetingKey, formatDelta } from "@/lib/format";
+import { computeInsights } from "@/lib/insights";
 import { CURRENT_PERIOD, WEIGHTAGE_IS_PLACEHOLDER } from "@/config";
 import { OUTPUT_DOMAIN_ID } from "@/config/frameworks";
 import { GSQAC_DOMAINS } from "@/config/kpiCatalog";
 import { Card, SectionLabel, Badge, ProgressBar, StatusDot } from "@/components/ui/atoms";
 import { RatingRing } from "@/components/ui/RatingRing";
 import { RatingBadge } from "@/components/ui/RatingBadge";
-import { CalloutCard } from "@/components/ui/Callout";
+import { HeroKpiStrip } from "@/components/ui/HeroKpiStrip";
+import { SchoolRiskTable } from "@/components/ui/SchoolRiskTable";
+import { AttentionStrip } from "@/components/ui/AttentionStrip";
 import { VskBadge } from "@/components/ui/VskBadge";
-import { Icon, ChevronRight, ArrowUpRight, ArrowDownRight, Minus } from "@/components/ui/Icon";
+import { Icon, ChevronRight, ArrowUpRight, ArrowDownRight, Minus, Database } from "@/components/ui/Icon";
 
 /**
  * 4A Input-Output homepage (same for every role). Headline = the Input Composite
@@ -25,6 +28,7 @@ export default function ScorecardHome() {
   const { user, entity, currentId, setScope, childLevel } = useScope();
   const sc = useScorecard(currentId);
   const children = useChildLeaderboard(currentId);
+  const stats = useScopeStats(currentId);
   const { t, tn, lang } = useT();
   const navigate = useNavigate();
 
@@ -35,7 +39,10 @@ export default function ScorecardHome() {
   const inputs = sc.domainScores.filter((d) => d.domain.kind === "input" && d.records.length > 0);
   const output = sc.domainScores.find((d) => d.domain.id === OUTPUT_DOMAIN_ID);
   const gsqac = entity.meta.gsqac;
-  const concern = sc.callouts.find((c) => c.kind === "needs_attention");
+  const allRecords = sc.domainScores.flatMap((d) => d.records);
+  const insights = computeInsights(sc, { stats });
+  // GSQAC coverage (real vs estimated) — honesty so missing data ≠ low performance
+  const gsqacCoverage = stats && stats.schools > 0 && stats.gsqacReal < stats.schools ? stats : null;
   const dWoW = sc.overallDeltaWoW;
   const dUp = (dWoW ?? 0) > 0.05;
   const dDown = (dWoW ?? 0) < -0.05;
@@ -87,15 +94,16 @@ export default function ScorecardHome() {
                 {dWoW == null ? t("scorecard.steady") : t("scorecard.overallMoved", { delta: formatDelta(dWoW, "%", lang) })}
               </p>
             </div>
-            {concern && (
-              <div className="mt-3">
-                <CalloutCard callout={concern} lang={lang} onClick={() => concern.domainId && navigate(`/app/domain/${concern.domainId}`)} />
-              </div>
-            )}
             <p className="mt-3 text-2xs text-neutral-400">{t("scorecard.inputsDriveOutput")}</p>
           </div>
         </div>
       </Card>
+
+      {/* WHAT NEEDS ATTENTION — auto-computed priority triage (the 6-second core) */}
+      <AttentionStrip insights={insights} onOpen={(ins) => navigate(ins.kpiId ? `/app/kpi/${ins.kpiId}` : ins.domainId ? `/app/domain/${ins.domainId}` : "/app")} />
+
+      {/* WHAT TO ACT ON — the official hero/intervention levers; opens the indicator detail directly */}
+      <HeroKpiStrip records={allRecords} level={entity.level} enrolment={stats?.enrolment} onOpen={(rec) => navigate(`/app/kpi/${rec.kpi.id}`)} />
 
       {/* INPUTS — the 3 dynamic domains the user can act on */}
       <div>
@@ -160,6 +168,16 @@ export default function ScorecardHome() {
               <ChevronRight size={16} className="text-neutral-300 transition-transform group-hover:translate-x-0.5" />
             </span>
           </div>
+          {/* coverage honesty — how many schools in scope are actually measured */}
+          {gsqacCoverage && gsqacCoverage.schools >= 2 && (
+            <p
+              className="mt-2 inline-flex items-center gap-1 text-2xs text-neutral-400"
+              title={t("ogm.coverageHint")}
+              aria-label={`${t("ogm.coverage", { real: locNum(gsqacCoverage.gsqacReal, lang), total: locNum(gsqacCoverage.schools, lang) })}. ${t("ogm.coverageHint")}`}
+            >
+              <Database size={11} /> {t("ogm.coverage", { real: locNum(gsqacCoverage.gsqacReal, lang), total: locNum(gsqacCoverage.schools, lang) })}
+            </p>
+          )}
           {/* D1-D5 breakdown (real GSQAC) */}
           {gsqac && (
             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-5">
@@ -183,26 +201,14 @@ export default function ScorecardHome() {
         </button>
       )}
 
-      {/* GEOGRAPHY drill — explore the level below */}
+      {/* GEOGRAPHY drill — the units below you, worst-first (decision-first) */}
       {childLevel && children.length > 0 && (
-        <Card className="card-pad">
-          <div className="mb-2 flex items-center justify-between">
-            <SectionLabel>{t("scorecard.explore")} · {t(`levels.${childLevel}`)}</SectionLabel>
-            <button onClick={() => navigate("/app/leaderboard")} className="text-xs font-semibold text-primary-600 hover:underline">{t("common.viewAll")}</button>
-          </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {children.slice(0, 6).map((c) => (
-              <button key={c.entity.id} onClick={() => { setScope(c.entity.id); navigate("/app"); }} className="flex items-center gap-3 rounded-xl border border-line/70 px-3 py-2.5 text-left hover:bg-neutral-50">
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-neutral-800">{tn(c.entity.name, c.entity.name_gu)}</span>
-                  <span className={cn("text-xs font-bold tnum", rag(c.status).text)}>{pct(c.percent, lang)}</span>
-                </span>
-                {c.grade && <RatingBadge grade={c.grade} size="sm" celebrate={false} />}
-                <ChevronRight size={16} className="text-neutral-300" />
-              </button>
-            ))}
-          </div>
-        </Card>
+        <SchoolRiskTable
+          entries={children}
+          childLevel={childLevel}
+          onOpen={(id) => { setScope(id); navigate("/app"); }}
+          onViewAll={() => navigate("/app/leaderboard")}
+        />
       )}
     </div>
   );

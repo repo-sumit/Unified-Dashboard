@@ -14,12 +14,17 @@ export function rag(status: RagStatus) {
   return RAG[status];
 }
 
-/** Grade group → celebratory colour treatment (A best). */
+/** GSQAC grade group → OFFICIAL grade colours (per GSQAC model documentation:
+ *  Green = A/A+, Yellow = B, Red = C, Black = D). These are compliance colours,
+ *  used verbatim wherever an actual GRADE is shown. `hex` is the exact official
+ *  fill (rings/badges/charts); `text` is a darkened-for-AA variant where the
+ *  official fill is too light to read as body text (the yellow B). Operational
+ *  status (On Track / Watch / Needs Attention) stays in `RAG` — kept separate. */
 export const GRADE_GROUP = {
-  A: { text: "text-rag-green", chip: "bg-rag-greenSoft text-rag-green", hex: "#16A34A", glow: "from-emerald-400 to-teal-500" },
-  B: { text: "text-amber-600", chip: "bg-rag-amberSoft text-amber-700", hex: "#F59E0B", glow: "from-amber-400 to-orange-500" },
-  C: { text: "text-orange-600", chip: "bg-orange-100 text-orange-700", hex: "#F97316", glow: "from-orange-400 to-rose-500" },
-  D: { text: "text-rag-red", chip: "bg-rag-redSoft text-rag-red", hex: "#EF4444", glow: "from-rose-400 to-red-500" },
+  A: { text: "text-[#1B7F4B]", chip: "bg-[#1B7F4B]/10 text-[#1B7F4B]", hex: "#1B7F4B", glow: "from-emerald-500 to-green-700" },
+  B: { text: "text-[#B07E00]", chip: "bg-[#E0A400]/[0.14] text-[#B07E00]", hex: "#E0A400", glow: "from-amber-400 to-yellow-600" },
+  C: { text: "text-[#D33A2C]", chip: "bg-[#D33A2C]/[0.1] text-[#D33A2C]", hex: "#D33A2C", glow: "from-red-400 to-rose-600" },
+  D: { text: "text-[#2B2B2B]", chip: "bg-[#2B2B2B]/[0.08] text-[#2B2B2B]", hex: "#2B2B2B", glow: "from-neutral-600 to-neutral-900" },
 } as const;
 
 export function gradeGroupOf(grade: string): "A" | "B" | "C" | "D" {

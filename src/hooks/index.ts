@@ -133,3 +133,14 @@ export function useKpiCascade(kpiId: string | undefined, entityId: string | null
 export function useEntity(id: string | null | undefined) {
   return useMemo(() => (id ? dataProvider.getEntity(id) : undefined), [id]);
 }
+
+/** schools-in-scope coverage + enrolment (honours PM-Shri) — for the data-coverage
+ *  chip and the chronic-absentee rate. Memoised; the provider caches descendants. */
+export function useScopeStats(entityId: string | null | undefined) {
+  const pmShri = usePmShri();
+  return useMemo(() => {
+    if (!entityId) return null;
+    dataProvider.setSchoolFilter(pmShri);
+    return dataProvider.getScopeStats(entityId);
+  }, [entityId, pmShri]);
+}

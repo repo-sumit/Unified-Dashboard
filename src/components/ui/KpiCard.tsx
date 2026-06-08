@@ -10,8 +10,8 @@ import { ChevronRight } from "./Icon";
 
 /** The per-KPI tile (OGM shape): value · Δ WoW · trend sparkline · RAG · vs benchmark. */
 export function KpiCard({
-  rec, name, onClick, lang = "en", showBenchmark = true,
-}: { rec: KpiRecord; name: string; onClick?: () => void; lang?: Lang; showBenchmark?: boolean }) {
+  rec, name, onClick, lang = "en",
+}: { rec: KpiRecord; name: string; onClick?: () => void; lang?: Lang }) {
   const { t } = useT();
   const c = rag(rec.status);
   const na = rec.value == null;
@@ -40,9 +40,6 @@ export function KpiCard({
             <span className="text-2xl font-extrabold text-rag-naText">NA</span>
           ) : (
             <span className={cn("text-2xl font-extrabold tnum", c.text)}>{formatValue(rec.value, rec.kpi.unit, lang)}</span>
-          )}
-          {showBenchmark && rec.benchmark != null && !na && (
-            <span className="ml-1 text-xs text-neutral-400">/ {formatValue(rec.benchmark, rec.kpi.unit, lang)}</span>
           )}
         </div>
         {!na && rec.series.length > 1 && (

@@ -20,9 +20,11 @@ export function buildLeaderboard(
   const prevPeriods = periods.length > 1 ? periods.slice(0, -1) : periods;
 
   const scored = peers.map((entity) => {
-    const now = scoreEntity(fw, entity, getSeries, periods, role).percent;
+    const cur = scoreEntity(fw, entity, getSeries, periods, role);
     const prev = scoreEntity(fw, entity, getSeries, prevPeriods, role).percent;
-    return { entity, now, prev };
+    const domainPercents: Record<string, number | null> = {};
+    cur.domainScores.forEach((d) => (domainPercents[d.domain.id] = d.percent));
+    return { entity, now: cur.percent, prev, domainPercents };
   });
 
   // entities with no data (null) sort to the bottom and render as NA.
@@ -44,6 +46,7 @@ export function buildLeaderboard(
       status: band ? statusFromGrade(band.group) : "na",
       deltaWoW: s.now != null && s.prev != null ? round1(s.now - s.prev) : null,
       isCurrent: s.entity.id === currentEntityId,
+      domainPercents: s.domainPercents,
     };
   });
 }

@@ -9,12 +9,11 @@ import { Breadcrumb } from "./Breadcrumb";
 import { LanguageToggle } from "./LanguageToggle";
 import { PmShriFilter } from "./PmShriFilter";
 import type { LucideIcon } from "lucide-react";
-import { BarChart3, ChartNoAxesColumn, Download, LogOut, Trophy, Users } from "../ui/Icon";
+import { BarChart3, ChartNoAxesColumn, Download, LogOut, Trophy } from "../ui/Icon";
 
 const NAV: { to: string; key: string; icon: LucideIcon; end?: boolean }[] = [
   { to: "/app", key: "home", icon: BarChart3, end: true },
   { to: "/app/compare", key: "compare", icon: ChartNoAxesColumn },
-  { to: "/app/sections", key: "sections", icon: Users },
   { to: "/app/leaderboard", key: "leaderboard", icon: Trophy },
   { to: "/app/export", key: "export", icon: Download },
 ];
@@ -63,8 +62,9 @@ export function AppShell() {
             <Breadcrumb />
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {/* PM SHRI is meaningless at teacher/principal scope — Cluster and above only */}
-            {isOfficer && <PmShriFilter className="hidden sm:inline-flex" />}
+            {/* PM SHRI is meaningless at teacher/principal scope — Cluster and above only.
+                Page-1 requirement, so it stays reachable on mobile too (compact). */}
+            {isOfficer && <PmShriFilter className="inline-flex" />}
             <LanguageToggle />
             {/* name + role: desktop only */}
             <div className="hidden text-right leading-tight sm:block">

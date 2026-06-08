@@ -82,11 +82,6 @@ async function run(label, viewport) {
   await shot(page, `${label}-teacher-compare`);
   ok(`${label} · compare renders`, await page.locator("body").isVisible());
 
-  // Sections
-  await page.getByRole("link", { name: /Sections/ }).first().click();
-  await page.waitForTimeout(500);
-  await shot(page, `${label}-teacher-sections`);
-
   // ── Officer (State) journey: cross-level + PM SHRI present ──
   await loginOfficer(page, "24", "0000");
   ok(`${label} · state scorecard loads`, /\/app$/.test(page.url()));
@@ -100,7 +95,7 @@ async function run(label, viewport) {
   await page.waitForTimeout(600);
   await shot(page, `${label}-state-compare`);
   // a KPI cascade detail
-  await page.goto(`${BASE}/app/kpi/att_pct`, { waitUntil: "networkidle" }).catch(() => {});
+  await page.goto(`${BASE}/app/kpi/att_student`, { waitUntil: "networkidle" }).catch(() => {});
   await page.waitForTimeout(500);
   await shot(page, `${label}-state-kpi-cascade`);
   // no broken "GSOAC" typo anywhere on cascade page text

@@ -200,23 +200,12 @@ export function getKpiCascade(fw: FrameworkConfig, kpiId: string, entityId: stri
   const entity = dataProvider.getEntity(entityId);
   const kpi = fw.kpis.find((k) => k.id === kpiId);
   if (!entity || !kpi) return [];
-  // §7: own level + a representative entity at each level below (never above)
-  const chain = [entity, ...representativeDescendants(entityId)];
+  // §C: the entity's OWN level + its ancestors up to State (the N+1 chain) — never
+  // descendants. `chain` is ordered top → own (State … own). A State user has no
+  // ancestors, so this yields a single row and the section is hidden by the caller.
+  const ancestors = dataProvider.getAncestors(entityId); // nearest → State
+  const chain = [...ancestors.slice().reverse(), entity];
   return kpiCascade(kpi, chain, entity, seriesFn(periods), periods);
-}
-
-/** one representative descendant per level beneath `entityId` (deterministic
- *  first-child walk) — used to show how a KPI compares down the levels. */
-function representativeDescendants(entityId: string): Entity[] {
-  const out: Entity[] = [];
-  let cur = dataProvider.getEntity(entityId);
-  while (cur) {
-    const kids = dataProvider.getChildren(cur.id);
-    if (!kids.length) break;
-    out.push(kids[0]);
-    cur = kids[0];
-  }
-  return out;
 }
 
 // ── Section comparison (sections of a grade ranked on a chosen KPI) ─────

@@ -96,6 +96,18 @@ class MockProviderImpl implements DataProvider {
     return res;
   }
 
+  /** coverage/denominator stats for schools in scope (honours the PM-Shri filter). */
+  getScopeStats(id: string) {
+    const schools = this.getSchoolDescendants(id);
+    let gsqacReal = 0;
+    let enrolment = 0;
+    for (const s of schools) {
+      if (s.meta.gsqac && !s.meta.gsqac.synth) gsqacReal++;
+      enrolment += s.meta.enrolment ?? 0;
+    }
+    return { schools: schools.length, gsqacReal, enrolment };
+  }
+
   // ── PM SHRI institutional filter ────────────────────────────────────
   setSchoolFilter(mode: FilterMode) {
     if (mode === this.filterMode) return;
@@ -147,13 +159,16 @@ class MockProviderImpl implements DataProvider {
     // across periods (no weekly trend); "vs last cycle" is the sq_improvement KPI.
     if (kpi.id.startsWith("sq_")) {
       const g = entity.meta.gsqac;
-      const v = !g
-        ? null
-        : kpi.id === "sq_gsqac"
-          ? round1(g.total_percent * 100)
-          : kpi.id === "sq_improvement"
-            ? g.improvement ?? null
-            : null;
+      let v: number | null = null;
+      if (g) {
+        if (kpi.id === "sq_gsqac") v = round1(g.total_percent * 100);
+        else if (kpi.id === "sq_improvement") v = g.improvement ?? null;
+        else if (kpi.id.startsWith("sq_d")) {
+          // sq_d1 → GSQAC domain "D1" (0..1 achieved → 0..100)
+          const dv = g.domains?.["D" + kpi.id.slice(4)];
+          v = dv == null ? null : round1(dv * 100);
+        }
+      }
       return { series: periods.map((p) => ({ period: p.id, value: v })), benchmark: this.benchmarkFor(kpi, entity.level) };
     }
     const benchmark = this.benchmarkFor(kpi, entity.level);
@@ -202,13 +217,24 @@ class MockProviderImpl implements DataProvider {
       const v = anchor * (1 + jf) * (1 + trend) + noise(wob, anchor * 0.02);
       return Math.max(0, Math.round(v));
     }
-    // % and score
-    const spread = 9;
+    if (kpi.unit === "ratio" || kpi.unit === "hours") {
+      // proportional spread (not the absolute ±9 of %), kept to 1 decimal.
+      const jf = noise(offKey, 0.12);
+      const trend = (higher ? -improve : improve) * 0.012;
+      const v = anchor * (1 + jf) * (1 + trend) + noise(wob, anchor * 0.02);
+      const hi = kpi.unit === "ratio" ? Math.max(2, anchor * 1.1) : anchor * 1.6;
+      return round1(clamp(v, 0, hi));
+    }
+    // % and score. Context-delta %s (YoY / reduction) are small magnitudes — a
+    // ±9 spread would swamp them, so keep them tight and let them dip negative
+    // (a real decline → a "needs attention" signal), not a fake daily trend.
+    const ctx = kpi.context === true && kpi.unit === "%";
+    const spread = ctx ? 2.4 : 9;
     const jitter = noise(offKey, spread);
-    const trend = (higher ? -improve : improve) * 0.7; // recent better
-    let v = anchor + jitter - trend + noise(wob, 1.6);
+    const trend = ctx ? 0 : (higher ? -improve : improve) * 0.7; // recent better
+    const v = anchor + jitter - trend + noise(wob, ctx ? 0.5 : 1.6);
     const hi = kpi.unit === "%" ? 100 : Math.max(100, anchor * 1.4);
-    return round1(clamp(v, 0, hi));
+    return round1(clamp(v, ctx ? -10 : 0, hi));
   }
 }
 

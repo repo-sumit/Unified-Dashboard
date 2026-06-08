@@ -11,7 +11,6 @@ const DomainView = lazy(() => import("@/screens/DomainView"));
 const SubDomainView = lazy(() => import("@/screens/SubDomainView"));
 const KpiDetail = lazy(() => import("@/screens/KpiDetail"));
 const CascadeComparison = lazy(() => import("@/screens/CascadeComparison"));
-const SectionComparison = lazy(() => import("@/screens/SectionComparison"));
 const Leaderboard = lazy(() => import("@/screens/Leaderboard"));
 const Export = lazy(() => import("@/screens/Export"));
 const NotFound = lazy(() => import("@/screens/NotFound"));
@@ -43,7 +42,6 @@ export default function App() {
             <Route path="domain/:domainId/:subId" element={<SubDomainView />} />
             <Route path="kpi/:kpiId" element={<KpiDetail />} />
             <Route path="compare" element={<CascadeComparison />} />
-            <Route path="sections" element={<SectionComparison />} />
             <Route path="leaderboard" element={<Leaderboard />} />
             <Route path="export" element={<Export />} />
           </Route>

@@ -26,6 +26,10 @@ export interface DataProvider {
   /** all descendants at a given level (or all descendants when omitted). */
   getDescendants(id: string, level?: Level): Entity[];
   getSchoolDescendants(id: string): Entity[];
+  /** coverage/denominator stats for the schools in scope (honours the PM-Shri
+   *  filter): total schools, schools with REAL GSQAC (not synthesized), and
+   *  summed enrolment. Powers the data-coverage chip + chronic-absentee rate. */
+  getScopeStats(id: string): { schools: number; gsqacReal: number; enrolment: number };
   /** access-control predicate: is `id` the home entity itself or a descendant
    *  of it? The single source of truth for "is this entity in the user's scope".
    *  NOTE: client-side only — production MUST also enforce this server-side (RLS). */

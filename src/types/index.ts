@@ -78,8 +78,13 @@ export interface AppUser {
 }
 
 // ── Framework configuration (swap GSQAC / SQAF / 6A by changing rows) ──
-export type Unit = "%" | "count" | "score" | "hours" | "days";
+export type Unit = "%" | "count" | "score" | "hours" | "days" | "ratio" | "grade";
 export type Direction = "higher" | "lower";
+
+/** OGM 3.0 reporting cadence → drives the display strategy. */
+export type Frequency = "Daily" | "Weekly" | "Monthly" | "Twice a Year" | "Yearly" | "Half yearly" | "Latest";
+/** how an indicator is visualised (frequency-aware; never a fake daily trend for annual data). */
+export type DisplayStrategy = "trend_30d" | "delta_cycle" | "snapshot_latest" | "compliance" | "count_with_rate";
 
 /** How a KPI is represented at each level (from OGM 3.0 cascading map). */
 export type Representation = "avg" | "count" | "class" | "school" | "sum" | "NA";
@@ -142,6 +147,30 @@ export interface KpiDef {
    *  Use for counts and for delta/"improvement"/"reduction" %s whose value is a
    *  change-magnitude, not a 0–100 level (so averaging it would distort the score). */
   context?: boolean;
+
+  // ── OGM 3.0 indicator metadata (source of truth: OGM 3.0 - Indicators.csv) ──
+  /** reporting cadence; drives `displayStrategy`. */
+  frequency?: Frequency;
+  /** false ⇒ render the "Data not in data lake yet — demo data" badge. */
+  availableInDataLake?: boolean;
+  /** frequency-aware visualisation (trend/delta/snapshot/compliance/count). */
+  displayStrategy?: DisplayStrategy;
+  /** green-flagged decision-critical indicator — surfaced prominently. */
+  hero?: boolean;
+  /** plain-language formula + numerator/denominator (shown in Indicator Detail). */
+  formula?: string;
+  numerator?: string;
+  denominator?: string;
+  /** PM-Shri global filter applies to this indicator's denominators. */
+  pmShriApplicable?: boolean;
+  /** levels this indicator is meaningful at (NA elsewhere → hidden). */
+  hierarchyLevels?: Level[];
+  /** roles allowed to see this indicator (e.g. teacher-attendance is officer-monitoring). */
+  roleVisibility?: Role[];
+  /** lowest level the indicator is computed at (e.g. dropout = school, never teacher). */
+  lowestLevel?: Level;
+  /** known data-lag caveat (e.g. dropout half-yearly, known next year via CTS). */
+  dataLagNote?: string;
 }
 
 /** kpi_values table — the raw fact row (one per entity × kpi × period). */
@@ -259,6 +288,9 @@ export interface LeaderboardEntry {
   status: RagStatus;
   deltaWoW: number | null;
   isCurrent: boolean;
+  /** per-domain % (the 4A breakdown behind the composite) — powers the
+   *  transparent "why is this ranked here?" hover on the risk table. */
+  domainPercents?: Record<string, number | null>;
 }
 
 /** One step in the cascade comparison (this entity vs each level up). */

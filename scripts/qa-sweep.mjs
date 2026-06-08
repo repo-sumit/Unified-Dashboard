@@ -14,18 +14,17 @@ const ROLES = {
 const SCREENS = [
   ["home", "/app"],
   ["compare", "/app/compare"],
-  ["sections", "/app/sections"],
   ["leaderboard", "/app/leaderboard"],
   ["export", "/app/export"],
-  ["kpi", "/app/kpi/att_pct"],
+  ["kpi", "/app/kpi/att_student"],
 ];
 const WIDTHS = [320, 375, 390, 768, 1024, 1440];
 const LANGS = ["en", "gu"];
 // screenshots only for these (role, screen, width, lang) to keep volume sane
 const SHOOT = new Set([
   "principal|home|375|en", "principal|home|320|en", "principal|home|1440|en", "principal|home|375|gu",
-  "principal|compare|375|en", "principal|sections|375|en", "principal|leaderboard|375|en", "principal|export|375|en",
-  "state|compare|375|en", "state|sections|375|en", "teacher|home|375|en", "brc|home|375|en",
+  "principal|compare|375|en", "principal|leaderboard|375|en", "principal|export|375|en",
+  "state|compare|375|en", "teacher|home|375|en", "brc|home|375|en",
   "principal|kpi|375|en",
 ]);
 

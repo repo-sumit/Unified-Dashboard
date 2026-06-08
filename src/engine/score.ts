@@ -104,7 +104,8 @@ export function buildDomainScore(domain: DomainDef, records: KpiRecord[], bands:
   let subScores: SubDomainScore[] = [];
 
   if (domain.kind === "output") {
-    percent = records.find((r) => r.kpi.unit === "score")?.value ?? null; // GSQAC, as-is
+    // GSQAC overall, as-is (the D1–D5 breakdown + improvement are context, not the headline).
+    percent = records.find((r) => r.kpi.id === "sq_gsqac")?.value ?? null;
   } else if (domain.sub_domains?.length) {
     subScores = domain.sub_domains
       .map((sub) => {
