@@ -1,5 +1,24 @@
 # Unified Portal — QA Report
 
+## Assessment IA split — Operational Indicator vs Assessment Outcomes
+
+Forcing the single-metric operational KPI into the same tall analytical card as the SAT1/SAT2/ORF/CET/CGMS outcome cards still read wrong. Fixed by **information architecture**, not more height tuning: the Assessment domain page now splits into two labelled sections, and the operational KPI gets a purpose-built compact card. Scoped to the Assessment domain page only — Attendance, Administration, School Quality, Export, Compare, Leaderboard and KPI detail are untouched.
+
+- **Two sections** ([DomainView.tsx](app/src/screens/DomainView.tsx)): a domain with no sub-domains that carries **both** single-metric and multi-metric indicators now renders **`Operational Indicator`** (compact card stack) above **`Assessment Outcomes`** (the multi-metric grid). The split is config-driven by `kpi.metrics` (only Assessment has the mix today), so every other domain keeps its single uniform grid. No catalog/metadata change.
+- **Compact operational card** ([OperationalKpiCard.tsx](app/src/components/ui/OperationalKpiCard.tsx), new): a slim full-width horizontal row for `SAT reports downloaded in classrooms` — left: title + `Daily` + `as on 9 Jun`; right: the value + N+1 (`Gujarat · 86%`), with a small sparkline between on wide screens. No footer tile grid, no blank middle, ~one-row height. Reuses the shared atoms (FrequencyBadge, ValueDisplay, NPlusOneLine, FrequencyDelta, Sparkline) so typography stays in the same family. Keeps value, N+1, and the as-on date.
+- **Outcome cards unchanged**: SAT1/SAT2/ORF/CET/CGMS keep the analytical `MultiMetricKpiCard` (title, frequency/date, primary metric, N+1, delta, trend, secondary tiles) and stay equal-height within their grid.
+- **i18n**: `domain.operationalIndicator` / `domain.assessmentOutcomes` (en + gu).
+
+**Result:** the oversized sparse first card is gone; the operational health-check and the analytical outcomes are visually and conceptually separated, and the outcome grid aligns cleanly on its own.
+
+**Files changed:** `components/ui/OperationalKpiCard.tsx` (new), `screens/DomainView.tsx`, `i18n/en.ts`, `i18n/gu.ts`, `QA_REPORT.md`.
+
+**Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+**Note:** I dropped the redundant outer "KPIs in Assessment" heading for the split view in favour of the two specific section headers (`Operational Indicator` / `Assessment Outcomes`), which reads cleaner than three stacked labels. Single-grid domains keep their "KPIs in {domain}" heading.
+
+---
+
 ## KPI card shell + composition (single = multi card family)
 
 The earlier equal-height pass stretched rows but left short cards sparse: `SAT reports downloaded in classrooms` had a big blank middle while SAT1/SAT2/ORF looked dense, so they read as different card types. This pass fixes the **internal composition** so every KPI card is the same component, not just the same height.

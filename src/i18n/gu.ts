@@ -60,7 +60,7 @@ export const gu: Dict = {
     netOver30: "{n} દિવસમાં {delta}",
     ahead: "આગળ", behind: "પાછળ", subDomains: "ઉપ-ડોમેન", indicators: "સૂચકો",
   },
-  domain: { kpisIn: "{name} માં KPIs", achievedVsBench: "{value} vs {benchmark} બેન્ચમાર્ક", noKpis: "કોઈ KPI રૂપરેખાંકિત નથી." },
+  domain: { kpisIn: "{name} માં KPIs", achievedVsBench: "{value} vs {benchmark} બેન્ચમાર્ક", noKpis: "કોઈ KPI રૂપરેખાંકિત નથી.", operationalIndicator: "કાર્યકારી સૂચક", assessmentOutcomes: "મૂલ્યાંકન પરિણામો" },
   kpi: {
     current: "વર્તમાન મૂલ્ય", deltaWoW: "Δ આ અઠવાડિયે", deltaMoM: "Δ આ મહિને", trend: "અઠવાડિયા મુજબ વલણ",
     why: "આનો અર્થ શું", cascadeTitle: "{name} ઉપલા સ્તરો સાથે કેવી રીતે સરખાવાય", statusLabel: "સ્થિતિ",

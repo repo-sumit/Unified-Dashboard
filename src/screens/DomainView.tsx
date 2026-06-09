@@ -3,6 +3,7 @@ import { useScope, useScorecard } from "@/hooks";
 import { useT } from "@/i18n";
 import { Card, StatusDot } from "@/components/ui/atoms";
 import { KpiCardAuto } from "@/components/ui/MultiMetricKpiCard";
+import { OperationalKpiCard } from "@/components/ui/OperationalKpiCard";
 import { ChevronRight } from "@/components/ui/Icon";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { BackLink } from "@/components/layout/PageHeader";
@@ -33,6 +34,14 @@ export default function DomainView() {
 
   const parentName = sc.parent ? tn(sc.parent.entity.name, sc.parent.entity.name_gu) : undefined;
 
+  // Assessment IA split: a single-metric operational indicator (SAT reports downloaded)
+  // sits in its own compact section, separate from the richer multi-metric outcome cards.
+  // Config-driven by `kpi.metrics` (currently only Assessment has the mix), so other
+  // domains keep their single uniform grid untouched.
+  const outcomes = ds.records.filter((r) => r.kpi.metrics?.length);
+  const operational = ds.records.filter((r) => !r.kpi.metrics?.length);
+  const splitView = ds.subScores.length === 0 && outcomes.length > 0 && operational.length > 0;
+
   return (
     <ScreenContainer>
       <BackLink label={t("nav.home")} onClick={() => navigate("/app")} />
@@ -57,6 +66,43 @@ export default function DomainView() {
             ))}
           </PageGrid>
         </PageSection>
+      ) : splitView ? (
+        <>
+          {/* Operational indicator — compact health-check row, kept apart from outcomes */}
+          <PageSection title={t("domain.operationalIndicator")}>
+            <div className="flex flex-col gap-3">
+              {operational.map((r) => (
+                <OperationalKpiCard
+                  key={r.kpi.id}
+                  rec={r}
+                  name={tn(r.kpi.name, r.kpi.name_gu)}
+                  lang={lang}
+                  level={entity.level}
+                  parentName={parentName}
+                  onClick={() => navigate(`/app/kpi/${r.kpi.id}`)}
+                />
+              ))}
+            </div>
+          </PageSection>
+
+          {/* Assessment outcomes — the richer multi-metric analytical cards */}
+          <PageSection title={t("domain.assessmentOutcomes")}>
+            <PageGrid cols="kpi">
+              {outcomes.map((r) => (
+                <KpiCardAuto
+                  key={r.kpi.id}
+                  rec={r}
+                  name={tn(r.kpi.name, r.kpi.name_gu)}
+                  lang={lang}
+                  level={entity.level}
+                  parentName={parentName}
+                  currentId={currentId}
+                  onClick={() => navigate(`/app/kpi/${r.kpi.id}`)}
+                />
+              ))}
+            </PageGrid>
+          </PageSection>
+        </>
       ) : (
         <PageSection title={t("domain.kpisIn", { name: tn(ds.domain.name, ds.domain.name_gu) })}>
           <PageGrid cols="kpi">
