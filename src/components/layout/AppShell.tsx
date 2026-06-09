@@ -13,8 +13,8 @@ import { BarChart3, ChartNoAxesColumn, Download, LogOut, Trophy } from "../ui/Ic
 
 const NAV: { to: string; key: string; icon: LucideIcon; end?: boolean }[] = [
   { to: "/app", key: "home", icon: BarChart3, end: true },
-  { to: "/app/compare", key: "compare", icon: ChartNoAxesColumn },
   { to: "/app/leaderboard", key: "leaderboard", icon: Trophy },
+  { to: "/app/compare", key: "compare", icon: ChartNoAxesColumn },
   { to: "/app/export", key: "export", icon: Download },
 ];
 

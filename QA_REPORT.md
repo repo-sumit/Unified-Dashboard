@@ -1,5 +1,14 @@
 # Unified Portal — QA Report
 
+## Export logo + nav reorder
+
+- **Export header logo** — replaced the blue circular `VSK` text badge in [Export.tsx](app/src/screens/Export.tsx) with the real app logo (`/logo-vsk.png`, the same asset `VskBadge` uses top-left), in a compact white/ring container (`h-9 w-9`, `object-contain`, no stretch/crop, transparency preserved).
+- **Sidebar / bottom-nav order** — reordered the single `NAV` array in [AppShell.tsx](app/src/components/layout/AppShell.tsx) (powers desktop sidebar + mobile bottom nav) to **Scorecard → Leaderboard → Compare → Export**. Routes/keys/active-state logic unchanged.
+
+**Build:** `npm run build` passes clean.
+
+---
+
 ## Homepage duplication fix — split domain-card vs Top Indicators
 
 The homepage repeated the same indicators in the Domain cards **and** the bottom Key Indicators strip (both driven by `kpi.hero`). Split the two concerns with a new config flag.

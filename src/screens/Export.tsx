@@ -126,7 +126,9 @@ export default function Export() {
         {/* report header — entity + scope (no overall-score ring) */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-500 text-white text-sm font-extrabold">VSK</span>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white ring-1 ring-line">
+              <img src="/logo-vsk.png" alt="VSK Gujarat" className="h-6 w-6 object-contain" />
+            </span>
             <div className="min-w-0">
               <div className="truncate text-base font-extrabold text-neutral-900" title={tn(entity.name, entity.name_gu)}>{tn(entity.name, entity.name_gu)}</div>
               <div className="truncate text-2xs text-neutral-400">{t(`levels.${entity.level}`)} · {sc.framework.name} · {t("common.week")} {locNum(periodNo, lang)}{pmShri !== "all" ? ` · ${t(`pmShri.${pmShri}`)}` : ""}</div>
