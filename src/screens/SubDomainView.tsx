@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useScope, useScorecard } from "@/hooks";
 import { useT } from "@/i18n";
 import { Card } from "@/components/ui/atoms";
-import { KpiCard } from "@/components/ui/KpiCard";
+import { KpiCardAuto } from "@/components/ui/MultiMetricKpiCard";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { BackLink } from "@/components/layout/PageHeader";
 import { PageSection, PageGrid } from "@/components/layout/PageSection";
@@ -36,13 +36,14 @@ export default function SubDomainView() {
       <PageSection title={t("scorecard.indicators")}>
         <PageGrid cols="kpi">
           {ss.records.map((r) => (
-            <KpiCard
+            <KpiCardAuto
               key={r.kpi.id}
               rec={r}
               name={tn(r.kpi.name, r.kpi.name_gu)}
               lang={lang}
               level={entity?.level}
               parentName={parentName}
+              currentId={currentId}
               onClick={() => navigate(`/app/kpi/${r.kpi.id}`)}
             />
           ))}

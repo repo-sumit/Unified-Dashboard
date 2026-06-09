@@ -20,7 +20,10 @@ export function PageSection({
 }
 
 const COLS: Record<string, string> = {
-  kpi: "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3",
+  // `sm:auto-rows-fr` makes every row track equal height from the 2-up breakpoint up,
+  // so KPI cards in the same row stretch to match (single/dual/triple-metric alike).
+  // Left off at the 1-col mobile breakpoint so phone cards keep their natural height.
+  kpi: "grid-cols-1 sm:grid-cols-2 sm:auto-rows-fr xl:grid-cols-3",
   domain: "grid-cols-1 sm:grid-cols-3",
   two: "grid-cols-1 sm:grid-cols-2",
 };

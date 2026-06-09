@@ -1,5 +1,45 @@
 # Unified Portal — QA Report
 
+## KPI card shell + composition (single = multi card family)
+
+The earlier equal-height pass stretched rows but left short cards sparse: `SAT reports downloaded in classrooms` had a big blank middle while SAT1/SAT2/ORF looked dense, so they read as different card types. This pass fixes the **internal composition** so every KPI card is the same component, not just the same height.
+
+- **One canonical shell** ([kpiCardParts.tsx](app/src/components/ui/kpiCardParts.tsx), new): `KpiCardShell` (h-full, `min-h-[16.5rem]`, flex-col) → `KpiCardHeader` (title `line-clamp-2` with a reserved `min-h-[2.5rem]` so every header is the same height, + frequency·last-updated chip) → `KpiPrimary` (flex-1, centred, so modest content fills instead of leaving a gap) → `KpiFooter` (`mt-auto`, 2-up grid pinned to the bottom). Both card types now compose from these pieces, so header / primary / trend / footer rhythm and outer height are identical.
+- **Single-metric cards fill the footer intelligently** ([KpiCard.tsx](app/src/components/ui/KpiCard.tsx)): rebuilt on the shell. Header has a headline metric label (Rate / Count / Score / Latest, by unit — matches the multi cards' sub-metric label rhythm without inventing data), the big value + delta or `as on <date>`, then the trend. The footer is **always two compact context tiles** drawn from already-available data: `Parent avg` (N+1), `Source`, falling back to `Updated`. No blank middle, no oversized first card.
+- **`SAT reports downloaded in classrooms`** now reads: header `Daily`, primary `RATE / 76.5% / as on 9 Jun` + sparkline, footer `Parent avg · Gujarat · 86%` + `Source · Gyan Prabhav bot`. Same density and height as its neighbours; the date appears once (no header/primary/footer triplication).
+- **Multi-metric cards** ([MultiMetricKpiCard.tsx](app/src/components/ui/MultiMetricKpiCard.tsx)): rebuilt on the same shell. Triple-metric (SAT1/SAT2/ORF) keep primary + 2 sub-metric tiles; **dual-metric (CET/CGMS)** fill the spare footer slot with a `Source` context tile so they're the same height as the triple cards (no obvious empty box, §4). Sub-metric tiles, N+1, deltas and micro-sparklines are unchanged.
+- **Typography unified** (§8): title, chip, metric label (`uppercase 2xs muted`), primary value (`size lg`), N+1, delta and the primary sparkline (height 32 on every card) share one scale across single and multi cards.
+- **Grid** ([PageSection.tsx](app/src/components/layout/PageSection.tsx)) keeps `sm:auto-rows-fr` as row-alignment support; the real fix is the card internals, so the target height is set by the dense SAT/ORF card, not the sparse single card.
+
+**Files changed:** `components/ui/kpiCardParts.tsx` (new), `components/ui/KpiCard.tsx`, `components/ui/MultiMetricKpiCard.tsx`, `i18n/en.ts`, `i18n/gu.ts`, `QA_REPORT.md`.
+
+**Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+**Known tradeoffs:** (a) the footer holds sub-metric tiles on multi cards (which include micro-sparklines) vs text context tiles on single/dual cards, so triple-metric footers carry slightly more ink, but every card now has a filled 2-up footer of equal height with no blank gaps. (b) On a dual-metric card the metric tile is taller than the source context tile beside it, so the source tile top-aligns with a little space below; deliberate, and far less jarring than an empty box. (c) Single-metric primary shows N+1 in the footer rather than inline (multi shows it inline) to avoid duplicating it; both cards display N+1 exactly once.
+
+---
+
+## Equal-height KPI cards (layout consistency pass)
+
+Multi-metric cards (SAT1/SAT2/ORF) were taller than dual-metric (CET/CGMS) and single-metric (SAT reports) cards, so the Assessment page looked uneven across rows. Made every KPI card in a grid row share one height, with balanced internal spacing. **Layout only — no KPI logic, values, formulas, deltas, N+1, graph data, provider, routing, access, Compare/Export, or GSQAC changes.**
+
+- **Grid equalises rows** ([PageSection.tsx](app/src/components/layout/PageSection.tsx)): the `cols="kpi"` grid gained **`sm:auto-rows-fr`** (`grid-cols-1 sm:grid-cols-2 sm:auto-rows-fr xl:grid-cols-3`). From the 2-up breakpoint up, every row track is equal height so cards stretch to match the tallest in the row. Deliberately **omitted at the 1-col mobile breakpoint** so phone cards keep their natural full-width height (§1). Only the KPI grid is touched — the homepage `domain` grid and the sub-domain `two` grid are unchanged.
+- **Shared sizing contract** — both card types now use `h-full flex flex-col` so they fill the row track:
+  - [KpiCard.tsx](app/src/components/ui/KpiCard.tsx) (single-metric): header pinned top, **value + sparkline wrapped in a `flex-1` centred region**, N+1 pinned to the foot. A short card (e.g. "SAT reports downloaded") fills the shared height with balanced spacing instead of leaving blank white space — content stays centred, nothing clipped (§4).
+  - [MultiMetricKpiCard.tsx](app/src/components/ui/MultiMetricKpiCard.tsx) (SAT1/SAT2/ORF/CET/CGMS): header top, **primary metric block in a `flex-1` region**, secondary compact tiles pinned to the foot. The secondary `grid-cols-2` keeps a **dual-metric card (one tile) the same height as a triple-metric card (two tiles)** — the empty cell reserves the slot (§3/§6).
+- **Consistent card system everywhere** ([SubDomainView.tsx](app/src/screens/SubDomainView.tsx)): switched from `KpiCard` to the same `KpiCardAuto` selector used by DomainView, so Administration sub-domain cards share the identical sizing path (they're single-metric, so they render via KpiCard exactly as before, now with `h-full`).
+- **Typography untouched** (§7): title/badge/primary-value/secondary-label/N+1/delta/sparkline sizes and the chevron position are all unchanged. No one-off large/small cards.
+
+**Assessment page result:** SAT1 = SAT2, CET = CGMS, ORF and the single-metric SAT-reports card all align to the row height; cards in a row align vertically.
+
+**Files changed:** `components/layout/PageSection.tsx`, `components/ui/KpiCard.tsx`, `components/ui/MultiMetricKpiCard.tsx`, `screens/SubDomainView.tsx`, `QA_REPORT.md`.
+
+**Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+**Known visual tradeoff:** with uniform row heights, the shortest cards (single-metric "SAT reports", and dual-metric CET/CGMS vs triple-metric SAT/ORF) gain a little vertical breathing room above/below their content. This is intentional and balanced (centred value/sparkline, footer pinned) rather than top-bunched with blank space below. Mobile (1-col) keeps natural per-card heights, so no card looks padded on phones.
+
+---
+
 ## Multi-metric indicator cards + sheet-driven last-updated labels
 
 **Sheet version used:** `Docs/GJ _ Unified App KPIs.xlsx` (the re-uploaded `GJ _ Unified App KPIs(10).xlsx`, Sheet1, 28 indicators across Attendance / Assessment / Administration / School Quality). Re-parsed columns: `Indicator`, `Data Source`, `Formula/Logic`, `Delta`, `Visible to School (HM)/Teacher`, **`Show Last Updated on UI`**.
