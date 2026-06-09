@@ -63,7 +63,7 @@ export const gu: Dict = {
     weeklyTrend: "સાપ્તાહિક વલણ", noData: "આ સ્તરે ટ્રેક થતું નથી; NA તરીકે બતાવેલ.",
     trendDaily: "૩૦-દિવસનો વલણ", trendMonthly: "માસિક વલણ", trendTwice: "તાજેતરના ચક્રો", trendHalf: "અર્ધવાર્ષિક વલણ", trendYearly: "વાર્ષિક વલણ",
     deltaWeek: "Δ આ અઠવાડિયે", deltaMonth: "Δ આ મહિને", deltaCycle: "Δ આ ચક્ર", deltaTime: "Δ આ વખતે", deltaYear: "Δ આ વર્ષ",
-    pWeek: "આ અઠવાડિયે", pMonth: "આ મહિને", pCycle: "આ ચક્ર", pTime: "આ વખતે", pYear: "આ વર્ષ",
+    pWeek: "આ દિવસે", pMonth: "આ મહિને", pCycle: "આ ચક્ર", pTime: "આ અર્ધવર્ષ", pYear: "આ વર્ષ",
     formula: "ગણતરી કેવી રીતે થાય", frequencyLabel: "અપડેટ", lowestLevelNote: "સૌથી નીચું સ્તર: {level}",
     latestOn: "છેલ્લે: {date}", latestAvailable: "છેલ્લે ઉપલબ્ધ", currentMonth: "આ મહિનો", currentCycle: "આ ચક્ર", currentHalf: "આ અર્ધવર્ષ", currentYear: "આ વર્ષ",
   },

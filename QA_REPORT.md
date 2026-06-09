@@ -1,5 +1,21 @@
 # Unified Portal — QA Report
 
+## Frequency wording: Daily → "this day", Half-yearly → "this half-year"
+
+The per-KPI delta/context wording is i18n-driven through one path — `FrequencyDelta` → `periodLabelKey(cadence)` → `kpi.p*` — used by every card/detail (KpiCard, DomainSummaryCard, HeroKpiStrip, KpiDetail). Fixing the two off words there propagates everywhere:
+
+- `kpi.pWeek` (Daily) "this week" → **"this day"** (gu "આ દિવસે")
+- `kpi.pTime` (Half-yearly) "this time" → **"this half-year"** (gu "આ અર્ધવર્ષ")
+- unchanged (already correct): Monthly → "this month", Twice-a-year → "this cycle", Yearly → "this year".
+
+So every Daily KPI (Teacher/Student Attendance, MDM served %, Students absent from past 7+ days, Attendance reporting compliance %) now reads e.g. "Latest: 1 Jun" + "↗ +3.4% **this day**"; SAT-reports (Monthly) → "this month"; dropout/re-enrolment (Half-yearly) → "this half-year"; SAT1/SAT2 (Twice-a-year, snapshot) → "this cycle"; GSQAC (Yearly) → "this year". Date context for Daily details unchanged ("Latest: {date}"). Frequency badges already drive off the catalog `frequency` (no "Weekly" KPI exists, so no Weekly badge renders); the dead `Weekly` i18n key is unused. Doc comment in [FrequencyDelta.tsx](app/src/components/ui/FrequencyDelta.tsx) updated.
+
+**Assumption / out of scope:** the Leaderboard "Top movers this week" and the school-risk-table "this week" are composite **week-over-week** movements (the scorecard periods are weekly), not a single daily KPI's frequency — left as-is (correct for the weekly comparison; not a per-KPI frequency label). Legacy unused strings (`scorecard.whatChanged`, `kpi.deltaWeek`, `kpi.weeklyTrend`, `ogm.thisWeek`) are not rendered anywhere and were left untouched.
+
+**Files:** `i18n/en.ts`, `i18n/gu.ts`, `FrequencyDelta.tsx`, `QA_REPORT.md`. **Build:** `npm run build` passes clean. No catalog/formula/id/access/routing/Compare/Export/provider changes.
+
+---
+
 ## Domain pages: top summary card removed · KPI charts: average line removed
 
 1. **Domain-page top summary card removed** — [DomainView.tsx](app/src/screens/DomainView.tsx) no longer renders the `DomainSummaryCard` (`variant="page"`) / `GsqacSummaryCard` header on any domain page (Attendance, Assessment, Administration, School Quality). The back link is now followed directly by the indicator section (`KPIS IN …`, or Administration's sub-domain cards). Removed the now-unused scaffolding (`useScopeStats`, `domainWoW`, `hero`/`parentPercent`/`gsqacCoverage`, the `sq_gsqac` filter) — so the School Quality page now shows **GSQAC score** as a normal indicator card too (no separate hero card). `DomainSummaryCard`/`GsqacSummaryCard` are untouched and still used by the **homepage** only.
