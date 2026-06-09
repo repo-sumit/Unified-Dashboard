@@ -58,7 +58,7 @@ export const en = {
     netOver30: "{delta} over {n} days",
     ahead: "ahead", behind: "behind", subDomains: "Sub-domains", indicators: "Indicators",
   },
-  domain: { kpisIn: "KPIs in {name}", achievedVsBench: "{value} vs {benchmark} benchmark", noKpis: "No KPIs configured.", operationalIndicator: "Operational Indicator", assessmentOutcomes: "Assessment Outcomes" },
+  domain: { kpisIn: "KPIs in {name}", achievedVsBench: "{value} vs {benchmark} benchmark", noKpis: "No KPIs configured." },
   kpi: {
     current: "Current value", deltaWoW: "Δ this week", deltaMoM: "Δ this month", trend: "Trend over weeks",
     why: "What this means", cascadeTitle: "How {name} compares up the hierarchy", statusLabel: "Status",

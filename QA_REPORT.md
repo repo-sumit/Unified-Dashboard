@@ -1,5 +1,20 @@
 # Unified Portal — QA Report
 
+## Revert Assessment IA split — back to one KPI grid
+
+Reverted the previous Operational-Indicator / Assessment-Outcomes split. The Assessment domain page is back to a **single `KPIs in Assessment` grid** where every indicator — including `SAT reports downloaded in classrooms` — renders through the normal `KpiCardAuto` path (single-metric → `KpiCard`, multi-metric → `MultiMetricKpiCard`).
+
+- **Split logic removed** ([DomainView.tsx](app/src/screens/DomainView.tsx)): dropped the `operational` / `outcomes` partition, the `splitView` branch, the two `PageSection`s and the `OperationalKpiCard` import. The non-sub-domain branch is once again a single `PageSection` + `PageGrid cols="kpi"` over `ds.records`. No `Operational Indicator` / `Assessment Outcomes` labels remain.
+- **Compact card removed**: `OperationalKpiCard.tsx` was created only for that experiment and is now unused, so it was deleted. `SAT reports downloaded in classrooms` keeps its normal single-metric card treatment — title, Daily badge, value, N+1, `as on <date>` (instead of delta), sparkline, chevron — all unchanged.
+- **i18n cleanup**: removed the now-unused `domain.operationalIndicator` / `domain.assessmentOutcomes` keys (en + gu) to keep the `Dict` shape in sync.
+- No change to KPI catalog, values, formulas, names, multi-metric SAT1/SAT2/ORF/CET/CGMS logic, delta/N+1/date/frequency logic, access control, routing, homepage, Export, Compare, Leaderboard, GSQAC, or provider architecture.
+
+**Files changed:** `screens/DomainView.tsx`, `components/ui/OperationalKpiCard.tsx` (deleted), `i18n/en.ts`, `i18n/gu.ts`, `QA_REPORT.md`.
+
+**Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+---
+
 ## Assessment IA split — Operational Indicator vs Assessment Outcomes
 
 Forcing the single-metric operational KPI into the same tall analytical card as the SAT1/SAT2/ORF/CET/CGMS outcome cards still read wrong. Fixed by **information architecture**, not more height tuning: the Assessment domain page now splits into two labelled sections, and the operational KPI gets a purpose-built compact card. Scoped to the Assessment domain page only — Attendance, Administration, School Quality, Export, Compare, Leaderboard and KPI detail are untouched.
