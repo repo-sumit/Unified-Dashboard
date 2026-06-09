@@ -2,9 +2,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useScope, useScorecard } from "@/hooks";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/cn";
-import { rag, accent } from "@/lib/colors";
+import { accent, valueToneClass } from "@/lib/colors";
 import { pct } from "@/lib/format";
-import { Card, SectionLabel, Badge, ProgressBar, StatusDot } from "@/components/ui/atoms";
+import { Card, SectionLabel, ProgressBar, StatusDot } from "@/components/ui/atoms";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Icon, ArrowLeft, ChevronRight } from "@/components/ui/Icon";
 
@@ -46,19 +46,12 @@ export default function DomainView() {
           </span>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-lg font-extrabold text-neutral-900">{tn(ds.domain.name, ds.domain.name_gu)}</h1>
-            <p className="text-xs text-neutral-400">
+            <p className="truncate text-xs text-neutral-400">
               {tn(entity.name, entity.name_gu)}
-              {ds.domain.kind === "input" ? ` · ${t("common.weightage")} ${Math.round(ds.domain.weightage * 100)}%` : ` · ${t("scorecard.output")} · ${t("scorecard.annual")}`}
+              {ds.domain.kind === "output" ? ` · ${t("scorecard.output")} · ${t("scorecard.annual")}` : ""}
             </p>
           </div>
-          <div className="text-right">
-            {ds.percent == null ? (
-              <span className="text-2xl font-extrabold text-rag-naText">{t("common.na")}</span>
-            ) : (
-              <span className={cn("text-3xl font-extrabold tnum", rag(ds.status).text)}>{pct(ds.percent, lang)}</span>
-            )}
-            <Badge status={ds.status} className="mt-1 !text-2xs">{t(`status.${ds.status}`)}</Badge>
-          </div>
+          <span className={cn("shrink-0 text-3xl font-extrabold tnum", ds.percent == null ? "text-rag-naText" : valueToneClass(ds.status))}>{ds.percent == null ? t("common.na") : pct(ds.percent, lang)}</span>
         </div>
         {ds.percent != null && <ProgressBar value={ds.percent} status={ds.status} className="mt-4" height={10} />}
       </Card>
@@ -79,7 +72,7 @@ export default function DomainView() {
                   <span className="block truncate text-sm font-semibold text-neutral-900">{tn(ss.sub.name, ss.sub.name_gu)}</span>
                   <span className="text-2xs text-neutral-400">{ss.records.length} {t("scorecard.indicators")}</span>
                 </span>
-                <span className={cn("shrink-0 text-base font-extrabold tnum", ss.percent == null ? "text-rag-naText" : rag(ss.status).text)}>{ss.percent == null ? t("common.na") : pct(ss.percent, lang)}</span>
+                <span className={cn("shrink-0 text-base font-extrabold tnum", ss.percent == null ? "text-rag-naText" : valueToneClass(ss.status))}>{ss.percent == null ? t("common.na") : pct(ss.percent, lang)}</span>
                 <ChevronRight size={16} className="shrink-0 text-neutral-300 transition-transform group-hover:translate-x-0.5" />
               </button>
             ))}

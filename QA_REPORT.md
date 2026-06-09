@@ -1,5 +1,25 @@
 # Unified Portal — QA Report
 
+## Homepage simplification + mobile-first
+
+Built mobile-first (verified 375 + 320 first, then desktop, EN + ગુ). Screenshots at repo root: `audit-home-375-mobile.png`, `audit-home-desktop-new.png`, `audit-domain-page-375.png`.
+
+**Overall score card** ([ScorecardHome.tsx](app/src/screens/ScorecardHome.tsx)) — renamed **"Input Composite → Overall score"** (ring sublabel); **grade badge (A+) moved to the right** of the score; removed the status word ("on track"), the green ±-vs-last-week button, the **"What changed this week"** block, the **"current period · Week 23"** label, and the **"Improve the 3 inputs…"** subtitle; added a **small 30-day trend** for the overall score (`overallTrendData` in [trend.ts](app/src/lib/trend.ts)).
+
+**Section order** is now **Overall score → Domain cards → School Quality → Key indicators** (the strip moved to the bottom).
+
+**Key indicators** ([HeroKpiStrip.tsx](app/src/components/ui/HeroKpiStrip.tsx)) — renamed from "What to act on", subtitle removed. Rebuilt as **full-width horizontal tiles showing each indicator's full name (no truncation)**: status dot + full name + frequency chip + one supporting line on the left; mini trend (desktop) + value on the right. The N+1 line shows the **parent's name + score** (e.g. "Gujarat · 91%") — no "ahead/behind/vs target".
+
+**Domain cards** — header renamed **"Inputs · act on these" → "Domain"**; removed the "Weightage 30%" string, the On track/Needs-attention tags, the status dot, and the "Weightages: placeholder" tag. The N+1 line now shows **"[parent name] · [parent score]"** (e.g. "Gujarat · 95%"), not a ±%. The small frequency-based up/down delta arrow is **kept**.
+
+**Domain pages** ([DomainView.tsx](app/src/screens/DomainView.tsx)) — same card language as the homepage: dropped the header weightage + status badge, and the indicator tiles ([KpiCard.tsx](app/src/components/ui/KpiCard.tsx)) drop the "% score" clutter + name truncation (full names), using the shared value treatment.
+
+**Indicator pages** ([KpiDetail.tsx](app/src/screens/KpiDetail.tsx)) — removed the "On track and ahead of the level average" commentary; **"Students below hierarchy avg" now substitutes the real N+1 level** (e.g. "Students below state avg"); the N+1 line shows the **parent's name + real score** (e.g. "Gujarat · 18%"), consistent with the cards.
+
+**Verified** (production build · Playwright): all of the above at 375 / 320 / desktop, EN + ગુ; **0 horizontal overflow**; section labels localise (એકંદર સ્કોર · ડોમેન · મુખ્ય સૂચકાંકો); domain + Key-indicator N+1 lines read "[parent] · score" with no "behind/vs target"; `tsc` + build clean; **roles 6/6 · access 20/20 · functional 21/21 · 0 console errors**.
+
+---
+
 ## Colour discipline + School-Quality consistency + domain-page cleanup
 
 Single source of truth added in [lib/colors.ts](app/src/lib/colors.ts): `valueToneClass(status)` for headline numbers and `deltaToneClass(delta, direction)` / `deltaIsGood` for deltas. Colour now signals **good vs bad**, derived from each indicator's `direction` — never a minus sign or "just being a number".

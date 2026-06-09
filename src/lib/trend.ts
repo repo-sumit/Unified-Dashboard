@@ -71,6 +71,22 @@ function pointCount(c: Cadence): number {
   return c === "daily" ? 30 : c === "yearly" ? 5 : 6;
 }
 
+/** ~30-day dummy history for the overall score (gently trending to `percent`,
+ *  can dip), deterministic by `seedKey`. For the small homepage trend line. */
+export function overallTrendData(percent: number | null, seedKey: string): number[] {
+  if (percent == null) return [];
+  const n = 30, cur = percent;
+  const drift = Math.max(cur * 0.05, 1.5) / (n - 1);
+  const amp = Math.max(cur * 0.02, 0.8);
+  const out: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const back = n - 1 - i;
+    out.push(Math.max(0, Math.min(100, Math.round((cur - back * drift + noise(`${seedKey}|ov${i}`, amp)) * 10) / 10)));
+  }
+  out[n - 1] = cur;
+  return out;
+}
+
 export function buildTrend(rec: KpiRecord, lang: Lang): Trend {
   const cadence = cadenceOf(rec.kpi.frequency);
   const n = pointCount(cadence);

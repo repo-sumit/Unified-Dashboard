@@ -5,7 +5,7 @@ import { isImproving } from "@/engine";
 import { cn } from "@/lib/cn";
 import { rag, deltaToneClass } from "@/lib/colors";
 import { formatValue, formatDelta, locNum } from "@/lib/format";
-import { peerAvg, peerGapOf, peerLevelOf } from "@/lib/peer";
+import { peerLevelOf } from "@/lib/peer";
 import { buildTrend, deltaLabelKey, trendTitleKey } from "@/lib/trend";
 import { gradeFor, GSQAC_BANDS } from "@/config/ratingBands";
 import { Card, SectionLabel, Badge, DeltaPill, TrendArrow, EmptyNA } from "@/components/ui/atoms";
@@ -30,18 +30,19 @@ export default function KpiDetail() {
   const na = rec.value == null;
   const improving = isImproving(rec.trend, kpi.direction);
   const domain = fw.domains.find((d) => d.id === kpi.domain_id);
-  const name = tn(kpi.name, kpi.name_gu);
   const isGsqac = kpi.id.startsWith("sq_");
   const isContextDelta = kpi.displayStrategy === "delta_cycle";
+  const peerLevel = peerLevelOf(entity.level);
+
+  // "Students below hierarchy avg" → substitute the actual N+1 level name (e.g. "cluster")
+  const parentLevelLabel = peerLevel ? t(`levels.${peerLevel}`) : null;
+  let name = tn(kpi.name, kpi.name_gu);
+  if (kpi.id === "asm_below" && parentLevelLabel) {
+    name = lang === "gu" ? name.replace("સ્તર", parentLevelLabel) : name.replace(/\bhierarchy\b/i, parentLevelLabel.toLowerCase());
+  }
 
   // frequency-aware trend (history + cadence + delta-vs-one-period-back)
   const trend = na ? null : buildTrend(rec, lang);
-
-  // N+1 peer comparison (own vs next level up). Skipped for State, counts/ratios,
-  // cycle deltas, and GSQAC (real value has no real next-level-up baseline in mock).
-  const peerLevel = peerLevelOf(entity.level);
-  const canPeer = !na && (kpi.unit === "%" || kpi.unit === "score") && !isContextDelta && !isGsqac;
-  const peer = canPeer && peerLevel ? peerGapOf(rec.value, peerAvg(kpi.id, entity.level), kpi.direction) : null;
 
   const bars: CompareBar[] = cascade.map((row) => ({
     key: row.level,
@@ -52,6 +53,8 @@ export default function KpiDetail() {
     isCurrent: row.isCurrent,
   }));
   const hasCascade = bars.filter((b) => b.value != null).length >= 2; // ≥2 ⇒ has ancestors (hidden at State)
+  // N+1 — the immediate parent (next level up): its real name + score, consistent with the cards.
+  const parentRow = cascade.length >= 2 ? cascade[cascade.length - 2] : null;
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -93,13 +96,10 @@ export default function KpiDetail() {
                 <TrendArrow trend={rec.trend} improving={improving} size={22} />
               </div>
             )}
-            {/* N+1 peer comparison — replaces the old "vs benchmark" copy */}
-            {peer && peerLevel && (
+            {/* N+1 — next level up: parent name + its real score (no ± delta) */}
+            {parentRow && parentRow.value != null && (
               <p className="mt-1.5 text-xs text-neutral-500">
-                {t(`levels.${peerLevel}`)} {locNum(Math.round(peer.peer), lang)}{kpi.unit === "%" ? "%" : ""} ·{" "}
-                <span className={cn("font-semibold", peer.ahead ? "text-rag-greenText" : "text-rag-redText")}>
-                  {formatDelta(peer.gap, kpi.unit === "%" ? "%" : "score", lang)} {peer.ahead ? t("scorecard.ahead") : t("scorecard.behind")}
-                </span>
+                {lang === "gu" && parentRow.entity.name_gu ? parentRow.entity.name_gu : parentRow.entity.name} · {formatValue(parentRow.value, kpi.unit, lang)}
               </p>
             )}
           </div>
@@ -107,11 +107,6 @@ export default function KpiDetail() {
           {trend && (
             <DeltaPill delta={trend.delta} unit={kpi.unit} direction={kpi.direction} lang={lang} label={t(deltaLabelKey(trend.cadence))} />
           )}
-        </div>
-
-        {/* the "why" story */}
-        <div className={cn("mt-4 rounded-xl px-4 py-3 text-sm font-medium", c.soft, c.text)}>
-          {lang === "gu" ? rec.remark_gu : rec.remark}
         </div>
       </Card>
 

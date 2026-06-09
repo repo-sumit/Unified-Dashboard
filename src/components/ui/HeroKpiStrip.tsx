@@ -3,25 +3,23 @@ import type { KpiRecord, Level, RagStatus } from "@/types";
 import { cn } from "@/lib/cn";
 import { rag, deltaToneClass } from "@/lib/colors";
 import { formatValue, formatDelta, locNum, pct } from "@/lib/format";
-import { peerAvg, peerGapOf, peerLevelOf } from "@/lib/peer";
+import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { buildTrend } from "@/lib/trend";
 import { gradeFor, GSQAC_BANDS } from "@/config/ratingBands";
 import { useT } from "@/i18n";
-import { isImproving, statusFromGrade } from "@/engine";
+import { statusFromGrade } from "@/engine";
 import { Card, StatusDot } from "./atoms";
 import { Sparkline } from "./Sparkline";
 import { RatingBadge } from "./RatingBadge";
 import { FrequencyBadge } from "./DataBadges";
 
 /**
- * "What to act on" — the official green-flagged HERO indicators (config-driven
- * via `kpi.hero`): intervention levers, not vanity numbers. Ordered most-at-risk
- * first. ONE card anatomy, reused across all of them and aligned:
- *   row 1  label (2-line, fixed height) + frequency chip (top-right) + status dot
- *   row 2  ONE dominant value (neutral; grade badge for GSQAC; green/red for a cycle delta)
- *   row 3  ONE supporting line (vs {level} avg / vs target / % of enrolled / vs last cycle)
- *   row 4  micro-viz pinned to the base (sparkline for daily, compliance bar for monthly %)
- * Colour is reserved for status (the dot), grade (the badge) and trend (the delta).
+ * "Key indicators" — the official green-flagged HERO indicators (config-driven
+ * via `kpi.hero`), most-at-risk first. Full-width horizontal tiles so each
+ * indicator's FULL name shows (no truncation): status dot + full name + freq chip
+ * + one supporting line on the left; mini trend (desktop) + the dominant value on
+ * the right. Colour is reserved for status (the dot), grade (the badge) and the
+ * trend delta.
  */
 const STATUS_RANK: Record<RagStatus, number> = { red: 0, amber: 1, green: 2, na: 3 };
 
@@ -35,8 +33,8 @@ function heroStatus(rec: KpiRecord): RagStatus {
 }
 
 export function HeroKpiStrip({
-  records, level, enrolment, onOpen,
-}: { records: KpiRecord[]; level: Level; enrolment?: number; onOpen?: (rec: KpiRecord) => void }) {
+  records, level, enrolment, parentName, onOpen,
+}: { records: KpiRecord[]; level: Level; enrolment?: number; parentName?: string; onOpen?: (rec: KpiRecord) => void }) {
   const { t } = useT();
   const heroes = records
     .filter((r) => r.kpi.hero && r.value != null)
@@ -51,13 +49,10 @@ export function HeroKpiStrip({
 
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-2">
-        <p className="section-title !mb-0">{t("ogm.heroKpis")}</p>
-        <span className="text-2xs text-neutral-400">{t("ogm.heroKpisHint")}</span>
-      </div>
-      <div className="grid grid-cols-2 items-stretch gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
+      <p className="section-title mb-2">{t("ogm.heroKpis")}</p>
+      <div className="flex flex-col gap-2.5">
         {heroes.map((rec) => (
-          <HeroTile key={rec.kpi.id} rec={rec} level={level} enrolment={enrolment} onOpen={onOpen} />
+          <HeroTile key={rec.kpi.id} rec={rec} level={level} enrolment={enrolment} parentName={parentName} onOpen={onOpen} />
         ))}
       </div>
     </div>
@@ -65,11 +60,12 @@ export function HeroKpiStrip({
 }
 
 function HeroTile({
-  rec, level, enrolment, onOpen,
+  rec, level, enrolment, parentName, onOpen,
 }: {
   rec: KpiRecord;
   level: Level;
   enrolment?: number;
+  parentName?: string;
   onOpen?: (rec: KpiRecord) => void;
 }) {
   const { t, tn, lang } = useT();
@@ -86,8 +82,8 @@ function HeroTile({
   // Skipped for counts/ratios, cycle deltas, and GSQAC (no real next-level baseline).
   const showPeer = (kpi.unit === "%" || kpi.unit === "score") && !isContextDelta && !kpi.id.startsWith("sq_");
   const peerLevel = peerLevelOf(level);
-  const peer = showPeer && peerLevel ? peerGapOf(v, peerAvg(kpi.id, level), kpi.direction) : null;
-  const allowPrevFallback = kpi.frequency === "Daily" || kpi.frequency === "Weekly" || kpi.frequency === "Monthly";
+  // N+1: the next-level-up entity's NAME + its score (no ± delta), consistent with the domain cards.
+  const peerScore = showPeer && peerLevel ? peerAvg(kpi.id, level) : null;
   const target = (kpi.target ?? "").replace(/[^0-9]/g, "") || "2";
   const chronicRate = kpi.unit === "count" && enrolment && enrolment > 0 ? (v / enrolment) * 100 : null;
 
@@ -107,28 +103,8 @@ function HeroTile({
 
   // ── ONE supporting line ──
   let supporting: ReactNode = null;
-  if (peer && peerLevel) {
-    supporting = (
-      <>
-        {t(`levels.${peerLevel}`)} {locNum(Math.round(peer.peer), lang)}{kpi.unit === "%" ? "%" : ""} ·{" "}
-        <span className={cn("font-semibold", peer.ahead ? "text-rag-greenText" : "text-rag-redText")}>
-          {formatDelta(peer.gap, kpi.unit === "%" ? "%" : "score", lang)} {peer.ahead ? t("scorecard.ahead") : t("scorecard.behind")}
-        </span>
-        {kpi.id === "ret_reenroll" && <> · {t("ogm.vsTarget")}</>}
-      </>
-    );
-  } else if (showPeer && !peerLevel && allowPrevFallback && rec.deltaWoW != null) {
-    supporting = (
-      <>
-        {t("ogm.vsPrevPeriod")}{" "}
-        <span className={cn("font-semibold", isImproving(rec.trend, kpi.direction) ? "text-rag-greenText" : rec.deltaWoW === 0 ? "text-neutral-400" : "text-rag-redText")}>
-          {formatDelta(rec.deltaWoW, kpi.unit === "%" ? "%" : "score", lang)}
-        </span>
-        {kpi.id === "ret_reenroll" && <> · {t("ogm.vsTarget")}</>}
-      </>
-    );
-  } else if (kpi.id === "ret_reenroll") {
-    supporting = t("ogm.vsTarget");
+  if (peerScore != null && parentName) {
+    supporting = `${parentName} · ${pct(peerScore, lang)}`; // parent name + score, no ± / ahead / behind / vs target
   } else if (isContextDelta) {
     supporting = t("scorecard.vsLastCycle");
   } else if (kpi.unit === "count") {
@@ -145,25 +121,18 @@ function HeroTile({
     <Card
       as="button"
       onClick={() => onOpen?.(rec)}
-      className="card-pad group flex h-full w-full flex-col gap-2 text-left transition-shadow hover:shadow-raised"
+      className="card-pad group flex w-full items-center gap-3 text-left transition-shadow hover:shadow-raised"
     >
-      {/* label + freq chip + status dot (fixed-height label keeps value baselines aligned) */}
-      <div className="flex items-start justify-between gap-1.5">
-        <span className="flex min-h-[2.3em] min-w-0 items-start gap-1.5">
-          <StatusDot status={ds} className="mt-[3px] shrink-0" />
-          <span title={name} className="line-clamp-2 text-2xs font-semibold leading-tight text-neutral-600">{name}</span>
-        </span>
-        <FrequencyBadge frequency={kpi.frequency} className="shrink-0" />
+      <StatusDot status={ds} className="shrink-0" />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <span className="text-sm font-semibold leading-snug text-neutral-800">{name}</span>
+          <FrequencyBadge frequency={kpi.frequency} className="shrink-0" />
+        </div>
+        {supporting != null && <span className="mt-0.5 block text-2xs text-neutral-400">{supporting}</span>}
       </div>
-
-      {/* one dominant value */}
-      <div className="min-w-0">{valueEl}</div>
-
-      {/* one supporting line */}
-      {supporting != null && <span className="block truncate text-2xs text-neutral-400">{supporting}</span>}
-
-      {/* micro-viz, pinned to the base so it aligns across the strip */}
-      {microViz && <div className="mt-auto flex h-6 items-end pt-1">{microViz}</div>}
+      {microViz && <div className="hidden shrink-0 items-end sm:flex">{microViz}</div>}
+      <div className="shrink-0 text-right">{valueEl}</div>
     </Card>
   );
 }

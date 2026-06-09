@@ -51,7 +51,7 @@ export const gu: Dict = {
     whatChanged: "આ અઠવાડિયે શું બદલાયું", steady: "સ્થિર અઠવાડિયું, કોઈ મોટો ફેરફાર નહીં.",
     overallMoved: "આ અઠવાડિયે એકંદર {delta}", led: "{kpi} દ્વારા",
     breakdown: "સ્કોર વિભાજન", weightPlaceholder: "વેઇટેજ: પ્લેસહોલ્ડર",
-    inputComposite: "ઇનપુટ સંયુક્ત", inputs: "ઇનપુટ · આના પર પગલાં લો", output: "પરિણામ", annual: "વાર્ષિક",
+    inputComposite: "ઇનપુટ સંયુક્ત", inputs: "ઇનપુટ · આના પર પગલાં લો", domainsHeader: "ડોમેન", output: "પરિણામ", annual: "વાર્ષિક",
     vsLastCycle: "ગયા ચક્ર સામે", inputsDriveOutput: "3 ઇનપુટ સુધારો → શાળા ગુણવત્તા વધે",
     ahead: "આગળ", behind: "પાછળ", subDomains: "ઉપ-ડોમેન", indicators: "સૂચકો",
   },
@@ -107,8 +107,7 @@ export const gu: Dict = {
   },
   common2: { school: "શાળા", state: "રાજ્ય", vsTarget: "લક્ષ્ય સામે", students: "વિદ્યાર્થીઓ" },
   ogm: {
-    heroKpis: "શેના પર પગલાં લેવા",
-    heroKpisHint: "હસ્તક્ષેપ માટેના સૂચકાંકો, માત્ર આંકડા નહીં",
+    heroKpis: "મુખ્ય સૂચકાંકો",
     vsTarget: "લક્ષ્ય સામે",
     vsPrevPeriod: "ગયા સમયગાળા સામે",
     studentsCount: "વિદ્યાર્થીઓ",

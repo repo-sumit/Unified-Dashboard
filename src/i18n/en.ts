@@ -49,7 +49,7 @@ export const en = {
     whatChanged: "What changed this week", steady: "Steady week, no major movement.",
     overallMoved: "Overall {delta} this week", led: "led by {kpi}",
     breakdown: "Score breakdown", weightPlaceholder: "Weightages: placeholder",
-    inputComposite: "Input composite", inputs: "Inputs · act on these", output: "Output", annual: "annual",
+    inputComposite: "Input composite", inputs: "Success Indicators", domainsHeader: "Domain", output: "Output", annual: "annual",
     vsLastCycle: "vs last cycle", inputsDriveOutput: "Improve the 3 inputs → School Quality rises",
     ahead: "ahead", behind: "behind", subDomains: "Sub-domains", indicators: "Indicators",
   },
@@ -105,8 +105,7 @@ export const en = {
   },
   common2: { school: "School", state: "State", vsTarget: "vs target", students: "students" },
   ogm: {
-    heroKpis: "What to act on",
-    heroKpisHint: "Intervention levers, not headline numbers",
+    heroKpis: "Key Indicators",
     vsTarget: "vs target",
     vsPrevPeriod: "vs last period",
     studentsCount: "students",
