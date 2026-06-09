@@ -1,30 +1,25 @@
 import { useNavigate, useParams } from "react-router-dom";
-import type { DomainScore } from "@/types";
-import { useScope, useScorecard, useScopeStats } from "@/hooks";
+import { useScope, useScorecard } from "@/hooks";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { valueToneClass } from "@/lib/colors";
 import { pct } from "@/lib/format";
 import { Card, StatusDot } from "@/components/ui/atoms";
 import { KpiCard } from "@/components/ui/KpiCard";
-import { DomainSummaryCard } from "@/components/ui/DomainSummaryCard";
-import { GsqacSummaryCard } from "@/components/ui/GsqacSummaryCard";
 import { ChevronRight } from "@/components/ui/Icon";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { BackLink } from "@/components/layout/PageHeader";
 import { PageSection, PageGrid } from "@/components/layout/PageSection";
 
 /**
- * Domain view — tier 2 of the 3-click drill. The top card uses the same grammar
- * as the homepage domain cards (expanded "page" variant), so the two are one
- * family. School Quality uses the GSQAC output card; its D1–D5 breakdown shows as
- * the indicator cards below (only after drilling in).
+ * Domain view — tier 2 of the 3-click drill. No top summary card: the back link
+ * is followed directly by the indicator section (Administration shows its
+ * sub-domains first; other domains list their indicators).
  */
 export default function DomainView() {
   const { domainId } = useParams();
   const { entity, currentId } = useScope();
   const sc = useScorecard(currentId);
-  const stats = useScopeStats(currentId);
   const { t, tn, lang } = useT();
   const navigate = useNavigate();
 
@@ -39,46 +34,11 @@ export default function DomainView() {
     );
   }
 
-  const isOutput = ds.domain.kind === "output";
   const parentName = sc.parent ? tn(sc.parent.entity.name, sc.parent.entity.name_gu) : undefined;
-  const parentPercent = sc.parent?.domainPercents[ds.domain.id] ?? null;
-  const gsqacCoverage = stats && stats.schools > 0 && stats.gsqacReal < stats.schools ? stats : null;
-  // top card = the domain's homepage (hero) indicator, same as the homepage domain card
-  const hero = ds.records.find((r) => r.kpi.hero) ?? null;
-  // GSQAC overall is the top card; D1–D5 are the breakdown cards below (no duplicate sq_gsqac tile)
-  const records = isOutput ? ds.records.filter((r) => r.kpi.id !== "sq_gsqac") : ds.records;
-
-  const domainWoW = (d: DomainScore) => {
-    const xs = d.records.filter((r) => r.kpi.unit === "%" || r.kpi.unit === "score").map((r) => r.deltaWoW).filter((v): v is number => v != null);
-    return xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10 : null;
-  };
 
   return (
     <ScreenContainer>
       <BackLink label={t("nav.home")} onClick={() => navigate("/app")} />
-
-      {/* domain header — same card grammar as the homepage */}
-      {isOutput ? (
-        <GsqacSummaryCard
-          output={ds}
-          gsqac={entity.meta.gsqac}
-          coverage={gsqacCoverage ? { real: gsqacCoverage.gsqacReal, total: gsqacCoverage.schools } : null}
-          parentName={parentName}
-          parentPercent={parentPercent}
-        />
-      ) : (
-        <DomainSummaryCard
-          ds={ds}
-          variant="page"
-          name={tn(ds.domain.name, ds.domain.name_gu)}
-          heroRec={hero}
-          heroName={hero ? tn(hero.kpi.name, hero.kpi.name_gu) : undefined}
-          level={entity.level}
-          delta={domainWoW(ds)}
-          parentName={parentName}
-          parentPercent={parentPercent}
-        />
-      )}
 
       {/* sub-domains (Administration) → tier-3 drill */}
       {ds.subScores.length > 0 ? (
@@ -104,7 +64,7 @@ export default function DomainView() {
       ) : (
         <PageSection title={t("domain.kpisIn", { name: tn(ds.domain.name, ds.domain.name_gu) })}>
           <PageGrid cols="kpi">
-            {records.map((r) => (
+            {ds.records.map((r) => (
               <KpiCard
                 key={r.kpi.id}
                 rec={r}

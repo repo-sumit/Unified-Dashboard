@@ -1,4 +1,4 @@
-import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { Unit } from "@/types";
 import type { Cadence } from "@/lib/trend";
 import { formatValue } from "@/lib/format";
@@ -11,20 +11,18 @@ import type { Lang } from "@/i18n";
  * Y-axis uses nice, ascending, evenly-spaced rounded ticks fitted to the data.
  */
 export function TrendChart({
-  points, unit, benchmark = null, color, cadence, lang = "en", height = 220,
+  points, unit, color, cadence, lang = "en", height = 220,
 }: {
   points: { x: string; value: number }[];
   unit: Unit;
-  benchmark?: number | null;
   color: string;
   cadence: Cadence;
   lang?: Lang;
   height?: number;
 }) {
   const isDaily = cadence === "daily";
-  const avgLabel = lang === "gu" ? "સરેરાશ" : "Avg";
-  const axisVals = [...points.map((p) => p.value), ...(benchmark != null ? [benchmark] : [])];
-  const { domain, ticks } = niceAxis(axisVals, unit);
+  // trend line only — no average/reference overlay
+  const { domain, ticks } = niceAxis(points.map((p) => p.value), unit);
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -54,14 +52,6 @@ export function TrendChart({
           ticks={ticks}
           tickFormatter={(v: number) => trimNum(v)}
         />
-        {benchmark != null && (
-          <ReferenceLine
-            y={benchmark}
-            stroke="#7383A5"
-            strokeDasharray="4 4"
-            label={{ value: `${avgLabel} ${formatValue(benchmark, unit, lang)}`, position: "insideTopLeft", fontSize: 10, fill: "#7383A5" }}
-          />
-        )}
         <Tooltip
           formatter={(v: number) => [formatValue(v, unit, lang), ""]}
           labelFormatter={(l) => String(l)}

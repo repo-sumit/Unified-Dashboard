@@ -1,5 +1,14 @@
 # Unified Portal — QA Report
 
+## Domain pages: top summary card removed · KPI charts: average line removed
+
+1. **Domain-page top summary card removed** — [DomainView.tsx](app/src/screens/DomainView.tsx) no longer renders the `DomainSummaryCard` (`variant="page"`) / `GsqacSummaryCard` header on any domain page (Attendance, Assessment, Administration, School Quality). The back link is now followed directly by the indicator section (`KPIS IN …`, or Administration's sub-domain cards). Removed the now-unused scaffolding (`useScopeStats`, `domainWoW`, `hero`/`parentPercent`/`gsqacCoverage`, the `sq_gsqac` filter) — so the School Quality page now shows **GSQAC score** as a normal indicator card too (no separate hero card). `DomainSummaryCard`/`GsqacSummaryCard` are untouched and still used by the **homepage** only.
+2. **Average/reference line removed from KPI charts** — [TrendChart.tsx](app/src/components/ui/TrendChart.tsx) dropped the dashed benchmark `ReferenceLine` and its `Avg {n}` / `સરેરાશ` label (and the `benchmark` prop + `ReferenceLine` import; the Y-axis now fits the trend data only). [KpiDetail.tsx](app/src/screens/KpiDetail.tsx) no longer passes `benchmark`. The trend line/area, axes, dots and tooltip remain. (The Compare `ComparisonBars` has no average line; the underlying `benchmark` value still feeds RAG status only — not a chart overlay.)
+
+**Files:** `DomainView.tsx`, `TrendChart.tsx`, `KpiDetail.tsx`, `QA_REPORT.md`. **Build:** `npm run build` passes clean. No changes to KPI catalog/formulas/ids, access control, routing, PM-Shri, Compare, Export, or provider architecture.
+
+---
+
 ## Assessment: SAT1/SAT2 replace "Assessment result %" (snapshot, no trend)
 
 Per the latest `GJ _ Unified App KPIs.xlsx` (Assessment focus area), "Assessment result %" is gone; the sheet defines two SAT result indicators.

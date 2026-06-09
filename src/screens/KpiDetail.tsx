@@ -113,7 +113,6 @@ export default function KpiDetail() {
             <TrendChart
               points={trend.points}
               unit={kpi.unit}
-              benchmark={isGsqac ? null : rec.benchmark}
               color={c.hex}
               cadence={trend.cadence}
               lang={lang}
