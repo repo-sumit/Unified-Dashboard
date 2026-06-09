@@ -34,6 +34,9 @@ export function KpiCard({
   // flat. GSQAC keeps its grade/status tone (untouched).
   const isGsqac = kpi.id.startsWith("sq_");
   const valueTone = isGsqac ? undefined : trend?.delta ? deltaToneClass(trend.delta, kpi.direction) : "text-neutral-900";
+  // Daily KPIs: show the latest data date (the last daily trend point, e.g. "1 Jun") next to the badge
+  const isDaily = cadenceOf(kpi.frequency) === "daily";
+  const latestDate = isDaily && trend && trend.points.length ? trend.points[trend.points.length - 1].x : null;
 
   return (
     <Card
@@ -47,6 +50,7 @@ export function KpiCard({
           <span className="block text-sm font-bold leading-snug text-neutral-900">{name}</span>
           <span className="mt-1 flex flex-wrap items-center gap-1.5">
             <FrequencyBadge frequency={kpi.frequency} />
+            {latestDate && <span className="text-2xs font-medium text-neutral-400">· {latestDate}</span>}
             {kpi.scheduleNote && <span className="text-2xs font-medium text-neutral-400">{kpi.scheduleNote}</span>}
           </span>
         </div>

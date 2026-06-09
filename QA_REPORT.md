@@ -1,5 +1,17 @@
 # Unified Portal — QA Report
 
+## Daily KPI cards show the latest data date
+
+[KpiCard.tsx](app/src/components/ui/KpiCard.tsx): Daily indicators now show the latest data date next to the frequency badge, e.g. **"🕐 Daily · 1 Jun"** (the `FrequencyBadge` already carries the clock icon + "Daily"; a muted `· {date}` is appended).
+
+- **Date source:** the last point of the KPI's own daily trend (`buildTrend(rec, lang).points[last].x`, e.g. "1 Jun" / "૧ જૂન" — real mock trend data, localised digits). No hardcoded/faked date; when the KPI is NA (no trend) the card shows "Not tracked" as before, so no date is invented.
+- **Scope:** only `cadenceOf(kpi.frequency) === "daily"` KPIs (Students absent from past 7+ days, Teachers/Students present today, MDM, Attendance submission, and any other Daily KPI). Non-daily cards are unchanged (SAT schedule note etc. untouched).
+- **Style:** same muted `text-2xs text-neutral-400` as the frequency badge, on the same row — no new colour, no extra card height, grid alignment preserved. Daily deltas still read "this day".
+
+**Files:** `KpiCard.tsx`, `QA_REPORT.md`. **Build:** `npm run build` passes clean. No KPI name/value/formula/delta/graph/access/routing/PM-Shri/Compare/Export/GSQAC/provider changes.
+
+---
+
 ## Export scorecard redesign — date label + polished report
 
 [Export.tsx](app/src/screens/Export.tsx) reworked into a cleaner government report card; nothing else (KPI/provider/other screens) touched.
