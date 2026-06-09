@@ -1,9 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useScope, useScorecard } from "@/hooks";
 import { useT } from "@/i18n";
-import { cn } from "@/lib/cn";
-import { valueToneClass } from "@/lib/colors";
-import { pct } from "@/lib/format";
 import { Card, StatusDot } from "@/components/ui/atoms";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { ChevronRight } from "@/components/ui/Icon";
@@ -55,7 +52,6 @@ export default function DomainView() {
                   <span className="block truncate text-sm font-semibold text-neutral-900">{tn(ss.sub.name, ss.sub.name_gu)}</span>
                   <span className="text-2xs text-neutral-400">{ss.records.length} {t("scorecard.indicators")}</span>
                 </span>
-                <span className={cn("shrink-0 text-base font-extrabold tnum", ss.percent == null ? "text-rag-naText" : valueToneClass(ss.status))}>{ss.percent == null ? t("common.na") : pct(ss.percent, lang)}</span>
                 <ChevronRight size={16} className="shrink-0 text-neutral-300 transition-transform group-hover:translate-x-0.5" />
               </button>
             ))}

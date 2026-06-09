@@ -1,5 +1,15 @@
 # Unified Portal — QA Report
 
+## Sub-domain scores + sub-domain summary card removed
+
+- **Sub-domain cards** ([DomainView.tsx](app/src/screens/DomainView.tsx)) — removed the aggregate score chip (e.g. 88% / 92% / 81% / 75%). Each sub-domain card now shows only the **name + "{n} Indicators"** + status dot + chevron (no progress bar, no score). Applies to every domain with sub-domains (Administration). Dropped the now-unused `valueToneClass`/`pct`/`cn` imports.
+- **Sub-domain detail** ([SubDomainView.tsx](app/src/screens/SubDomainView.tsx)) — removed the large top summary card (domain eyebrow + sub-domain title + big `88.3%` value + long progress bar). The page now goes straight from the **← {Domain}** back link to the **INDICATORS** grid (ScreenContainer spacing, no large gap). Dropped the unused `ProgressBar`/`ValueDisplay` imports.
+- **KPI indicator cards unchanged** — values, frequency/date badge, sparkline, N+1, delta all still render. Scoring logic (`buildDomainScore`/`subScores`) untouched (still used by homepage domain cards); only the visible sub-domain score/summary UI was removed.
+
+**Files:** `DomainView.tsx`, `SubDomainView.tsx`, `QA_REPORT.md`. **Build:** `npm run build` passes clean. No KPI catalog/name/formula/value, homepage, top-indicator, access, routing, PM-Shri, Compare, Export, GSQAC, or provider changes.
+
+---
+
 ## Daily KPI date → today's working date (weekend → previous Friday)
 
 Replaced the trend-point "Latest: 1 Jun" date on Daily indicators with **today's working date**.

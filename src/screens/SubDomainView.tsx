@@ -1,8 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useScope, useScorecard } from "@/hooks";
 import { useT } from "@/i18n";
-import { Card, ProgressBar } from "@/components/ui/atoms";
-import { ValueDisplay } from "@/components/ui/ValueDisplay";
+import { Card } from "@/components/ui/atoms";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { BackLink } from "@/components/layout/PageHeader";
@@ -33,17 +32,6 @@ export default function SubDomainView() {
   return (
     <ScreenContainer>
       <BackLink label={tn(ds.domain.name, ds.domain.name_gu)} onClick={() => navigate(`/app/domain/${domainId}`)} />
-
-      <Card className="card-pad">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-2xs font-semibold uppercase tracking-wide text-neutral-400">{tn(ds.domain.name, ds.domain.name_gu)}</p>
-            <h1 className="truncate text-lg font-extrabold text-neutral-900">{tn(ss.sub.name, ss.sub.name_gu)}</h1>
-          </div>
-          <ValueDisplay value={ss.percent} unit="%" status={ss.status} lang={lang} size="lg" naLabel={t("common.na")} className="shrink-0" />
-        </div>
-        {ss.percent != null && <ProgressBar value={ss.percent} status={ss.status} className="mt-4" height={10} />}
-      </Card>
 
       <PageSection title={t("scorecard.indicators")}>
         <PageGrid cols="kpi">
