@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useScope, useKpiRecord, useKpiCascade, useFramework } from "@/hooks";
 import { useT } from "@/i18n";
-import { rag } from "@/lib/colors";
+import { rag, deltaToneClass } from "@/lib/colors";
 import { locNum } from "@/lib/format";
 import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { buildTrend, trendTitleKey, cadenceOf } from "@/lib/trend";
@@ -35,12 +35,7 @@ export default function KpiDetail() {
   const isContextDelta = kpi.displayStrategy === "delta_cycle";
   const peerLevel = peerLevelOf(entity.level);
 
-  // "Students below hierarchy avg" → substitute the actual N+1 level name (e.g. "cluster")
-  const parentLevelLabel = peerLevel ? t(`levels.${peerLevel}`) : null;
-  let name = tn(kpi.name, kpi.name_gu);
-  if (kpi.id === "asm_below" && parentLevelLabel) {
-    name = lang === "gu" ? name.replace("સ્તર", parentLevelLabel) : name.replace(/\bhierarchy\b/i, parentLevelLabel.toLowerCase());
-  }
+  const name = tn(kpi.name, kpi.name_gu);
 
   // frequency-aware trend (history + cadence + delta-vs-one-period-back).
   // snapshot/cycle indicators (kpi.noTrend, e.g. SAT1/SAT2) get no trend chart — a cycle context only.
@@ -64,6 +59,8 @@ export default function KpiDetail() {
   const parentRow = cascade.length >= 2 ? cascade[cascade.length - 2] : null;
   const parentName = parentRow ? (lang === "gu" && parentRow.entity.name_gu ? parentRow.entity.name_gu : parentRow.entity.name) : undefined;
   const parentScore = peerLevel ? peerAvg(kpi.id, entity.level) : null;
+  // main value colour follows delta direction (up=green / down=red, direction-aware), neutral when flat; GSQAC keeps its own treatment
+  const valueTone = isGsqac ? undefined : trend?.delta ? deltaToneClass(trend.delta, kpi.direction) : "text-neutral-900";
 
   return (
     <ScreenContainer>
@@ -76,6 +73,7 @@ export default function KpiDetail() {
           <h1 className="text-lg font-extrabold text-neutral-900">{name}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <FrequencyBadge frequency={kpi.frequency} />
+            {kpi.scheduleNote && <span className="text-2xs font-medium text-neutral-400">{kpi.scheduleNote}</span>}
             <span className="inline-flex max-w-full items-center gap-1 truncate text-2xs text-neutral-400" title={kpi.data_source}>
               <Database size={11} className="shrink-0" /> <span className="truncate">{kpi.data_source}</span>
             </span>
@@ -91,7 +89,7 @@ export default function KpiDetail() {
                 <RatingBadge grade={gradeFor(rec.value as number, GSQAC_BANDS).grade} size="md" />
               </div>
             ) : (
-              <ValueDisplay value={rec.value} unit={kpi.unit} status={rec.status} direction={kpi.direction} isDelta={isContextDelta} lang={lang} size="xl" naLabel={t("common.na")} className="mt-1 block" />
+              <ValueDisplay value={rec.value} unit={kpi.unit} status={rec.status} direction={kpi.direction} isDelta={isContextDelta} lang={lang} size="xl" naLabel={t("common.na")} toneClass={valueTone} className="mt-1 block" />
             )}
             {/* N+1 — next level up: parent name + parent-level score (absolute, no ± delta) */}
             <NPlusOneLine parentName={parentName} value={parentScore} unit={kpi.unit} lang={lang} signed={isContextDelta} className="mt-1.5 !text-xs !text-neutral-500" />

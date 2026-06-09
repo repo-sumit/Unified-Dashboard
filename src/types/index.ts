@@ -161,8 +161,10 @@ export interface KpiDef {
    *  (distinct from `hero`, so it never duplicates a domain-card indicator). */
   topIndicator?: boolean;
   /** snapshot/cycle indicator — suppress the time-trend chart + sparkline; show a
-   *  date/cycle context line instead (e.g. SAT1/SAT2 assessment-cycle results). */
+   *  date/cycle context line instead. */
   noTrend?: boolean;
+  /** a fixed schedule/month note shown as context (e.g. SAT1 "September", SAT2 "March"). */
+  scheduleNote?: string;
   /** plain-language formula + numerator/denominator (shown in Indicator Detail). */
   formula?: string;
   numerator?: string;

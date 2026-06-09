@@ -1,5 +1,34 @@
 # Unified Portal — QA Report
 
+## 3A re-audit vs latest sheet (`GJ _ Unified App KPIs(8).xlsx`) — GSQAC untouched
+
+Re-parsed the latest sheet (re-uploaded over `GJ _ Unified App KPIs.xlsx`, modified today). It added a **Delta** column and shifted columns; only **Attendance / Assessment / Administration** were updated. **School Quality / GSQAC (sq_*, D1–D5, grade colours, GsqacSummaryCard) was not touched.**
+
+**Names + data sources + frequency (catalog [kpiCatalog.ts](app/src/config/kpiCatalog.ts), all per sheet):**
+- Attendance (src "Attendance bot", Daily): Students absent from past 7+ days (HP) · Teachers present today · Students present today · Students consuming Mid-day Meal (MDM) · Schools and Class Sections Submitting Attendance.
+- Assessment: SAT reports downloaded in classrooms (HP, src "Gyan Prabhav bot", **now Daily**) · Semester Assessment Test 1 (SAT1) · SAT2 (src "Xamta bot", **Yearly**) · **FLN - Oral Reading Fluency** (src "Oral Reading Fluency (ORF) Bot", Monthly) · **Common Entrance Test (CET)** (Yearly) · **Chief Minister Gyan Sadhna Merit Scholarship (CGMS)** (Yearly). The old ORF/CET/CGMS participation+improvement pairs were **collapsed to one each** (ids `asm_orf`/`asm_cet`/`asm_cgms`); `asm_below` ("Students below avg") and `Assessment result %` are **removed** (not in sheet).
+- Administration (sub-domains now School Observation · **Classroom Observation** (new) · Student Retention · CPD): renamed all to sheet wording — No of CRC/URC Visits per school (HP), School observations completed by CRC/URC, ICT Lab Usage in Schools, Library/Urinals & Toilets/Handwash/Drinking Water/SMC, Schools Visited for Classroom Observation, Classrooms following monthly lesson plans, Classrooms with Completed Teacher Diaries, **Identified Dropout Students**, Re-enrolment of Out-of-School Students, **Average CPD Time Per Teacher**, Teachers Achieving the 50-Hour CPD Target. Sources updated to SMA / CTS + EWS / PLC.
+
+**Source labels** shortened to sheet values everywhere (catalog `data_source` → KPI-detail badge / Export tables): "Attendance Monitoring System (Attendance Bot)" → "Attendance bot", "Student Monitoring App (SMA)…" → "SMA", etc.
+
+**Score / value vs delta** — main value is the actual score (`%`, count, `score` for ORF CWPM, `hours` for avg CPD). No KPI uses `delta_cycle` any more (the improvement KPIs were collapsed), so no formula/delta text leaks into the value.
+
+**Delta + main-value colour now follow movement direction** (`ValueDisplay` gained an optional `toneClass`; cards derive it from `deltaToneClass(trend.delta, kpi.direction)`): up = green, down = red, **flat = neutral**, with the lower-is-better exception applied automatically by `kpi.direction` (so **Students absent from past 7+ days** and **Identified Dropout Students** show green when falling, red when rising). Applied consistently to KpiCard, DomainSummaryCard (home + page), KpiDetail summary, and the Top-Indicators strip. **GSQAC values keep their grade/status tone** (skipped via `sq_*` guard).
+
+**Frequency wording** stays sheet-driven: Daily → "this day", Monthly → "this month", Yearly → "this year", Half-yearly → "this half-year". No "this week"/"Weekly" on any KPI.
+
+**SAT1/SAT2** — now annual (`Yearly`), `noTrend` removed → they show the trend graph + delta + N+1 + frequency badge like other cards, with a schedule note (**SAT1 "September", SAT2 "March"**, via new `KpiDef.scheduleNote`, rendered on KpiCard + KpiDetail).
+
+**Absentee KPI** unchanged in logic — `Students absent from past 7+ days` stays an absolute count (no per-school average), Daily → "this day", down = green.
+
+**Mock data** ([kpiCatalog.ts] `PUBLISHED`): removed `asm_below`/improve rows; `asm_orf` set to CWPM-range scores (~44–53); `cpd_hours` → avg hours (~38–46); `ret_dropout` → growing absolute dropout count (school 6 → state 1400). Provider is catalog-driven, so the renamed/collapsed KPIs flow to Domain/KPI-detail/Compare/Leaderboard/Export automatically.
+
+**Assumptions:** SAT/ORF/CET/CGMS treated as snapshot result values (`snapshot_latest`) with a YoY delta; no real assessment date in mock, so SAT shows the month schedule note + yearly trend; `MID-day MDM` formula kept as "Total eligible Students" (prior explicit user override) though the sheet says "Total Students"; ORF unit set to `score` (CWPM), CPD-time unit set to `hours`; "Classroom Observation" added as a 4th Administration sub-domain per the sheet's Domain column.
+
+**Files:** `kpiCatalog.ts`, `frameworks.ts`, `types/index.ts`, `ValueDisplay.tsx`, `KpiCard.tsx`, `DomainSummaryCard.tsx`, `HeroKpiStrip.tsx`, `KpiDetail.tsx`, `QA_REPORT.md`. **Build:** `npm run build` passes clean. No GSQAC/access/routing/PM-Shri/Compare-selection/Export-structure/provider changes.
+
+---
+
 ## Frequency wording: Daily → "this day", Half-yearly → "this half-year"
 
 The per-KPI delta/context wording is i18n-driven through one path — `FrequencyDelta` → `periodLabelKey(cadence)` → `kpi.p*` — used by every card/detail (KpiCard, DomainSummaryCard, HeroKpiStrip, KpiDetail). Fixing the two off words there propagates everywhere:

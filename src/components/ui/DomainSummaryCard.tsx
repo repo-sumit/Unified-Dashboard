@@ -1,6 +1,6 @@
 import { cn } from "@/lib/cn";
 import type { DomainScore, KpiRecord, Level } from "@/types";
-import { accent } from "@/lib/colors";
+import { accent, deltaToneClass } from "@/lib/colors";
 import { peerAvg } from "@/lib/peer";
 import { buildTrend } from "@/lib/trend";
 import { useT } from "@/i18n";
@@ -49,6 +49,8 @@ export function DomainSummaryCard({
   const deltaEl = deltaVal != null && deltaVal !== 0
     ? <FrequencyDelta delta={deltaVal} unit={unit} direction={direction} cadence={trend?.cadence ?? "daily"} showPeriod={useHero} lang={lang} className="pb-1" />
     : null;
+  // main value colour follows delta direction (up=green / down=red, direction-aware), neutral when flat
+  const valueTone = deltaVal ? deltaToneClass(deltaVal, direction) : "text-neutral-900";
 
   if (variant === "page") {
     return (
@@ -62,7 +64,7 @@ export function DomainSummaryCard({
             {heroName && <p className="truncate text-xs text-neutral-400">{heroName}</p>}
           </div>
           <div className="flex shrink-0 flex-col items-end">
-            <ValueDisplay value={value} unit={unit} status={status} direction={direction} lang={lang} size="lg" naLabel={t("common.na")} />
+            <ValueDisplay value={value} unit={unit} status={status} direction={direction} lang={lang} size="lg" naLabel={t("common.na")} toneClass={valueTone} />
             {deltaEl}
           </div>
         </div>
@@ -91,7 +93,7 @@ export function DomainSummaryCard({
       </div>
 
       <div className="flex items-end justify-between gap-2">
-        <ValueDisplay value={value} unit={unit} status={status} direction={direction} lang={lang} size="lg" naLabel={t("common.na")} />
+        <ValueDisplay value={value} unit={unit} status={status} direction={direction} lang={lang} size="lg" naLabel={t("common.na")} toneClass={valueTone} />
         {deltaEl}
       </div>
 

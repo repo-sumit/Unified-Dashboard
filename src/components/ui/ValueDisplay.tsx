@@ -11,14 +11,14 @@ const SIZE: Record<string, string> = {
 };
 
 /**
- * The single, canonical big-number value treatment. Colour follows the colour
- * discipline (one place): a rate/level value is tinted by RAG status (good → green,
- * watch → neutral, at-risk → red, NA → muted); a change-delta value (`isDelta`) is
- * tinted direction-aware and shown signed. Used by every metric card + detail view
- * so the value reads the same everywhere.
+ * The single, canonical big-number value treatment. Colour: when a `toneClass` is
+ * passed (the card derives it from the delta direction — up=green, down=red, with
+ * the lower-is-better/absentee exception, neutral when flat) it wins; otherwise it
+ * falls back to RAG status / signed-delta tone. Used by every metric card + detail
+ * view so the value reads the same everywhere.
  */
 export function ValueDisplay({
-  value, unit, status, direction = "higher", isDelta = false, lang = "en", size = "lg", naLabel = "NA", className,
+  value, unit, status, direction = "higher", isDelta = false, lang = "en", size = "lg", naLabel = "NA", toneClass, className,
 }: {
   value: number | null;
   unit: Unit;
@@ -28,10 +28,11 @@ export function ValueDisplay({
   lang?: Lang;
   size?: "md" | "lg" | "xl";
   naLabel?: string;
+  toneClass?: string;
   className?: string;
 }) {
   const na = value == null;
-  const tone = na ? "text-rag-naText" : isDelta ? deltaToneClass(value, direction) : valueToneClass(status);
+  const tone = na ? "text-rag-naText" : toneClass ?? (isDelta ? deltaToneClass(value, direction) : valueToneClass(status));
   const text = na ? naLabel : isDelta ? formatDelta(value, unit, lang) : formatValue(value, unit, lang);
   return <span className={cn(SIZE[size], "font-extrabold tnum", tone, className)}>{text}</span>;
 }

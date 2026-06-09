@@ -88,19 +88,22 @@ function HeroTile({
   const peerScore = peerLevel ? peerAvg(kpi.id, level) : null;
   const target = (kpi.target ?? "").replace(/[^0-9]/g, "") || "2";
   const chronicRate = kpi.unit === "count" && enrolment && enrolment > 0 ? (v / enrolment) * 100 : null;
+  // value colour follows the delta direction (up=green / down=red, direction-aware), neutral when flat
+  const trend = buildTrend(rec, lang);
+  const valueTone = trend.delta ? deltaToneClass(trend.delta, kpi.direction) : "text-neutral-900";
 
-  // ── ONE dominant value (neutral; green/red only for a cycle delta, by direction) ──
+  // ── ONE dominant value ──
   const valueEl = isContextDelta ? (
     <span className={cn("text-2xl font-extrabold tnum", deltaToneClass(v, kpi.direction))}>{formatDelta(v, "%", lang)}</span>
   ) : kpi.unit === "ratio" ? (
-    <span className="text-2xl font-extrabold tnum text-neutral-900">{locNum(v, lang)}<span className="text-sm font-bold text-neutral-400"> / {locNum(target, lang)}</span></span>
+    <span className={cn("text-2xl font-extrabold tnum", valueTone)}>{locNum(v, lang)}<span className="text-sm font-bold text-neutral-400"> / {locNum(target, lang)}</span></span>
   ) : kpi.id === "sq_gsqac" ? (
     <span className="flex items-center gap-1.5">
       <span className="text-2xl font-extrabold tnum text-neutral-900">{locNum(Math.round(v), lang)}</span>
       <RatingBadge grade={gradeFor(v, GSQAC_BANDS).grade} size="sm" />
     </span>
   ) : (
-    <span className="text-2xl font-extrabold tnum text-neutral-900">{formatValue(v, kpi.unit, lang)}</span>
+    <span className={cn("text-2xl font-extrabold tnum", valueTone)}>{formatValue(v, kpi.unit, lang)}</span>
   );
 
   // ── ONE supporting line: the shared N+1 parent comparison, else a contextual fallback ──
@@ -113,7 +116,7 @@ function HeroTile({
   }
 
   // ── micro-viz: a frequency-appropriate mini trend for every hero ──
-  const trendPts = buildTrend(rec, lang).points.map((p) => p.value);
+  const trendPts = trend.points.map((p) => p.value);
   const microViz = trendPts.length > 1 ? <Sparkline data={trendPts} color={c.hex} width={120} height={24} /> : null;
 
   return (

@@ -1,5 +1,5 @@
 import type { KpiRecord, Level } from "@/types";
-import { rag } from "@/lib/colors";
+import { rag, deltaToneClass } from "@/lib/colors";
 import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { buildTrend, cadenceOf, snapshotContextKey } from "@/lib/trend";
 import { useT, type Lang } from "@/i18n";
@@ -29,6 +29,11 @@ export function KpiCard({
   const trend = na || kpi.noTrend ? null : buildTrend(rec, lang);
   const isDelta = kpi.displayStrategy === "delta_cycle";
   const peerScore = level && peerLevelOf(level) ? peerAvg(kpi.id, level) : null;
+  // main value colour follows the delta DIRECTION (up=green, down=red; lower-is-better
+  // KPIs like absentees flip — handled by deltaToneClass via kpi.direction), neutral when
+  // flat. GSQAC keeps its grade/status tone (untouched).
+  const isGsqac = kpi.id.startsWith("sq_");
+  const valueTone = isGsqac ? undefined : trend?.delta ? deltaToneClass(trend.delta, kpi.direction) : "text-neutral-900";
 
   return (
     <Card
@@ -40,14 +45,17 @@ export function KpiCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <span className="block text-sm font-bold leading-snug text-neutral-900">{name}</span>
-          <FrequencyBadge frequency={kpi.frequency} className="mt-1" />
+          <span className="mt-1 flex flex-wrap items-center gap-1.5">
+            <FrequencyBadge frequency={kpi.frequency} />
+            {kpi.scheduleNote && <span className="text-2xs font-medium text-neutral-400">{kpi.scheduleNote}</span>}
+          </span>
         </div>
         <ChevronRight size={16} className="mt-0.5 shrink-0 text-neutral-300 transition-transform group-hover:translate-x-0.5" />
       </div>
 
       {/* value + inline direction-aware frequency delta */}
       <div className="flex items-end justify-between gap-2">
-        <ValueDisplay value={rec.value} unit={kpi.unit} status={rec.status} direction={kpi.direction} isDelta={isDelta} lang={lang} size="lg" />
+        <ValueDisplay value={rec.value} unit={kpi.unit} status={rec.status} direction={kpi.direction} isDelta={isDelta} lang={lang} size="lg" toneClass={valueTone} />
         {trend && !isDelta && trend.delta != null && trend.delta !== 0 && (
           <FrequencyDelta delta={trend.delta} unit={kpi.unit} direction={kpi.direction} cadence={trend.cadence} lang={lang} className="pb-1" />
         )}
