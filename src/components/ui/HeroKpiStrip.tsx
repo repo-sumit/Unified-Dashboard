@@ -37,8 +37,11 @@ export function HeroKpiStrip({
   records, level, enrolment, parentName, onOpen,
 }: { records: KpiRecord[]; level: Level; enrolment?: number; parentName?: string; onOpen?: (rec: KpiRecord) => void }) {
   const { t } = useT();
+  // "Top Indicators" — the intervention indicators flagged `topIndicator` in the catalog.
+  // Deliberately excludes the domain-card "Home Page Indicator"s (kpi.hero) so the homepage
+  // never repeats them. Config-driven: a new flag in kpiCatalog changes this with no code edit.
   const heroes = records
-    .filter((r) => r.kpi.hero && r.value != null)
+    .filter((r) => r.kpi.topIndicator && r.value != null)
     .sort((a, b) => {
       const s = STATUS_RANK[heroStatus(a)] - STATUS_RANK[heroStatus(b)];
       if (s !== 0) return s;
@@ -50,7 +53,7 @@ export function HeroKpiStrip({
 
   return (
     <div>
-      <p className="section-title mb-2">{t("ogm.heroKpis")}</p>
+      <p className="section-title mb-2">{t("ogm.topIndicators")}</p>
       <div className="flex flex-col gap-2.5">
         {heroes.map((rec) => (
           <HeroTile key={rec.kpi.id} rec={rec} level={level} enrolment={enrolment} parentName={parentName} onOpen={onOpen} />

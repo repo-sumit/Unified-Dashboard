@@ -110,7 +110,7 @@ export const gu: Dict = {
   },
   common2: { school: "શાળા", state: "રાજ્ય", vsTarget: "લક્ષ્ય સામે", students: "વિદ્યાર્થીઓ" },
   ogm: {
-    heroKpis: "મુખ્ય સૂચકાંકો",
+    heroKpis: "મુખ્ય સૂચકાંકો", topIndicators: "ટોચના સૂચકાંકો",
     vsTarget: "લક્ષ્ય સામે",
     vsPrevPeriod: "ગયા સમયગાળા સામે",
     studentsCount: "વિદ્યાર્થીઓ",

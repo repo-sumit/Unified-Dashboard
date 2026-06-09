@@ -155,8 +155,11 @@ export interface KpiDef {
   availableInDataLake?: boolean;
   /** frequency-aware visualisation (trend/delta/snapshot/compliance/count). */
   displayStrategy?: DisplayStrategy;
-  /** green-flagged decision-critical indicator — surfaced prominently. */
+  /** the domain's "Home Page Indicator for any hierarchy" — drives the domain card's primary value. */
   hero?: boolean;
+  /** a top intervention indicator surfaced in the homepage "Top Indicators" strip
+   *  (distinct from `hero`, so it never duplicates a domain-card indicator). */
+  topIndicator?: boolean;
   /** plain-language formula + numerator/denominator (shown in Indicator Detail). */
   formula?: string;
   numerator?: string;

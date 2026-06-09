@@ -88,7 +88,8 @@ export default function ScorecardHome() {
         />
       )}
 
-      {/* KEY INDICATORS — actionable hero KPIs (full-width tiles); opens the indicator detail */}
+      {/* TOP INDICATORS — intervention indicators (kpi.topIndicator), excludes the
+          domain-card homepage indicators so the homepage never repeats them */}
       <HeroKpiStrip
         records={allRecords}
         level={entity.level}

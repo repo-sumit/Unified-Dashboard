@@ -108,7 +108,7 @@ export const en = {
   },
   common2: { school: "School", state: "State", vsTarget: "vs target", students: "students" },
   ogm: {
-    heroKpis: "Key Indicators",
+    heroKpis: "Key Indicators", topIndicators: "Top Indicators",
     vsTarget: "vs target",
     vsPrevPeriod: "vs last period",
     studentsCount: "students",

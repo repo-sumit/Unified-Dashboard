@@ -1,5 +1,19 @@
 # Unified Portal — QA Report
 
+## Homepage duplication fix — split domain-card vs Top Indicators
+
+The homepage repeated the same indicators in the Domain cards **and** the bottom Key Indicators strip (both driven by `kpi.hero`). Split the two concerns with a new config flag.
+
+- **`hero`** = the domain's "Home Page Indicator for any hierarchy" → drives the **domain card** primary value (unchanged): Students absent from 7+ days · SAT reports downloaded in classrooms · No of CRC/URC Visits per school · GSQAC score.
+- **`topIndicator`** (new optional `KpiDef` flag) = top intervention indicators → drives the bottom strip, now relabelled **"Top Indicators"**. Set `topIndicator: true` on `ret_dropout` (Reduction in dropout %) and `ret_reenroll` (Re-enrolment of OoSC… against target %) only.
+- [HeroKpiStrip](app/src/components/ui/HeroKpiStrip.tsx) now filters `r.kpi.topIndicator` (was `r.kpi.hero`) and uses the new `ogm.topIndicators` label — so the bottom section no longer repeats the four domain-card indicators.
+
+Catalog flags now: **4 `hero` + 2 `topIndicator`** (Teacher% completing 50 hours has neither → absent from the strip, as required). Config-driven: changing the strip later needs only catalog flags, no UI edits. Direction-aware colour preserved (both Top Indicators are higher-is-better). Domain cards, School Quality card, Compare and Export unchanged (Export has no bottom Key-Indicators strip).
+
+**Files:** `types/index.ts` (`topIndicator?`), `kpiCatalog.ts` (flags on dropout + re-enrolment), `HeroKpiStrip.tsx` (filter + label), `i18n/en.ts` + `gu.ts` (`ogm.topIndicators`), `ScorecardHome.tsx` (comment). **Build:** `npm run build` passes clean.
+
+---
+
 ## Latest KPI sheet re-audit (now has explicit "Home Page Indicator" column)
 
 Re-parsed the **latest** `GJ _ Unified App KPIs.xlsx` from scratch (treated as source of truth). New structure vs the version the prior pass saw:
