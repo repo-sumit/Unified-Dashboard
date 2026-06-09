@@ -3,12 +3,11 @@ import { useScope, useKpiRecord, useKpiCascade, useFramework } from "@/hooks";
 import { useT } from "@/i18n";
 import { rag } from "@/lib/colors";
 import { locNum } from "@/lib/format";
-import { peerLevelOf } from "@/lib/peer";
+import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { buildTrend, trendTitleKey, cadenceOf } from "@/lib/trend";
 import { gradeFor, GSQAC_BANDS } from "@/config/ratingBands";
 import { Card, SectionLabel, EmptyNA } from "@/components/ui/atoms";
 import { TrendChart } from "@/components/ui/TrendChart";
-import { ComparisonBars, type CompareBar } from "@/components/ui/ComparisonBars";
 import { RatingBadge } from "@/components/ui/RatingBadge";
 import { FrequencyBadge } from "@/components/ui/DataBadges";
 import { ValueDisplay } from "@/components/ui/ValueDisplay";
@@ -59,18 +58,11 @@ export default function KpiDetail() {
             : cadence === "yearly" ? t("kpi.currentYear")
               : t("kpi.latestAvailable");
 
-  const bars: CompareBar[] = cascade.map((row) => ({
-    key: row.level,
-    label: lang === "gu" ? row.label_gu : row.label,
-    sublabel: lang === "gu" && row.entity.name_gu ? row.entity.name_gu : row.entity.name,
-    value: row.value,
-    status: row.status,
-    isCurrent: row.isCurrent,
-  }));
-  const hasCascade = bars.filter((b) => b.value != null).length >= 2; // ≥2 ⇒ has ancestors (hidden at State)
-  // N+1 — the immediate parent (next level up): its real name + score, consistent with the cards.
+  // N+1 — the immediate parent (next level up): its real name (from the read-only
+  // ancestor cascade) + the parent-level score (peerAvg, absolute — never per-school).
   const parentRow = cascade.length >= 2 ? cascade[cascade.length - 2] : null;
   const parentName = parentRow ? (lang === "gu" && parentRow.entity.name_gu ? parentRow.entity.name_gu : parentRow.entity.name) : undefined;
+  const parentScore = peerLevel ? peerAvg(kpi.id, entity.level) : null;
 
   return (
     <ScreenContainer>
@@ -100,8 +92,8 @@ export default function KpiDetail() {
             ) : (
               <ValueDisplay value={rec.value} unit={kpi.unit} status={rec.status} direction={kpi.direction} isDelta={isContextDelta} lang={lang} size="xl" naLabel={t("common.na")} className="mt-1 block" />
             )}
-            {/* N+1 — next level up: parent name + its real score (no ± delta) */}
-            <NPlusOneLine parentName={parentName} value={parentRow?.value ?? null} unit={kpi.unit} lang={lang} signed={isContextDelta} className="mt-1.5 !text-xs !text-neutral-500" />
+            {/* N+1 — next level up: parent name + parent-level score (absolute, no ± delta) */}
+            <NPlusOneLine parentName={parentName} value={parentScore} unit={kpi.unit} lang={lang} signed={isContextDelta} className="mt-1.5 !text-xs !text-neutral-500" />
           </div>
           {/* single delta tag, wording derived from the indicator's frequency */}
           {trend && !isContextDelta && (
@@ -126,17 +118,6 @@ export default function KpiDetail() {
               cadence={trend.cadence}
               lang={lang}
             />
-          </div>
-        </Card>
-      )}
-
-      {/* CROSS-LEVEL COMPARISON (C) — own + ancestors up to State; hidden for a State user */}
-      {hasCascade && (
-        <Card className="card-pad">
-          <SectionLabel>{t("kpi.cascadeTitle", { name })}</SectionLabel>
-          {kpi.unit === "count" && <p className="mt-0.5 text-2xs text-neutral-400">{t("compare.perSchool")}</p>}
-          <div className="mt-4">
-            <ComparisonBars bars={bars} unit={kpi.unit} lang={lang} />
           </div>
         </Card>
       )}

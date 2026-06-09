@@ -86,7 +86,8 @@ export default function CompareView() {
   if (!entity) return null;
   const shortName = (e: Entity) => (lang === "gu" && e.name_gu ? e.name_gu : e.name);
   const cmpVal = (kpi: { id: string; unit: string }, ent: Entity, v: number | null | undefined) =>
-    v == null ? null : kpi.unit === "count" ? Math.round((v / schoolsImplied(kpi.id, ent.level)) * 10) / 10 : v;
+    // att_chronic is a deliberate exception: shown as an absolute count, never per-school
+    v == null ? null : kpi.unit === "count" && kpi.id !== "att_chronic" ? Math.round((v / schoolsImplied(kpi.id, ent.level)) * 10) / 10 : v;
 
   return (
     <ScreenContainer>

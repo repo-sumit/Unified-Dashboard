@@ -101,7 +101,7 @@ export const en = {
     gsqacScoreboard: "GSQAC Accreditation Scoreboard", improvementLastCycle: "Improvement compared to last cycle",
     complianceTitle: "Compliance benchmarks", ptr: "Pupil-Teacher Ratio", ptrTarget: "Target 27:1",
     classCapacity: "Class capacity", classCapTarget: "Max 30 / class", enrolment: "Total enrolment", enrolTarget: "Floor 150+",
-    avgTraining: "Avg school training hours", chronicAbs: "Chronic absentees (7-day)", avgTrainTarget: "≥ 50h", sevenDayWindow: "7-day",
+    avgTraining: "Avg school training hours", chronicAbs: "Students absent from past 7+ days", avgTrainTarget: "≥ 50h", sevenDayWindow: "7-day",
     attendanceGap: "Attendance submission gaps", allSubmitted: "All classes have submitted today. Nothing pending.",
     notSubmitted: "Not submitted", submitted: "Submitted", downloadNames: "Download Names", classId: "Class", teacherName: "Teacher",
     dropout: "Drop-out reduction", fewerDropouts: "{n} fewer drop-outs than last year", statusMatrix: "Status overview",

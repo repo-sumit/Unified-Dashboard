@@ -103,7 +103,7 @@ export const gu: Dict = {
     gsqacScoreboard: "GSQAC માન્યતા સ્કોરબોર્ડ", improvementLastCycle: "ગયા ચક્ર કરતાં સુધારો",
     complianceTitle: "અનુપાલન બેન્ચમાર્ક", ptr: "વિદ્યાર્થી-શિક્ષક ગુણોત્તર", ptrTarget: "લક્ષ્ય ૨૭:૧",
     classCapacity: "વર્ગ ક્ષમતા", classCapTarget: "મહત્તમ ૩૦ / વર્ગ", enrolment: "કુલ નોંધણી", enrolTarget: "ન્યૂનતમ ૧૫૦+",
-    avgTraining: "સરેરાશ શાળા તાલીમ કલાક", chronicAbs: "સતત ગેરહાજર (૭-દિવસ)", avgTrainTarget: "≥ ૫૦ કલાક", sevenDayWindow: "૭-દિવસ",
+    avgTraining: "સરેરાશ શાળા તાલીમ કલાક", chronicAbs: "છેલ્લા 7+ દિવસથી ગેરહાજર વિદ્યાર્થીઓ", avgTrainTarget: "≥ ૫૦ કલાક", sevenDayWindow: "૭-દિવસ",
     attendanceGap: "હાજરી સબમિશન ગેપ", allSubmitted: "આજે બધા વર્ગોએ સબમિટ કર્યું. કંઈ બાકી નથી.",
     notSubmitted: "સબમિટ નથી", submitted: "સબમિટ થયું", downloadNames: "નામ ડાઉનલોડ કરો", classId: "વર્ગ", teacherName: "શિક્ષક",
     dropout: "ડ્રોપઆઉટ ઘટાડો", fewerDropouts: "ગયા વર્ષ કરતાં {n} ઓછા ડ્રોપઆઉટ", statusMatrix: "સ્થિતિ ઝાંખી",

@@ -1,5 +1,18 @@
 # Unified Portal — QA Report
 
+## Absentee KPI = absolute count · hierarchy bar chart removed from KPI detail
+
+1. **Rename** — `att_chronic` → **"Students absent from past 7+ days"** (en + gu) in [kpiCatalog.ts](app/src/config/kpiCatalog.ts); same id/direction (lower-is-better). Flows everywhere via `kpi.name`; the dead `principal.chronicAbs` legacy string updated too. No old variants remain (grep-clean).
+2. **Absolute-count semantics** — the value is already anchored to the published per-level **count** (`PUBLISHED.att_chronic` = section 4 → school 18 → cluster 62 → block 215 → district 790 → state 4100), shown via `formatValue(count)` — never a percentage or per-school average.
+3. **N+1 = absolute parent count** — KPI-detail N+1 now uses `peerAvg(att_chronic, level)` (the published parent-level count, e.g. cluster scope → "Lakhapat · 215"), matching the cards. Compare (`cmpVal`) now **exempts `att_chronic`** from the `schoolsImplied` per-school normalization (deliberate exception); all other count KPIs unchanged.
+4. **"How it's calculated"** — updated to absolute-count prose: *"Counts unique students absent for 7 or more consecutive school days as of the selected/latest date. Higher hierarchy values are summed across all descendant schools."* Description no longer mentions "rate"/"average per school".
+5. **Hierarchy comparison bar chart removed from ALL KPI detail pages** — deleted the "How {KPI} compares up the hierarchy" `ComparisonBars` card + the "Shown as average per school" subtitle from [KpiDetail.tsx](app/src/screens/KpiDetail.tsx) (cascade is still read only for the parent N+1 name). N+1 remains in the summary card + KPI cards only. `ComparisonBars` itself is untouched and still used by the Compare screen.
+6. **Trend charts kept** — the frequency-aware time-trend chart (30-day / monthly / half-yearly / yearly) is unchanged.
+
+**Files:** `kpiCatalog.ts`, `KpiDetail.tsx`, `CascadeComparison.tsx`, `i18n/en.ts`, `i18n/gu.ts`, `QA_REPORT.md`. **Build:** `npm run build` passes clean. No changes to access control, routing, PM-Shri, Compare selection, Export structure, provider, or non-absentee formulas.
+
+---
+
 ## KPI display cleanup — absentee rename · detail labels · domain top cards · freq badges
 
 1. **Absentee rename** — `att_chronic` name "Students absent from 7+ days" → **"Students absent since last 7+ consecutive days"** (en + gu) in [kpiCatalog.ts](app/src/config/kpiCatalog.ts). Same id/formula/direction (lower-is-better). Flows to home/domain/top-indicators/detail/Compare/Leaderboard/Export via `kpi.name` (no hardcoded copies remain — grep-clean).
