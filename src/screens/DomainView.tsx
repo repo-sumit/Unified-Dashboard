@@ -43,6 +43,8 @@ export default function DomainView() {
   const parentName = sc.parent ? tn(sc.parent.entity.name, sc.parent.entity.name_gu) : undefined;
   const parentPercent = sc.parent?.domainPercents[ds.domain.id] ?? null;
   const gsqacCoverage = stats && stats.schools > 0 && stats.gsqacReal < stats.schools ? stats : null;
+  // top card = the domain's homepage (hero) indicator, same as the homepage domain card
+  const hero = ds.records.find((r) => r.kpi.hero) ?? null;
   // GSQAC overall is the top card; D1–D5 are the breakdown cards below (no duplicate sq_gsqac tile)
   const records = isOutput ? ds.records.filter((r) => r.kpi.id !== "sq_gsqac") : ds.records;
 
@@ -69,7 +71,9 @@ export default function DomainView() {
           ds={ds}
           variant="page"
           name={tn(ds.domain.name, ds.domain.name_gu)}
-          scopeName={tn(entity.name, entity.name_gu)}
+          heroRec={hero}
+          heroName={hero ? tn(hero.kpi.name, hero.kpi.name_gu) : undefined}
+          level={entity.level}
           delta={domainWoW(ds)}
           parentName={parentName}
           parentPercent={parentPercent}

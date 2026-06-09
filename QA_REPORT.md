@@ -1,5 +1,18 @@
 # Unified Portal — QA Report
 
+## KPI display cleanup — absentee rename · detail labels · domain top cards · freq badges
+
+1. **Absentee rename** — `att_chronic` name "Students absent from 7+ days" → **"Students absent since last 7+ consecutive days"** (en + gu) in [kpiCatalog.ts](app/src/config/kpiCatalog.ts). Same id/formula/direction (lower-is-better). Flows to home/domain/top-indicators/detail/Compare/Leaderboard/Export via `kpi.name` (no hardcoded copies remain — grep-clean).
+2. **`CURRENT VALUE` removed from KPI detail** — [KpiDetail.tsx](app/src/screens/KpiDetail.tsx) now derives a frequency-aware label from the indicator's cadence: Daily → **"Latest: {date}"** (last trend point, or "Latest available" if none) · Monthly → "Current month" · Twice-a-Year → "Current cycle" · Half-yearly → "Current half-year" · Yearly → "Current year". New `kpi.*` i18n keys (en + gu). (Export keeps "Current value" as a table **column header** — not a detail page.)
+3. **Lowest-level text removed** — dropped the visible `Lowest level: {level}` line from KPI detail; `kpi.lowestLevel` applicability logic untouched (only the UI render removed).
+4. **Domain page top card = homepage indicator** — [DomainSummaryCard](app/src/components/ui/DomainSummaryCard.tsx) `page` variant now uses the same hero-indicator logic as `home` (value/unit/delta/N+1 + indicator label under the domain name); [DomainView](app/src/screens/DomainView.tsx) passes `heroRec` (= `ds.records.find(r => r.kpi.hero)`). Attendance → Students absent since last 7+ consecutive days · Assessment → SAT reports downloaded in classrooms · Administration → No of CRC/URC Visits per school · School Quality → GSQAC score (`GsqacSummaryCard`). No more generic domain aggregate as the top-card primary value (aggregate fallback only where the hero is role-hidden, e.g. teacher).
+5. **Frequency badge on KPI cards** — [KpiCard.tsx](app/src/components/ui/KpiCard.tsx) now renders a `FrequencyBadge` (driven by `kpi.frequency` from the sheet) under the indicator name. Verified catalog frequencies vs the sheet: Attendance = Daily, SAT reports + CRC visits + observations = Monthly, dropout + re-enrolment = Half-yearly, GSQAC + ORF/CET/CGMS + CPD = Yearly, Assessment result = Twice-a-Year — all already correct.
+6. **30-day trend avg line** — left as the existing subtle dashed reference (already low-emphasis); not made more prominent.
+
+**Files:** `kpiCatalog.ts`, `DomainSummaryCard.tsx`, `DomainView.tsx`, `KpiDetail.tsx`, `KpiCard.tsx`, `i18n/en.ts`, `i18n/gu.ts`, `QA_REPORT.md`. **Build:** `npm run build` passes clean. Formulas/ids/access/PM-Shri/routing/provider unchanged.
+
+---
+
 ## Export logo + nav reorder
 
 - **Export header logo** — replaced the blue circular `VSK` text badge in [Export.tsx](app/src/screens/Export.tsx) with the real app logo (`/logo-vsk.png`, the same asset `VskBadge` uses top-left), in a compact white/ring container (`h-9 w-9`, `object-contain`, no stretch/crop, transparency preserved).

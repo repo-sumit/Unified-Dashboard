@@ -4,7 +4,7 @@ import { accent } from "@/lib/colors";
 import { peerAvg } from "@/lib/peer";
 import { buildTrend } from "@/lib/trend";
 import { useT } from "@/i18n";
-import { Card, ProgressBar } from "./atoms";
+import { Card } from "./atoms";
 import { Icon, ChevronRight } from "./Icon";
 import { ValueDisplay } from "./ValueDisplay";
 import { FrequencyDelta } from "./FrequencyDelta";
@@ -16,11 +16,12 @@ import { NPlusOneLine } from "./NPlusOneLine";
  *    HOMEPAGE indicator (`heroRec`, the sheet's green-flagged hero) — its value,
  *    unit, frequency-aware delta and N+1 — with the indicator label under the
  *    domain name. Falls back to the domain aggregate if no hero record is passed.
- *  • `variant="page"` — the expanded domain-page header (aggregate + progress).
+ *  • `variant="page"` — the expanded domain-page header. Same hero-indicator
+ *    logic as `home`, just full-width, so the two are one family.
  * Status lives in the value colour — no "On track" text tags.
  */
 export function DomainSummaryCard({
-  ds, name, heroRec, heroName, level, delta, parentName, parentPercent, scopeName, variant = "home", onClick,
+  ds, name, heroRec, heroName, level, delta, parentName, parentPercent, variant = "home", onClick,
 }: {
   ds: DomainScore;
   name: string;
@@ -30,39 +31,13 @@ export function DomainSummaryCard({
   delta?: number | null;
   parentName?: string;
   parentPercent?: number | null;
-  scopeName?: string;
   variant?: "home" | "page";
   onClick?: () => void;
 }) {
   const { t, lang } = useT();
   const a = accent(ds.domain.accent);
 
-  if (variant === "page") {
-    const deltaEl = delta != null && delta !== 0
-      ? <FrequencyDelta delta={delta} unit="%" direction="higher" cadence="daily" showPeriod={false} lang={lang} className="pb-1" />
-      : null;
-    return (
-      <Card className="card-pad">
-        <div className="flex items-center gap-3">
-          <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-2xl", a.bg)}>
-            <Icon name={ds.domain.icon} className={a.icon} size={22} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-extrabold text-neutral-900">{name}</h1>
-            {scopeName && <p className="truncate text-xs text-neutral-400">{scopeName}</p>}
-          </div>
-          <div className="flex shrink-0 flex-col items-end">
-            <ValueDisplay value={ds.percent} unit="%" status={ds.status} lang={lang} size="lg" naLabel={t("common.na")} />
-            {deltaEl}
-          </div>
-        </div>
-        {ds.percent != null && <ProgressBar value={ds.percent} status={ds.status} className="mt-3" height={8} />}
-        <NPlusOneLine parentName={parentName} value={parentPercent ?? null} unit="%" lang={lang} className="mt-2" />
-      </Card>
-    );
-  }
-
-  // ── home variant: primary value = the domain's homepage (hero) indicator ──
+  // primary value = the domain's homepage (hero) indicator; falls back to the aggregate
   const useHero = !!heroRec;
   const trend = useHero && heroRec!.value != null ? buildTrend(heroRec!, lang) : null;
   const value = useHero ? heroRec!.value : ds.percent;
@@ -74,6 +49,27 @@ export function DomainSummaryCard({
   const deltaEl = deltaVal != null && deltaVal !== 0
     ? <FrequencyDelta delta={deltaVal} unit={unit} direction={direction} cadence={trend?.cadence ?? "daily"} showPeriod={useHero} lang={lang} className="pb-1" />
     : null;
+
+  if (variant === "page") {
+    return (
+      <Card className="card-pad">
+        <div className="flex items-center gap-3">
+          <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-2xl", a.bg)}>
+            <Icon name={ds.domain.icon} className={a.icon} size={22} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-base font-extrabold text-neutral-900">{name}</h1>
+            {heroName && <p className="truncate text-xs text-neutral-400">{heroName}</p>}
+          </div>
+          <div className="flex shrink-0 flex-col items-end">
+            <ValueDisplay value={value} unit={unit} status={status} direction={direction} lang={lang} size="lg" naLabel={t("common.na")} />
+            {deltaEl}
+          </div>
+        </div>
+        <NPlusOneLine parentName={parentName} value={peerScore} unit={unit} lang={lang} className="mt-2" />
+      </Card>
+    );
+  }
 
   return (
     <Card

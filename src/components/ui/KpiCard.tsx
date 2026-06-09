@@ -8,6 +8,7 @@ import { Sparkline } from "./Sparkline";
 import { FrequencyDelta } from "./FrequencyDelta";
 import { NPlusOneLine } from "./NPlusOneLine";
 import { ValueDisplay } from "./ValueDisplay";
+import { FrequencyBadge } from "./DataBadges";
 import { ChevronRight } from "./Icon";
 
 /**
@@ -34,9 +35,12 @@ export function KpiCard({
       onClick={onClick}
       className="group card-pad flex w-full flex-col gap-2 text-left transition-shadow hover:shadow-raised"
     >
-      {/* identity */}
+      {/* identity + frequency badge (from KPI config) */}
       <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-bold leading-snug text-neutral-900">{name}</span>
+        <div className="min-w-0">
+          <span className="block text-sm font-bold leading-snug text-neutral-900">{name}</span>
+          <FrequencyBadge frequency={kpi.frequency} className="mt-1" />
+        </div>
         <ChevronRight size={16} className="mt-0.5 shrink-0 text-neutral-300 transition-transform group-hover:translate-x-0.5" />
       </div>
 
