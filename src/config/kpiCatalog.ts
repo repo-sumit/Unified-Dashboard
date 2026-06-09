@@ -1,4 +1,4 @@
-import type { KpiDef, Level, LevelRepresentation, Representation } from "@/types";
+import type { KpiDef, KpiMetricDef, Level, LevelRepresentation, Representation } from "@/types";
 
 /**
  * Unified Portal — indicator catalog. SOURCE OF TRUTH: `Docs/GJ _ Unified App
@@ -22,7 +22,7 @@ import type { KpiDef, Level, LevelRepresentation, Representation } from "@/types
  */
 
 type Pub = Partial<Record<Level, number>>;
-export const PUBLISHED: Record<string, Pub> = {
+const BASE_PUBLISHED: Record<string, Pub> = {
   // Attendance (Daily, DL=Yes). Teacher attendance / MDM are school-and-above.
   att_teacher: { school: 89, cluster: 91, block: 93, district: 94, state: 95 },
   att_student: { section: 88, school: 86, cluster: 87, block: 89, district: 91, state: 92 },
@@ -63,6 +63,55 @@ export const PUBLISHED: Record<string, Pub> = {
   sq_d5: { school: 47, cluster: 48, block: 45, district: 49, state: 47 },
 };
 
+/**
+ * Per-SUB-METRIC anchors for the multi-metric indicators (SAT1/SAT2/ORF/CET/CGMS).
+ * Keyed `<parentId>__<metricId>` so the provider/peer helpers resolve them through
+ * the same machinery as a normal indicator — no UI hardcoding (§9, §12). The primary
+ * metric reuses the parent's published anchor; the secondary metrics get their own
+ * deterministic level series. "Below hierarchy avg" is lower-is-better and trends DOWN
+ * up the hierarchy (bigger units cluster tighter, so fewer fall below the mean).
+ */
+const METRIC_PUBLISHED: Record<string, Pub> = {
+  // SAT1 — Avg score (= parent), students below hierarchy avg (lower better), participation
+  asm_sat1__avgScore: BASE_PUBLISHED.asm_sat1,
+  asm_sat1__belowHierarchyAvg: { section: 34, school: 32, cluster: 30, block: 27, district: 24, state: 21 },
+  asm_sat1__participation: { section: 88, school: 89, cluster: 90, block: 91, district: 92, state: 93 },
+  // SAT2
+  asm_sat2__avgScore: BASE_PUBLISHED.asm_sat2,
+  asm_sat2__belowHierarchyAvg: { section: 33, school: 31, cluster: 29, block: 26, district: 23, state: 20 },
+  asm_sat2__participation: { section: 89, school: 90, cluster: 91, block: 92, district: 93, state: 94 },
+  // FLN-ORF — CWPM score (= parent), below hierarchy avg, participation
+  asm_orf__cwpm: BASE_PUBLISHED.asm_orf,
+  asm_orf__belowHierarchyAvg: { section: 40, school: 38, cluster: 36, block: 33, district: 30, state: 27 },
+  asm_orf__participation: { section: 84, school: 85, cluster: 86, block: 88, district: 89, state: 90 },
+  // CET — result (= parent), class-5 participation
+  asm_cet__result: BASE_PUBLISHED.asm_cet,
+  asm_cet__participation: { section: 90, school: 91, cluster: 92, block: 93, district: 94, state: 95 },
+  // CGMS — result (= parent), class-8 participation
+  asm_cgms__result: BASE_PUBLISHED.asm_cgms,
+  asm_cgms__participation: { section: 84, school: 85, cluster: 86, block: 88, district: 89, state: 90 },
+};
+
+/** Combined anchor map — real indicators + sub-metrics. Every value/peer/benchmark
+ *  lookup (provider, peer.ts, applicability.ts) reads from this single source. */
+export const PUBLISHED: Record<string, Pub> = { ...BASE_PUBLISHED, ...METRIC_PUBLISHED };
+
+/** the 3 shared SAT/ORF sub-metrics, parameterised by the test label so the formula
+ *  copy is readable per indicator (§9 — config-driven, not hardcoded in the UI). */
+function resultSubMetrics(test: string, scoreUnit: "%" | "score", scoreId: string, scoreLabel: string, scoreLabel_gu: string): KpiMetricDef[] {
+  return [
+    { id: scoreId, label: scoreLabel, label_gu: scoreLabel_gu, unit: scoreUnit, direction: "higher",
+      formula: `Average ${test} ${scoreUnit === "%" ? "% score" : "score"} for the current year (Year N).`,
+      formula_gu: `ચાલુ વર્ષ (વર્ષ N) માટે સરેરાશ ${test} ${scoreUnit === "%" ? "% સ્કોર" : "સ્કોર"}.` },
+    { id: "belowHierarchyAvg", label: "Below hierarchy avg", label_gu: "સ્તર સરેરાશથી નીચે", unit: "%", direction: "lower",
+      formula: `Students whose ${test} score is below the hierarchy average ÷ total students × 100.`,
+      formula_gu: `જે વિદ્યાર્થીઓનો ${test} સ્કોર સ્તરની સરેરાશથી ઓછો છે ÷ કુલ વિદ્યાર્થીઓ × 100.` },
+    { id: "participation", label: "Participation", label_gu: "સહભાગિતા", unit: "%", direction: "higher",
+      formula: "Students participated ÷ total students × 100.",
+      formula_gu: "ભાગ લેનાર વિદ્યાર્થીઓ ÷ કુલ વિદ્યાર્થીઓ × 100." },
+  ];
+}
+
 function repFromPublished(id: string, unit: KpiDef["unit"]): LevelRepresentation {
   const p = PUBLISHED[id] ?? {};
   const agg: Representation = unit === "count" ? "count" : "avg";
@@ -89,50 +138,56 @@ const NON_TEACHER = ["principal", "crc", "brc", "deo", "state"] as const;
  *  grade/section). `roleVisibility:[...NON_TEACHER]` ⇒ column-J "No" (hidden from teacher). */
 const RAW: Array<Partial<CatItem> & Pick<CatItem, "id" | "domain_id" | "name" | "name_gu" | "unit" | "direction" | "data_source">> = [
   // ── Attendance — Daily · src "Attendance bot" ──
-  { id: "att_chronic", domain_id: "attendance", name: "Students absent from past 7+ consecutive days", name_gu: "છેલ્લા 7+ દિવસથી ગેરહાજર વિદ્યાર્થીઓ", unit: "count", direction: "lower", data_source: ATT, frequency: "Daily", displayStrategy: "count_with_rate", hero: true, formula: "Counts unique students absent for 7 or more consecutive school days as of the selected/latest date. .", description: "Absolute count of students absent 7+ consecutive days as of the latest date; summed up the hierarchy (never an average per school)." },
-  { id: "att_teacher", domain_id: "attendance", name: "Teachers present today", name_gu: "આજે હાજર શિક્ષકો", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "Present: (Teachers Present / Total Teachers) × 100", description: "Officer-monitoring KPI — not a teacher self-evaluation card." },
-  { id: "att_student", domain_id: "attendance", name: "Students present today", name_gu: "આજે હાજર વિદ્યાર્થીઓ", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", formula: "Present: (Students Present / Total Students) × 100" },
-  { id: "att_mdm", domain_id: "attendance", name: "Students consuming Mid-day Meal (MDM)", name_gu: "મધ્યાહ્ન ભોજન (MDM) લેતા વિદ્યાર્થીઓ", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", formula: "(Students Consuming MDM / Total eligible Students) × 100" },
-  { id: "att_report", domain_id: "attendance", name: "Schools submitting Attendance", name_gu: "હાજરી સબમિટ કરતી શાળાઓ અને વર્ગ વિભાગો", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", formula: "Schools: (Schools That Filled Attendance / Total Schools) × 100" },
+  { id: "att_chronic", domain_id: "attendance", name: "Students absent from past 7+ days", name_gu: "છેલ્લા 7+ દિવસથી ગેરહાજર વિદ્યાર્થીઓ", unit: "count", direction: "lower", data_source: ATT, frequency: "Daily", displayStrategy: "count_with_rate", hero: true, showLastUpdatedOnUi: true, formula: "Counts unique students absent for 7 or more consecutive school days as of the selected/latest date. .", description: "Absolute count of students absent 7+ consecutive days as of the latest date; summed up the hierarchy (never an average per school)." },
+  { id: "att_teacher", domain_id: "attendance", name: "Teachers present today", name_gu: "આજે હાજર શિક્ષકો", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "Present: (Teachers Present / Total Teachers) × 100", description: "Officer-monitoring KPI — not a teacher self-evaluation card." },
+  { id: "att_student", domain_id: "attendance", name: "Students present today", name_gu: "આજે હાજર વિદ્યાર્થીઓ", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", showLastUpdatedOnUi: true, formula: "Present: (Students Present / Total Students) × 100" },
+  { id: "att_mdm", domain_id: "attendance", name: "Students consuming Mid-day Meal (MDM)", name_gu: "મધ્યાહ્ન ભોજન (MDM) લેતા વિદ્યાર્થીઓ", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", showLastUpdatedOnUi: true, formula: "(Students Consuming MDM / Total eligible Students) × 100" },
+  { id: "att_report", domain_id: "attendance", name: "Schools and Class Sections Submitting Attendance", name_gu: "હાજરી સબમિટ કરતી શાળાઓ અને વર્ગ વિભાગો", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", showLastUpdatedOnUi: true, formula: "Schools: (Schools That Filled Attendance / Total Schools) × 100" },
 
   // ── Assessment — classroom-level (down to section) ──
-  { id: "asm_remediation", domain_id: "assessment", name: "SAT reports downloaded in classrooms", name_gu: "વર્ગખંડોમાં ડાઉનલોડ થયેલ SAT રિપોર્ટ", unit: "%", direction: "higher", data_source: "Gyan Prabhav bot", frequency: "Daily", displayStrategy: "compliance", hero: true, formula: "(Classrooms Where Report Was Downloaded / Total Classrooms) × 100", description: "Gyan Prabhav generates a SAT report card per classroom; this is the share of classrooms that downloaded it." },
-  { id: "asm_sat1", domain_id: "assessment", name: "Semester Assessment Test 1 (SAT1)", name_gu: "સેમેસ્ટર મૂલ્યાંકન કસોટી 1 (SAT1)", unit: "%", direction: "higher", data_source: "Xamta bot", frequency: "Yearly", displayStrategy: "snapshot_latest", scheduleNote: "September", formula: "SAT1 Result % (current year); year-on-year change vs the previous SAT1.", description: "Semester Assessment Test 1 — held every September." },
-  { id: "asm_sat2", domain_id: "assessment", name: "Semester Assessment Test 2 (SAT2)", name_gu: "સેમેસ્ટર મૂલ્યાંકન કસોટી 2 (SAT2)", unit: "%", direction: "higher", data_source: "Xamta bot", frequency: "Yearly", displayStrategy: "snapshot_latest", scheduleNote: "March", formula: "SAT2 Result % (current year); year-on-year change vs the previous SAT2." },
-  { id: "asm_orf", domain_id: "assessment", name: "FLN - Oral Reading Fluency", name_gu: "FLN - મૌખિક વાચન પ્રવાહ", unit: "score", direction: "higher", data_source: "Oral Reading Fluency (ORF) Bot", availableInDataLake: false, frequency: "Monthly", displayStrategy: "snapshot_latest", formula: "Correct Words Per Minute (CWPM) score; year-on-year change from the latest ORF tests." },
-  { id: "asm_cet", domain_id: "assessment", name: "Common Entrance Test (CET)", name_gu: "કોમન એન્ટ્રન્સ ટેસ્ટ (CET)", unit: "%", direction: "higher", data_source: "Common Entrance Test (CET) Portal", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", roleVisibility: [...NON_TEACHER], formula: "CET Result % (current year); year-on-year change. Class-5 participation = Present / Enrolled × 100." },
-  { id: "asm_cgms", domain_id: "assessment", name: "Chief Minister Gyan Sadhna Merit Scholarship (CGMS)", name_gu: "મુખ્યમંત્રી જ્ઞાન સાધના મેરિટ શિષ્યવૃત્તિ (CGMS)", unit: "%", direction: "higher", data_source: "CGMS Portal", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", roleVisibility: [...NON_TEACHER], formula: "CGMS Result % (current year); year-on-year change. Class-8 participation = Present / Enrolled × 100." },
+  { id: "asm_remediation", domain_id: "assessment", name: "SAT reports downloaded in classrooms", name_gu: "વર્ગખંડોમાં ડાઉનલોડ થયેલ SAT રિપોર્ટ", unit: "%", direction: "higher", data_source: "Gyan Prabhav bot", frequency: "Daily", displayStrategy: "compliance", hero: true, showLastUpdatedOnUi: true, suppressDelta: true, formula: "(Classrooms Where Report Was Downloaded / Total Classrooms) × 100", description: "Gyan Prabhav generates a SAT report card per classroom; this is the share of classrooms that downloaded it." },
+  { id: "asm_sat1", domain_id: "assessment", name: "Semester Assessment Test 1 (SAT1)", name_gu: "સેમેસ્ટર મૂલ્યાંકન કસોટી 1 (SAT1)", unit: "%", direction: "higher", data_source: "Xamta bot", frequency: "Yearly", displayStrategy: "snapshot_latest", scheduleNote: "September", metrics: resultSubMetrics("SAT1", "%", "avgScore", "Avg score", "સરેરાશ સ્કોર"), formula: "SAT1 Result % (current year); year-on-year change vs the previous SAT1.", description: "Semester Assessment Test 1 — held every September." },
+  { id: "asm_sat2", domain_id: "assessment", name: "Semester Assessment Test 2 (SAT2)", name_gu: "સેમેસ્ટર મૂલ્યાંકન કસોટી 2 (SAT2)", unit: "%", direction: "higher", data_source: "Xamta bot", frequency: "Yearly", displayStrategy: "snapshot_latest", scheduleNote: "March", metrics: resultSubMetrics("SAT2", "%", "avgScore", "Avg score", "સરેરાશ સ્કોર"), formula: "SAT2 Result % (current year); year-on-year change vs the previous SAT2." },
+  { id: "asm_orf", domain_id: "assessment", name: "FLN - Oral Reading Fluency", name_gu: "FLN - મૌખિક વાચન પ્રવાહ", unit: "score", direction: "higher", data_source: "Oral Reading Fluency (ORF) Bot", availableInDataLake: false, frequency: "Monthly", displayStrategy: "snapshot_latest", metrics: resultSubMetrics("ORF", "score", "cwpm", "CWPM score", "CWPM સ્કોર"), formula: "Correct Words Per Minute (CWPM) score; year-on-year change from the latest ORF tests." },
+  { id: "asm_cet", domain_id: "assessment", name: "Common Entrance Test (CET)", name_gu: "કોમન એન્ટ્રન્સ ટેસ્ટ (CET)", unit: "%", direction: "higher", data_source: "Common Entrance Test (CET) Portal", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", roleVisibility: [...NON_TEACHER], metrics: [
+    { id: "result", label: "Result", label_gu: "પરિણામ", unit: "%", direction: "higher", formula: "CET Result % for the current year (Year N).", formula_gu: "ચાલુ વર્ષ (વર્ષ N) માટે CET પરિણામ %." },
+    { id: "participation", label: "Participation", label_gu: "સહભાગિતા", unit: "%", direction: "higher", formula: "Class-5 students present for exam ÷ total enrolled in Class 5 × 100.", formula_gu: "પરીક્ષામાં હાજર ધોરણ 5 ના વિદ્યાર્થીઓ ÷ ધોરણ 5 ની કુલ નોંધણી × 100." },
+  ], formula: "CET Result % (current year); year-on-year change. Class-5 participation = Present / Enrolled × 100." },
+  { id: "asm_cgms", domain_id: "assessment", name: "Chief Minister Gyan Sadhna Merit Scholarship (CGMS)", name_gu: "મુખ્યમંત્રી જ્ઞાન સાધના મેરિટ શિષ્યવૃત્તિ (CGMS)", unit: "%", direction: "higher", data_source: "CGMS Portal", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", roleVisibility: [...NON_TEACHER], metrics: [
+    { id: "result", label: "Result", label_gu: "પરિણામ", unit: "%", direction: "higher", formula: "CGMS Result % for the current year (Year N).", formula_gu: "ચાલુ વર્ષ (વર્ષ N) માટે CGMS પરિણામ %." },
+    { id: "participation", label: "Participation", label_gu: "સહભાગિતા", unit: "%", direction: "higher", formula: "Class-8 students present for exam ÷ total enrolled in Class 8 × 100.", formula_gu: "પરીક્ષામાં હાજર ધોરણ 8 ના વિદ્યાર્થીઓ ÷ ધોરણ 8 ની કુલ નોંધણી × 100." },
+  ], formula: "CGMS Result % (current year); year-on-year change. Class-8 participation = Present / Enrolled × 100." },
 
   // ── Administration · School Observation (Monthly · SMA · officer-only) ──
-  { id: "vis_crc_count", domain_id: "administration", sub_domain: "adm_visits", name: "No of CRC/URC Visits per school", name_gu: "શાળા દીઠ CRC/URC મુલાકાતની સંખ્યા", unit: "ratio", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "count_with_rate", hero: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER], target: "Max 2 / month", formula: "Count of CRC/URC visits per school per month (max 2).", description: "A count out of 2 per month — not a percentage." },
-  { id: "vis_obs_completion", domain_id: "administration", sub_domain: "adm_visits", name: "School observations completed by CRC/URC", name_gu: "CRC/URC દ્વારા પૂર્ણ શાળા નિરીક્ષણ", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "Schools observed at least once that month / Total schools (classes 1–8) × 100" },
-  { id: "vis_ict", domain_id: "administration", sub_domain: "adm_visits", name: "ICT Lab Usage in Schools", name_gu: "શાળાઓમાં ICT લેબ ઉપયોગ", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "Active ICT Labs / Total ICT Labs × 100 (latest visit)" },
-  { id: "vis_library", domain_id: "administration", sub_domain: "adm_visits", name: "Library usage in Schools", name_gu: "શાળાઓમાં પુસ્તકાલય ઉપયોગ", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "Active Libraries / Total Schools × 100 (latest visit)" },
-  { id: "vis_urinals", domain_id: "administration", sub_domain: "adm_visits", name: "Urinals & Toilets Availability in Schools", name_gu: "શાળાઓમાં મૂત્રાલય અને શૌચાલય ઉપલબ્ધતા", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "Schools with Functional Urinals & Toilets / Total Schools × 100" },
-  { id: "vis_handwash", domain_id: "administration", sub_domain: "adm_visits", name: "Handwash Availability in Schools", name_gu: "શાળાઓમાં હાથ ધોવાની ઉપલબ્ધતા", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "Schools with Handwash Facility Outside Toilet / Total Schools × 100" },
-  { id: "vis_water", domain_id: "administration", sub_domain: "adm_visits", name: "Drinking Water Availability in Schools", name_gu: "શાળાઓમાં પીવાના પાણીની ઉપલબ્ધતા", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "Schools with Drinking Water Facility / Total Schools × 100" },
-  { id: "vis_smc", domain_id: "administration", sub_domain: "adm_visits", name: "Schools Conducting SMC Meetings", name_gu: "SMC બેઠક યોજતી શાળાઓ", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "SMC Meetings Conducted / Total Schools × 100 (latest status)" },
+  { id: "vis_crc_count", domain_id: "administration", sub_domain: "adm_visits", name: "No of CRC/URC Visits per school", name_gu: "શાળા દીઠ CRC/URC મુલાકાતની સંખ્યા", unit: "ratio", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "count_with_rate", hero: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, target: "Max 2 / month", formula: "Count of CRC/URC visits per school per month (max 2).", description: "A count out of 2 per month — not a percentage." },
+  { id: "vis_obs_completion", domain_id: "administration", sub_domain: "adm_visits", name: "School observations completed by CRC/URC", name_gu: "CRC/URC દ્વારા પૂર્ણ શાળા નિરીક્ષણ", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "Schools observed at least once that month / Total schools (classes 1–8) × 100" },
+  { id: "vis_ict", domain_id: "administration", sub_domain: "adm_visits", name: "Schools using ICT Labs (%)", name_gu: "ICT લેબ વાપરતી શાળાઓ (%)", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "Active ICT Labs / Total ICT Labs × 100 (latest visit)" },
+  { id: "vis_library", domain_id: "administration", sub_domain: "adm_visits", name: "Schools using Library (%)", name_gu: "પુસ્તકાલય વાપરતી શાળાઓ (%)", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "Active Libraries / Total Schools × 100 (latest visit)" },
+  { id: "vis_urinals", domain_id: "administration", sub_domain: "adm_visits", name: "Urinals & Toilets Availability in Schools", name_gu: "શાળાઓમાં મૂત્રાલય અને શૌચાલય ઉપલબ્ધતા", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "Schools with Functional Urinals & Toilets / Total Schools × 100" },
+  { id: "vis_handwash", domain_id: "administration", sub_domain: "adm_visits", name: "Handwash Availability in Schools", name_gu: "શાળાઓમાં હાથ ધોવાની ઉપલબ્ધતા", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "Schools with Handwash Facility Outside Toilet / Total Schools × 100" },
+  { id: "vis_water", domain_id: "administration", sub_domain: "adm_visits", name: "Drinking Water Availability in Schools", name_gu: "શાળાઓમાં પીવાના પાણીની ઉપલબ્ધતા", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "Schools with Drinking Water Facility / Total Schools × 100" },
+  { id: "vis_smc", domain_id: "administration", sub_domain: "adm_visits", name: "Schools Conducting SMC Meetings", name_gu: "SMC બેઠક યોજતી શાળાઓ", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "SMC Meetings Conducted / Total Schools × 100 (latest status)" },
 
   // ── Administration · Classroom Observation (Monthly · SMA · officer-only) ──
-  { id: "vis_classroom_obs", domain_id: "administration", sub_domain: "adm_classroom", name: "Schools Visited for Classroom Observation", name_gu: "વર્ગખંડ નિરીક્ષણ માટે મુલાકાત લીધેલ શાળાઓ", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "Unique schools where a classroom was observed / Total Schools × 100 (latest visit)" },
-  { id: "vis_lesson_plan", domain_id: "administration", sub_domain: "adm_classroom", name: "Classrooms following monthly lesson plans", name_gu: "માસિક પાઠ યોજના અનુસરતા વર્ગખંડો", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "'Yes' classrooms / Completed Classroom Observations × 100" },
-  { id: "vis_teacher_diary", domain_id: "administration", sub_domain: "adm_classroom", name: "Classrooms with Completed Teacher Diaries", name_gu: "પૂર્ણ શિક્ષક ડાયરી ધરાવતા વર્ગખંડો", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "'Yes' classrooms / Completed Classroom Observations × 100" },
+  { id: "vis_classroom_obs", domain_id: "administration", sub_domain: "adm_classroom", name: "Schools Visited for Classroom Observation", name_gu: "વર્ગખંડ નિરીક્ષણ માટે મુલાકાત લીધેલ શાળાઓ", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "Unique schools where a classroom was observed / Total Schools × 100 (latest visit)" },
+  { id: "vis_lesson_plan", domain_id: "administration", sub_domain: "adm_classroom", name: "Classrooms following monthly lesson plans", name_gu: "માસિક પાઠ યોજના અનુસરતા વર્ગખંડો", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "'Yes' classrooms / Completed Classroom Observations × 100" },
+  { id: "vis_teacher_diary", domain_id: "administration", sub_domain: "adm_classroom", name: "Classrooms with Completed Teacher Diaries", name_gu: "પૂર્ણ શિક્ષક ડાયરી ધરાવતા વર્ગખંડો", unit: "%", direction: "higher", data_source: SMA, availableInDataLake: false, frequency: "Monthly", displayStrategy: "compliance", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "'Yes' classrooms / Completed Classroom Observations × 100" },
 
   // ── Administration · Student Retention (CTS + EWS) ──
-  { id: "ret_dropout", domain_id: "administration", sub_domain: "adm_retention", name: "Identified Dropout Students", name_gu: "ઓળખાયેલ ડ્રોપઆઉટ વિદ્યાર્થીઓ", unit: "count", direction: "lower", data_source: "CTS + EWS", availableInDataLake: false, frequency: "Daily", displayStrategy: "count_with_rate", topIndicator: true, lowestLevel: "school", formula: "Current Enrolment of classes [Lowest+1 to Highest] − Last-Year Enrolment of classes [Lowest to Highest−1]. Absolute count, summed up the hierarchy." },
-  { id: "ret_reenroll", domain_id: "administration", sub_domain: "adm_retention", name: "Re-enrolment of Out-of-School Students", name_gu: "શાળા બહારના વિદ્યાર્થીઓની પુનઃનોંધણી", unit: "%", direction: "higher", data_source: "CTS + EWS", availableInDataLake: false, frequency: "Half yearly", displayStrategy: "compliance", topIndicator: true, lowestLevel: "school", dataLagNote: "Half-yearly; confirmed at the start of the next year from CTS, so expect a data lag.", formula: "Students Enrolled via Back-to-School Initiative / Total Flagged × 100" },
+  { id: "ret_dropout", domain_id: "administration", sub_domain: "adm_retention", name: "Identified Dropout Students", name_gu: "ઓળખાયેલ ડ્રોપઆઉટ વિદ્યાર્થીઓ", unit: "count", direction: "lower", data_source: "CTS + EWS", availableInDataLake: false, frequency: "Daily", displayStrategy: "count_with_rate", topIndicator: true, lowestLevel: "school", showLastUpdatedOnUi: true, formula: "Current Enrolment of classes [Lowest+1 to Highest] − Last-Year Enrolment of classes [Lowest to Highest−1]. Absolute count, summed up the hierarchy." },
+  { id: "ret_reenroll", domain_id: "administration", sub_domain: "adm_retention", name: "Re-enrolment of Out-of-School Students", name_gu: "શાળા બહારના વિદ્યાર્થીઓની પુનઃનોંધણી", unit: "%", direction: "higher", data_source: "CTS + EWS", availableInDataLake: false, frequency: "Half yearly", displayStrategy: "compliance", topIndicator: true, lowestLevel: "school", showLastUpdatedOnUi: true, dataLagNote: "Half-yearly; confirmed at the start of the next year from CTS, so expect a data lag.", formula: "Students Enrolled via Back-to-School Initiative / Total Flagged × 100" },
 
   // ── Administration · Continuous Professional Development (PLC · Yearly) ──
-  { id: "cpd_hours", domain_id: "administration", sub_domain: "adm_cpd", name: "Average CPD Time Per Teacher", name_gu: "શિક્ષક દીઠ સરેરાશ CPD સમય", unit: "hours", direction: "higher", data_source: "PLC", availableInDataLake: false, pmShriApplicable: false, frequency: "Yearly", displayStrategy: "compliance", lowestLevel: "school", formula: "Average TPD hours per enrolled teacher on PLC (capped at 50 hours)." },
-  { id: "cpd_50", domain_id: "administration", sub_domain: "adm_cpd", name: "Teachers Achieving the 50-Hour CPD Target", name_gu: "50-કલાક CPD લક્ષ્ય હાંસલ કરનાર શિક્ષકો", unit: "%", direction: "higher", data_source: "PLC", availableInDataLake: false, pmShriApplicable: false, frequency: "Yearly", displayStrategy: "compliance", lowestLevel: "school", formula: "Teachers Who Completed 50 Hours / Total Teachers × 100" },
+  { id: "cpd_hours", domain_id: "administration", sub_domain: "adm_cpd", name: "Average CPD Time Per Teacher", name_gu: "શિક્ષક દીઠ સરેરાશ CPD સમય", unit: "hours", direction: "higher", data_source: "PLC", availableInDataLake: false, pmShriApplicable: false, frequency: "Yearly", displayStrategy: "compliance", lowestLevel: "school", showLastUpdatedOnUi: true, formula: "Average TPD hours per enrolled teacher on PLC (capped at 50 hours)." },
+  { id: "cpd_50", domain_id: "administration", sub_domain: "adm_cpd", name: "Teachers Achieving the 50-Hour CPD Target", name_gu: "50-કલાક CPD લક્ષ્ય હાંસલ કરનાર શિક્ષકો", unit: "%", direction: "higher", data_source: "PLC", availableInDataLake: false, pmShriApplicable: false, frequency: "Yearly", displayStrategy: "compliance", lowestLevel: "school", showLastUpdatedOnUi: true, formula: "Teachers Who Completed 50 Hours / Total Teachers × 100" },
 
   // ── School Quality (OUTPUT) — REAL GSQAC · annual · school-and-above ──
   { id: "sq_gsqac", domain_id: "school_quality", name: "GSQAC score", name_gu: "GSQAC સ્કોર", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", hero: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER], formula: "Latest GSQAC school score; averaged per hierarchy level. Colour by GSQAC grade. 5 GSQAC domains converge into the overall score." },
-  { id: "sq_d1", domain_id: "school_quality", name: "Teaching & Learning", name_gu: "અધ્યયન અને અધ્યાપન", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
-  { id: "sq_d2", domain_id: "school_quality", name: "School Management", name_gu: "શાળા વ્યવસ્થાપન", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
-  { id: "sq_d3", domain_id: "school_quality", name: "Co-curricular activities", name_gu: "સહઅભ્યાસિક પ્રવૃત્તિઓ", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
-  { id: "sq_d4", domain_id: "school_quality", name: "Use of Resources", name_gu: "સંસાધનોનો ઉપયોગ", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
-  { id: "sq_d5", domain_id: "school_quality", name: "Exam Participation", name_gu: "પરીક્ષામાં સહભાગિતા", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
+  { id: "sq_d1", domain_id: "school_quality", name: "Learning & Teaching", name_gu: "અધ્યયન અને અધ્યાપન", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
+  { id: "sq_d2", domain_id: "school_quality", name: "School Administration", name_gu: "શાળા વહીવટ", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
+  { id: "sq_d3", domain_id: "school_quality", name: "Co-curricular Activities", name_gu: "સહઅભ્યાસિક પ્રવૃત્તિઓ", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
+  { id: "sq_d4", domain_id: "school_quality", name: "Resources & their Use", name_gu: "સંસાધનો અને તેનો ઉપયોગ", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
+  { id: "sq_d5", domain_id: "school_quality", name: "Participation in Scholarships", name_gu: "શિષ્યવૃત્તિમાં સહભાગિતા", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
 ];
 
 const CATALOG: CatItem[] = RAW.map((o) => ({ availableInDataLake: true, pmShriApplicable: true, ...o }));
@@ -145,11 +200,11 @@ export const VSK_KPIS: KpiDef[] = CATALOG.map((item, i) => ({
 
 /** GSQAC's 5 output domains (keys match the real CSV). */
 export const GSQAC_DOMAINS: { key: string; kpiId: string; name: string; name_gu: string }[] = [
-  { key: "D1", kpiId: "sq_d1", name: "Teaching & Learning", name_gu: "અધ્યયન અને અધ્યાપન" },
-  { key: "D2", kpiId: "sq_d2", name: "School Management", name_gu: "શાળા વ્યવસ્થાપન" },
-  { key: "D3", kpiId: "sq_d3", name: "Co-curricular activities", name_gu: "સહઅભ્યાસિક પ્રવૃત્તિઓ" },
-  { key: "D4", kpiId: "sq_d4", name: "Use of Resources", name_gu: "સંસાધનોનો ઉપયોગ" },
-  { key: "D5", kpiId: "sq_d5", name: "Exam Participation", name_gu: "પરીક્ષામાં સહભાગિતા" },
+  { key: "D1", kpiId: "sq_d1", name: "Learning & Teaching", name_gu: "અધ્યયન અને અધ્યાપન" },
+  { key: "D2", kpiId: "sq_d2", name: "School Administration", name_gu: "શાળા વહીવટ" },
+  { key: "D3", kpiId: "sq_d3", name: "Co-curricular Activities", name_gu: "સહઅભ્યાસિક પ્રવૃત્તિઓ" },
+  { key: "D4", kpiId: "sq_d4", name: "Resources & their Use", name_gu: "સંસાધનો અને તેનો ઉપયોગ" },
+  { key: "D5", kpiId: "sq_d5", name: "Participation in Scholarships", name_gu: "શિષ્યવૃત્તિમાં સહભાગિતા" },
 ];
 
 /** Hero KPI ids — the homepage indicator per domain (one each), driven by `hero` in the

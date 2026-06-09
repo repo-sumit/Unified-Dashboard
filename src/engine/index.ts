@@ -15,7 +15,7 @@ import type {
 import { dataProvider, type RawSeries } from "@/data/provider";
 import { gradeFor } from "@/config/ratingBands";
 import { kpiApplies, kpiAppliesAtLevel } from "@/config/applicability";
-import { buildDomainScore, buildKpiRecord, buildOverall, scoreEntity } from "./score";
+import { buildDomainScore, buildKpiRecord, buildOverall, metricKpiDef, scoreEntity } from "./score";
 import { buildLeaderboard } from "./leaderboard";
 import { isImproving } from "./story";
 import { kpiCascade, overallCascade } from "./rollup";
@@ -171,6 +171,22 @@ export function getKpiRecord(fw: FrameworkConfig, kpiId: string, entityId: strin
   const kpi = fw.kpis.find((k) => k.id === kpiId);
   if (!entity || !kpi) return null;
   return buildKpiRecord(kpi, entity, dataProvider.getValueSeries(entity, kpi, periods), periods);
+}
+
+// ── Multi-metric sub-records ─────────────────────────────────────────────
+/** The per-sub-metric records of a multi-metric indicator (SAT1/SAT2/ORF/CET/CGMS),
+ *  in declaration order (metrics[0] is the primary). Each is a full KpiRecord built
+ *  from a deterministic provider series, so it carries its own value, benchmark,
+ *  trend and delta — and `peerAvg(metricId, level)` resolves its N+1. Empty for
+ *  single-metric indicators. */
+export function getKpiMetricRecords(fw: FrameworkConfig, kpiId: string, entityId: string, periods: Period[]): KpiRecord[] {
+  const entity = dataProvider.getEntity(entityId);
+  const kpi = fw.kpis.find((k) => k.id === kpiId);
+  if (!entity || !kpi?.metrics?.length) return [];
+  return kpi.metrics.map((m) => {
+    const mk = metricKpiDef(kpi, m);
+    return buildKpiRecord(mk, entity, dataProvider.getValueSeries(entity, mk, periods), periods);
+  });
 }
 
 // ── Leaderboards ───────────────────────────────────────────────────────

@@ -53,7 +53,7 @@ export const en = {
     whatChanged: "What changed this week", steady: "Steady week, no major movement.",
     overallMoved: "Overall {delta} this week", led: "led by {kpi}",
     breakdown: "Score breakdown", weightPlaceholder: "Weightages: placeholder",
-    inputComposite: "Input composite", inputs: "Success Indicators", domainsHeader: "Domain", output: "Output", annual: "annual",
+    inputComposite: "Input composite", inputs: "Success Indicators", domainsHeader: "Domain", output: "Output", annual: "annual", gsqacScore: "GSQAC Score",
     vsLastCycle: "vs last cycle", inputsDriveOutput: "Improve the 3 inputs → School Quality rises",
     netOver30: "{delta} over {n} days",
     ahead: "ahead", behind: "behind", subDomains: "Sub-domains", indicators: "Indicators",
@@ -67,7 +67,7 @@ export const en = {
     deltaWeek: "Δ this week", deltaMonth: "Δ this month", deltaCycle: "Δ this cycle", deltaTime: "Δ this time", deltaYear: "Δ this year",
     pWeek: "today", pMonth: "this month", pCycle: "this cycle", pTime: "this half-year", pYear: "this year",
     formula: "How it's calculated", frequencyLabel: "Updated", lowestLevelNote: "Lowest level: {level}",
-    latestOn: "Latest: {date}", asOn: "As on {date}", latestAvailable: "Latest available", currentMonth: "Current month", currentCycle: "Current cycle", currentHalf: "Current half-year", currentYear: "Current year",
+    latestOn: "Latest: {date}", asOn: "As on {date}", asOnShort: "as on {date}", latestAvailable: "Latest available", currentMonth: "Current month", currentCycle: "Current cycle", currentHalf: "Current half-year", currentYear: "Current year",
   },
   cascade: { title: "Performance comparison", subtitle: "{name} across every level, Section to State", overall: "Overall score across levels" },
   compare: {

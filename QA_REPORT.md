@@ -1,5 +1,40 @@
 # Unified Portal — QA Report
 
+## Multi-metric indicator cards + sheet-driven last-updated labels
+
+**Sheet version used:** `Docs/GJ _ Unified App KPIs.xlsx` (the re-uploaded `GJ _ Unified App KPIs(10).xlsx`, Sheet1, 28 indicators across Attendance / Assessment / Administration / School Quality). Re-parsed columns: `Indicator`, `Data Source`, `Formula/Logic`, `Delta`, `Visible to School (HM)/Teacher`, **`Show Last Updated on UI`**.
+
+### 1 · School Quality eyebrow → `GSQAC Score`
+[GsqacSummaryCard.tsx](app/src/components/ui/GsqacSummaryCard.tsx): the homepage School Quality card eyebrow changed from `OUTPUT · ANNUAL` to **`GSQAC Score`** (new i18n key `scorecard.gsqacScore`, en + gu). The header now reads **School Quality / GSQAC Score**. GSQAC score, grade, N+1, D1–D5, grade colours and routing are untouched.
+
+### 2 · `SAT reports downloaded in classrooms` → `as on <date>` (no delta)
+The sheet's Delta column is blank for this row, so it now shows **`as on 9 Jun`** (variable working date, never hardcoded) instead of `↘ 0.2 today`. Driven by a config flag `suppressDelta` on `asm_remediation` (not an ID check in the UI). Applied to: homepage Assessment domain card ([DomainSummaryCard.tsx](app/src/components/ui/DomainSummaryCard.tsx)), Assessment domain page card ([KpiCard.tsx](app/src/components/ui/KpiCard.tsx)), KPI detail header ([KpiDetail.tsx](app/src/screens/KpiDetail.tsx) — delta pill hidden, "As on 9 Jun" kept), and the Export indicator/summary delta cells ([Export.tsx](app/src/screens/Export.tsx)). Value + N+1 are preserved; value tone goes neutral (no hidden-delta colouring).
+
+### 3 · `Show Last Updated on UI` column drives the date/month/year label
+New shared helper [`getLastUpdatedLabel(kpi, date, lang)`](app/src/lib/trend.ts) maps cadence → label: **Daily → `9 Jun`** (working date) · **Monthly → `Jun 2026`** · **SAT1/SAT2 (scheduleNote) → `Sep 2025` / `Mar 2026`** · **Twice/Half-yearly → cycle month + year** · **Yearly/Annual → `2026`** · else → `Latest available`. The sheet flag `showLastUpdatedOnUi` (column H = Yes) gates whether the chip shows. Wired into `KpiCard`, `MultiMetricKpiCard`, and `KpiDetail` headers. No `Latest: 1 Jun` is shown anywhere (`kpi.latestOn` is unused).
+
+### 4–7 · Multi-metric indicator cards (SAT1 / SAT2 + ORF / CET / CGMS)
+Indicators whose Formula/Logic carries 2–3 metrics now render as a single **[MultiMetricKpiCard](app/src/components/ui/MultiMetricKpiCard.tsx)** instead of separate top-level cards:
+- **Schema** ([types/index.ts](app/src/types/index.ts)): `KpiMetricDef { id, label, label_gu, unit, direction, formula }` + `KpiDef.metrics?`. Config-driven — `SAT1/SAT2` → `Avg score · Below hierarchy avg · Participation`; `ORF` → `CWPM score · Below hierarchy avg · Participation`; `CET/CGMS` → `Result · Participation`. Re-audited from the sheet (not hardcoded to SAT only).
+- **Data** ([kpiCatalog.ts](app/src/config/kpiCatalog.ts) `METRIC_PUBLISHED`, [mockProvider.ts](app/src/data/provider/mockProvider.ts)): each sub-metric has its own per-level anchor under `<parentId>__<metricId>` and flows through the **existing** value/benchmark/trend/PM-Shri machinery. No values hardcoded in UI components (§9/§12). [score.ts `metricKpiDef`](app/src/engine/score.ts) synthesises a single-value KpiDef per metric; [engine `getKpiMetricRecords`](app/src/engine/index.ts) + [`useKpiMetrics`](app/src/hooks/index.ts) expose them.
+- **Card layout**: title → `Yearly · Sep 2025` chip → a primary metric row (label · big value · N+1 · delta · one sparkline) → the secondary metrics in a compact 2-up grid (small type, own N+1, direction-aware delta, tiny micro-sparkline). Each metric shows **value + N+1 + delta + compact trend**; calm palette (status hue for the primary spark, muted slate for the micro-sparks) to avoid clutter/colour overload.
+- **Lower-is-better** (§8): `Below hierarchy avg` uses `direction: "lower"`, so a fall reads **green** and a rise **red** (shared `deltaToneClass`). `Students absent 7+ days`, `Identified Dropout Students` keep their existing lower-is-better logic.
+
+### 8–10 · KPI detail for multi-metric indicators
+[KpiDetail.tsx](app/src/screens/KpiDetail.tsx): for SAT1/SAT2/ORF/CET/CGMS the page shows a **compact 3-up metric summary** at top, then **one trend chart per metric** (never a single chart that hides the others), then a clean **`How it's calculated`** breakdown listing each metric's plain-language formula (Avg % score / Below hierarchy avg / Participation). Frequency, source and last-updated stay visible. Single-metric detail pages are unchanged.
+
+### KPI / domain name reconciliation (per the latest sheet)
+- `att_chronic` → **Students absent from past 7+ days** · `att_report` → **Schools and Class Sections Submitting Attendance** · `vis_ict` → **Schools using ICT Labs (%)** · `vis_library` → **Schools using Library (%)**.
+- GSQAC D1–D5 display names aligned to the canonical GSQAC model + sheet: **Learning & Teaching · School Administration · Co-curricular Activities · Resources & their Use · Participation in Scholarships** (catalog `sq_d*` + `GSQAC_DOMAINS`, en + gu). GSQAC scores, grade bands, D1–D5 *values* and colours unchanged.
+
+**Files changed:** `types/index.ts`, `config/kpiCatalog.ts`, `lib/trend.ts`, `engine/score.ts`, `engine/index.ts`, `hooks/index.ts`, `components/ui/MultiMetricKpiCard.tsx` (new), `components/ui/KpiCard.tsx`, `components/ui/DomainSummaryCard.tsx`, `components/ui/GsqacSummaryCard.tsx`, `screens/KpiDetail.tsx`, `screens/DomainView.tsx`, `screens/Export.tsx`, `i18n/en.ts`, `i18n/gu.ts`, `QA_REPORT.md`.
+
+**Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+**Assumptions:** (a) `Show Last Updated on UI` (Yes/No) gates *whether* to show the label; the cadence/`scheduleNote` decides the *format*. (b) SAT/ORF/CET/CGMS sub-metric demo numbers are deterministic anchors (avg = parent value; below-hierarchy ~20–34%; participation ~84–95%) since the live data lake isn't wired — kept config-driven so swapping in real values is a data change. (c) `metrics` was applied to every Assessment indicator that clearly carries multiple formulas, not only SAT1/SAT2 (§6). No changes to access control, routing, PM-Shri, login, Compare selection, Export structure (only labels/date-context), GSQAC score/grade/D1–D5 logic, provider architecture, or the homepage top-indicator split.
+
+---
+
 ## Sub-domain scores + sub-domain summary card removed
 
 - **Sub-domain cards** ([DomainView.tsx](app/src/screens/DomainView.tsx)) — removed the aggregate score chip (e.g. 88% / 92% / 81% / 75%). Each sub-domain card now shows only the **name + "{n} Indicators"** + status dot + chevron (no progress bar, no score). Applies to every domain with sub-domains (Administration). Dropped the now-unused `valueToneClass`/`pct`/`cn` imports.

@@ -1,7 +1,7 @@
 import type { KpiRecord, Level } from "@/types";
 import { rag, deltaToneClass } from "@/lib/colors";
 import { peerAvg, peerLevelOf } from "@/lib/peer";
-import { buildTrend, cadenceOf, snapshotContextKey } from "@/lib/trend";
+import { buildTrend, cadenceOf, snapshotContextKey, getLastUpdatedLabel } from "@/lib/trend";
 import { getWorkingDateLabel } from "@/lib/format";
 import { useT, type Lang } from "@/i18n";
 import { Card } from "./atoms";
@@ -34,10 +34,13 @@ export function KpiCard({
   // KPIs like absentees flip — handled by deltaToneClass via kpi.direction), neutral when
   // flat. GSQAC keeps its grade/status tone (untouched).
   const isGsqac = kpi.id.startsWith("sq_");
-  const valueTone = isGsqac ? undefined : trend?.delta ? deltaToneClass(trend.delta, kpi.direction) : "text-neutral-900";
-  // Daily KPIs: show today's working date (Sat/Sun → previous Fri) next to the badge → "Daily · 9 Jun"
-  const isDaily = cadenceOf(kpi.frequency) === "daily";
-  const latestDate = isDaily ? getWorkingDateLabel(new Date(), lang) : null;
+  const valueTone = isGsqac ? undefined : !kpi.suppressDelta && trend?.delta ? deltaToneClass(trend.delta, kpi.direction) : "text-neutral-900";
+  // Sheet-driven last-updated context (§3): Daily → date · Monthly → month · Yearly → year.
+  // Shown next to the frequency badge whenever the sheet flags "Show Last Updated on UI".
+  const lastUpdated = kpi.showLastUpdatedOnUi ? getLastUpdatedLabel(kpi, new Date(), lang) : null;
+  // "SAT reports downloaded in classrooms" (and any blank-Delta sheet row): no delta text —
+  // show "as on <working date>" instead (§2). Treat today as a variable, never hardcoded.
+  const asOnLabel = kpi.suppressDelta ? (lastUpdated || getWorkingDateLabel(new Date(), lang)) : null;
 
   return (
     <Card
@@ -51,7 +54,7 @@ export function KpiCard({
           <span className="block text-sm font-bold leading-snug text-neutral-900">{name}</span>
           <span className="mt-1 flex flex-wrap items-center gap-1.5">
             <FrequencyBadge frequency={kpi.frequency} />
-            {latestDate && <span className="text-2xs font-medium text-neutral-400">· {latestDate}</span>}
+            {lastUpdated && !asOnLabel && <span className="text-2xs font-medium text-neutral-400">· {lastUpdated}</span>}
             {kpi.scheduleNote && <span className="text-2xs font-medium text-neutral-400">{kpi.scheduleNote}</span>}
           </span>
         </div>
@@ -61,9 +64,11 @@ export function KpiCard({
       {/* value + inline direction-aware frequency delta */}
       <div className="flex items-end justify-between gap-2">
         <ValueDisplay value={rec.value} unit={kpi.unit} status={rec.status} direction={kpi.direction} isDelta={isDelta} lang={lang} size="lg" toneClass={valueTone} />
-        {trend && !isDelta && trend.delta != null && trend.delta !== 0 && (
+        {asOnLabel ? (
+          <span className="pb-1 text-2xs font-semibold text-neutral-400">{t("kpi.asOnShort", { date: asOnLabel })}</span>
+        ) : trend && !isDelta && trend.delta != null && trend.delta !== 0 ? (
           <FrequencyDelta delta={trend.delta} unit={kpi.unit} direction={kpi.direction} cadence={trend.cadence} lang={lang} className="pb-1" />
-        )}
+        ) : null}
       </div>
 
       {/* frequency-appropriate trend graph (snapshot indicators show a cycle context line instead) */}

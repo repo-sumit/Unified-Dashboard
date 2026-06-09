@@ -1,7 +1,7 @@
-import type { Frequency, KpiRecord, Unit } from "@/types";
+import type { Frequency, KpiDef, KpiRecord, Unit } from "@/types";
 import { noise } from "@/data/prng";
 import { CURRENT_PERIOD } from "@/config";
-import { locNum } from "@/lib/format";
+import { locNum, getWorkingDateLabel } from "@/lib/format";
 import type { Lang } from "@/i18n";
 
 /**
@@ -67,6 +67,42 @@ const PERIOD_KEY: Record<Cadence, string> = {
 };
 export function periodLabelKey(c: Cadence): string {
   return PERIOD_KEY[c];
+}
+
+const MONTH_ABBR = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+function monthIndexOf(note: string): number {
+  return MONTH_ABBR.indexOf(note.trim().slice(0, 3).toLowerCase());
+}
+
+/**
+ * Sheet-driven "last updated" context label (§3/§11). The sheet's `Show Last Updated
+ * on UI` column says WHETHER to show it; the cadence (+ `scheduleNote`) says HOW:
+ *   Daily   → working date    e.g. "9 Jun"   (Sat/Sun → previous Fri)
+ *   Monthly → month + year    e.g. "Jun 2026"
+ *   SAT1/SAT2 (scheduleNote)  → schedule month + cycle year  e.g. "Sep 2025" / "Mar 2026"
+ *   Twice / Half-yearly       → latest cycle month + year
+ *   Yearly / Annual           → year            e.g. "2026"
+ *   Latest / unknown          → "" (caller falls back to "Latest available")
+ * Returns a bare label (no prefix) so callers can wrap it ("as on …", "Yearly · …").
+ */
+export function getLastUpdatedLabel(kpi: KpiDef, date: Date, lang: Lang): string {
+  const cadence = cadenceOf(kpi.frequency);
+  const months = lang === "gu" ? MONTHS_GU : MONTHS_EN;
+  if (cadence === "daily") return getWorkingDateLabel(date, lang);
+  // an explicit schedule month (SAT1 September, SAT2 March) wins for snapshot tests:
+  // pick the most-recent occurrence of that month relative to today.
+  if (kpi.scheduleNote) {
+    const mi = monthIndexOf(kpi.scheduleNote);
+    if (mi >= 0) {
+      const y = mi <= date.getMonth() ? date.getFullYear() : date.getFullYear() - 1;
+      return `${months[mi]} ${locNum(y, lang)}`;
+    }
+  }
+  if (cadence === "monthly" || cadence === "twice" || cadence === "half") {
+    return `${months[date.getMonth()]} ${locNum(date.getFullYear(), lang)}`;
+  }
+  if (cadence === "yearly") return locNum(date.getFullYear(), lang);
+  return "";
 }
 
 /** i18n key for a snapshot/cycle context line (for indicators with no time trend). */

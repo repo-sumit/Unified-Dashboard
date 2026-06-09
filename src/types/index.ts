@@ -103,6 +103,24 @@ export interface SubDomainDef {
   name_gu: string;
 }
 
+/**
+ * One logical metric inside a MULTI-METRIC indicator (e.g. SAT1 carries Avg score,
+ * Below-hierarchy-avg and Participation in its Formula/Logic column). Config-driven:
+ * a sub-metric is rendered as a compact row/tile inside the parent indicator's card,
+ * never as a separate top-level indicator. `id` is suffixed onto the parent KPI id
+ * (`asm_sat1__participation`) so the provider can resolve a deterministic series for it.
+ */
+export interface KpiMetricDef {
+  id: string;
+  label: string;
+  label_gu: string;
+  unit: Unit;
+  direction: Direction;
+  /** plain-language formula line (shown in the parent's "How it's calculated"). */
+  formula?: string;
+  formula_gu?: string;
+}
+
 /** domains table. */
 export interface DomainDef {
   id: string;
@@ -165,6 +183,16 @@ export interface KpiDef {
   noTrend?: boolean;
   /** a fixed schedule/month note shown as context (e.g. SAT1 "September", SAT2 "March"). */
   scheduleNote?: string;
+  /** MULTI-METRIC indicator: 2–3 logical metrics inside one indicator card (the
+   *  sheet's Formula/Logic column). When present the indicator renders as a
+   *  `MultiMetricKpiCard` (compact sub-metric tiles), not a single-value card. */
+  metrics?: KpiMetricDef[];
+  /** sheet column "Show Last Updated on UI" (Yes ⇒ true): show a frequency-aware
+   *  last-updated context label (Daily → date · Monthly → month · Yearly → year). */
+  showLastUpdatedOnUi?: boolean;
+  /** suppress the delta text and show an "as on <date>" context instead (sheet rows
+   *  with a blank Delta column, e.g. "SAT reports downloaded in classrooms"). */
+  suppressDelta?: boolean;
   /** plain-language formula + numerator/denominator (shown in Indicator Detail). */
   formula?: string;
   numerator?: string;

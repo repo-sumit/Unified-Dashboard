@@ -2,7 +2,8 @@ import { cn } from "@/lib/cn";
 import type { DomainScore, KpiRecord, Level } from "@/types";
 import { accent, deltaToneClass } from "@/lib/colors";
 import { peerAvg } from "@/lib/peer";
-import { buildTrend } from "@/lib/trend";
+import { buildTrend, getLastUpdatedLabel } from "@/lib/trend";
+import { getWorkingDateLabel } from "@/lib/format";
 import { useT } from "@/i18n";
 import { Card } from "./atoms";
 import { Icon, ChevronRight } from "./Icon";
@@ -46,11 +47,18 @@ export function DomainSummaryCard({
   const direction = useHero ? heroRec!.kpi.direction : "higher";
   const peerScore = useHero ? (level ? peerAvg(heroRec!.kpi.id, level) : null) : (parentPercent ?? null);
   const deltaVal = useHero ? (trend?.delta ?? null) : (delta ?? null);
-  const deltaEl = deltaVal != null && deltaVal !== 0
-    ? <FrequencyDelta delta={deltaVal} unit={unit} direction={direction} cadence={trend?.cadence ?? "daily"} showPeriod={useHero} lang={lang} className="pb-1" />
-    : null;
-  // main value colour follows delta direction (up=green / down=red, direction-aware), neutral when flat
-  const valueTone = deltaVal ? deltaToneClass(deltaVal, direction) : "text-neutral-900";
+  // SAT-reports-style indicators (blank-Delta sheet rows): show "as on <date>" instead
+  // of a delta, here on the homepage domain card too (§2).
+  const suppressDelta = useHero && !!heroRec!.kpi.suppressDelta;
+  const asOnLabel = suppressDelta ? (getLastUpdatedLabel(heroRec!.kpi, new Date(), lang) || getWorkingDateLabel(new Date(), lang)) : null;
+  const deltaEl = asOnLabel
+    ? <span className="pb-1 text-2xs font-semibold text-neutral-400">{t("kpi.asOnShort", { date: asOnLabel })}</span>
+    : deltaVal != null && deltaVal !== 0
+      ? <FrequencyDelta delta={deltaVal} unit={unit} direction={direction} cadence={trend?.cadence ?? "daily"} showPeriod={useHero} lang={lang} className="pb-1" />
+      : null;
+  // main value colour follows delta direction (up=green / down=red, direction-aware), neutral
+  // when flat — or when the delta is suppressed (as-on-date indicators stay neutral).
+  const valueTone = !asOnLabel && deltaVal ? deltaToneClass(deltaVal, direction) : "text-neutral-900";
 
   if (variant === "page") {
     return (

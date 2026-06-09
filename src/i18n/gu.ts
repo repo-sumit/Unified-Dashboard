@@ -55,7 +55,7 @@ export const gu: Dict = {
     whatChanged: "આ અઠવાડિયે શું બદલાયું", steady: "સ્થિર અઠવાડિયું, કોઈ મોટો ફેરફાર નહીં.",
     overallMoved: "આ અઠવાડિયે એકંદર {delta}", led: "{kpi} દ્વારા",
     breakdown: "સ્કોર વિભાજન", weightPlaceholder: "વેઇટેજ: પ્લેસહોલ્ડર",
-    inputComposite: "ઇનપુટ સંયુક્ત", inputs: "ઇનપુટ · આના પર પગલાં લો", domainsHeader: "ડોમેન", output: "પરિણામ", annual: "વાર્ષિક",
+    inputComposite: "ઇનપુટ સંયુક્ત", inputs: "ઇનપુટ · આના પર પગલાં લો", domainsHeader: "ડોમેન", output: "પરિણામ", annual: "વાર્ષિક", gsqacScore: "GSQAC સ્કોર",
     vsLastCycle: "ગયા ચક્ર સામે", inputsDriveOutput: "3 ઇનપુટ સુધારો → શાળા ગુણવત્તા વધે",
     netOver30: "{n} દિવસમાં {delta}",
     ahead: "આગળ", behind: "પાછળ", subDomains: "ઉપ-ડોમેન", indicators: "સૂચકો",
@@ -69,7 +69,7 @@ export const gu: Dict = {
     deltaWeek: "Δ આ અઠવાડિયે", deltaMonth: "Δ આ મહિને", deltaCycle: "Δ આ ચક્ર", deltaTime: "Δ આ વખતે", deltaYear: "Δ આ વર્ષ",
     pWeek: "આ દિવસે", pMonth: "આ મહિને", pCycle: "આ ચક્ર", pTime: "આ અર્ધવર્ષ", pYear: "આ વર્ષ",
     formula: "ગણતરી કેવી રીતે થાય", frequencyLabel: "અપડેટ", lowestLevelNote: "સૌથી નીચું સ્તર: {level}",
-    latestOn: "છેલ્લે: {date}", asOn: "{date} ના રોજ", latestAvailable: "છેલ્લે ઉપલબ્ધ", currentMonth: "આ મહિનો", currentCycle: "આ ચક્ર", currentHalf: "આ અર્ધવર્ષ", currentYear: "આ વર્ષ",
+    latestOn: "છેલ્લે: {date}", asOn: "{date} ના રોજ", asOnShort: "{date} ના રોજ", latestAvailable: "છેલ્લે ઉપલબ્ધ", currentMonth: "આ મહિનો", currentCycle: "આ ચક્ર", currentHalf: "આ અર્ધવર્ષ", currentYear: "આ વર્ષ",
   },
   cascade: { title: "પ્રદર્શન સરખામણી", subtitle: "{name} દરેક સ્તરે · વિભાગથી રાજ્ય સુધી", overall: "સ્તરો વચ્ચે એકંદર સ્કોર" },
   compare: {

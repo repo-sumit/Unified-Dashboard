@@ -53,6 +53,7 @@ export default function Export() {
   const heroDeltaInfo = (d: DomainScore): DeltaInfo | null => {
     const h = heroOf(d);
     if (!h || h.value == null) return null;
+    if (h.kpi.suppressDelta) return null; // as-on-date indicators show no delta (§2)
     if (isGsqacHero(h)) return improvement != null && improvement !== 0 ? { v: improvement, unit: "%", direction: "higher", cadence: "yearly" } : null;
     const tr = buildTrend(h, lang);
     return tr.delta != null && tr.delta !== 0 ? { v: tr.delta, unit: h.kpi.unit, direction: h.kpi.direction, cadence: tr.cadence } : null;
@@ -70,6 +71,7 @@ export default function Export() {
   };
   const indicatorDeltaInfo = (rec: KpiRecord): DeltaInfo | null => {
     if (rec.value == null) return null;
+    if (rec.kpi.suppressDelta) return null; // as-on-date indicators show no delta (§2)
     if (PERIODIC.has(rec.kpi.frequency ?? "")) return rec.deltaWoW != null && rec.deltaWoW !== 0 ? { v: rec.deltaWoW, unit: rec.kpi.unit, direction: rec.kpi.direction, cadence: "daily" } : null;
     if (rec.kpi.id.startsWith("sq_")) return improvement != null && improvement !== 0 ? { v: improvement, unit: "%", direction: "higher", cadence: "yearly" } : null;
     return null;

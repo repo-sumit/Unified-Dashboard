@@ -47,7 +47,7 @@ export function GsqacSummaryCard({
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-tint-pinkBg"><Icon name="Award" className="text-pink-600" size={18} /></span>
           <span className="min-w-0">
             <span className="block truncate text-sm font-bold text-neutral-900">{tn(output.domain.name, output.domain.name_gu)}</span>
-            <span className="block text-2xs font-semibold uppercase tracking-wide text-neutral-400">{t("scorecard.output")} · {t("scorecard.annual")}</span>
+            <span className="block text-2xs font-semibold uppercase tracking-wide text-neutral-400">{t("scorecard.gsqacScore")}</span>
           </span>
         </span>
         {clickable && <ChevronRight size={16} className="shrink-0 text-neutral-300 transition-transform group-hover:translate-x-0.5" />}

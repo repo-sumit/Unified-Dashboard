@@ -5,6 +5,7 @@ import { dataProvider } from "@/data/provider";
 import {
   getChildLeaderboard,
   getKpiCascade,
+  getKpiMetricRecords,
   getKpiRecord,
   getOverallBenchmark,
   getOverallCascade,
@@ -76,6 +77,16 @@ export function useKpiRecord(kpiId: string | undefined, entityId: string | null 
   return useMemo(() => {
     dataProvider.setSchoolFilter(pmShri);
     return kpiId && entityId ? getKpiRecord(fw, kpiId, entityId, PERIODS) : null;
+  }, [fw, kpiId, entityId, pmShri]);
+}
+
+/** the sub-metric records of a multi-metric indicator (empty for single-metric). */
+export function useKpiMetrics(kpiId: string | undefined, entityId: string | null | undefined) {
+  const fw = useFramework();
+  const pmShri = usePmShri();
+  return useMemo(() => {
+    dataProvider.setSchoolFilter(pmShri);
+    return kpiId && entityId ? getKpiMetricRecords(fw, kpiId, entityId, PERIODS) : [];
   }, [fw, kpiId, entityId, pmShri]);
 }
 
