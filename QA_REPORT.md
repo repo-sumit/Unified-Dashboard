@@ -1,5 +1,19 @@
 # Unified Portal — QA Report
 
+## Daily KPI date → today's working date (weekend → previous Friday)
+
+Replaced the trend-point "Latest: 1 Jun" date on Daily indicators with **today's working date**.
+
+- **Helper** [`getWorkingDateLabel(date = new Date(), lang)`](app/src/lib/format.ts) (+ `getWorkingDate`): Mon–Fri → today; **Sat → previous Fri; Sun → previous Fri**. Returns a compact localised day + short month ("9 Jun" / "૯ જૂન", no year). Not hardcoded — derived from `new Date()` at render.
+- **Daily KPI cards** ([KpiCard.tsx](app/src/components/ui/KpiCard.tsx)): badge row now reads **"🕐 Daily · 9 Jun"** (working date instead of the last daily trend point). Same muted style, same row, no height change. Non-daily cards unchanged.
+- **Daily KPI detail** ([KpiDetail.tsx](app/src/screens/KpiDetail.tsx)): the "current value" label for daily cadence is now **"As on 9 Jun"** (`kpi.asOn`, en + gu) instead of "Latest: {date}". Non-daily detail labels (Current month/cycle/half-year/year) unchanged.
+- Config-driven by `cadenceOf(kpi.frequency) === "daily"`, so it covers every Daily KPI (Students absent…, Teachers/Students present today, MDM, Schools submitting Attendance, SAT reports downloaded, Identified Dropout Students, …) without an ID list.
+- Daily delta wording stays **"this day"** (unchanged). No `Latest:` / `Latest available` shown for Daily KPIs that have data.
+
+**Files:** `lib/format.ts`, `KpiCard.tsx`, `KpiDetail.tsx`, `i18n/en.ts`, `i18n/gu.ts`, `QA_REPORT.md`. **Build:** `npm run build` passes clean. No KPI value/formula/name/delta/graph or access/routing/PM-Shri/Compare/Export/GSQAC/provider changes.
+
+---
+
 ## Daily KPI cards show the latest data date
 
 [KpiCard.tsx](app/src/components/ui/KpiCard.tsx): Daily indicators now show the latest data date next to the frequency badge, e.g. **"🕐 Daily · 1 Jun"** (the `FrequencyBadge` already carries the clock icon + "Daily"; a muted `· {date}` is appended).
@@ -69,7 +83,7 @@ Final homepage card: title · OUTPUT · ANNUAL · score · grade badge · N+1 ·
 Re-parsed the latest sheet (re-uploaded over `GJ _ Unified App KPIs.xlsx`, modified today). It added a **Delta** column and shifted columns; only **Attendance / Assessment / Administration** were updated. **School Quality / GSQAC (sq_*, D1–D5, grade colours, GsqacSummaryCard) was not touched.**
 
 **Names + data sources + frequency (catalog [kpiCatalog.ts](app/src/config/kpiCatalog.ts), all per sheet):**
-- Attendance (src "Attendance bot", Daily): Students absent from past 7+ consecutive days (HP) · Teachers present today · Students present today · Students consuming Mid-day Meal (MDM) · Schools and Class Sections Submitting Attendance.
+- Attendance (src "Attendance bot", Daily): Students absent from past 7+ consecutive days (HP) · Teachers present today · Students present today · Students consuming Mid-day Meal (MDM) · Schools submitting Attendance.
 - Assessment: SAT reports downloaded in classrooms (HP, src "Gyan Prabhav bot", **now Daily**) · Semester Assessment Test 1 (SAT1) · SAT2 (src "Xamta bot", **Yearly**) · **FLN - Oral Reading Fluency** (src "Oral Reading Fluency (ORF) Bot", Monthly) · **Common Entrance Test (CET)** (Yearly) · **Chief Minister Gyan Sadhna Merit Scholarship (CGMS)** (Yearly). The old ORF/CET/CGMS participation+improvement pairs were **collapsed to one each** (ids `asm_orf`/`asm_cet`/`asm_cgms`); `asm_below` ("Students below avg") and `Assessment result %` are **removed** (not in sheet).
 - Administration (sub-domains now School Observation · **Classroom Observation** (new) · Student Retention · CPD): renamed all to sheet wording — No of CRC/URC Visits per school (HP), School observations completed by CRC/URC, ICT Lab Usage in Schools, Library/Urinals & Toilets/Handwash/Drinking Water/SMC, Schools Visited for Classroom Observation, Classrooms following monthly lesson plans, Classrooms with Completed Teacher Diaries, **Identified Dropout Students**, Re-enrolment of Out-of-School Students, **Average CPD Time Per Teacher**, Teachers Achieving the 50-Hour CPD Target. Sources updated to SMA / CTS + EWS / PLC.
 

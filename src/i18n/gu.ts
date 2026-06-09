@@ -69,7 +69,7 @@ export const gu: Dict = {
     deltaWeek: "Δ આ અઠવાડિયે", deltaMonth: "Δ આ મહિને", deltaCycle: "Δ આ ચક્ર", deltaTime: "Δ આ વખતે", deltaYear: "Δ આ વર્ષ",
     pWeek: "આ દિવસે", pMonth: "આ મહિને", pCycle: "આ ચક્ર", pTime: "આ અર્ધવર્ષ", pYear: "આ વર્ષ",
     formula: "ગણતરી કેવી રીતે થાય", frequencyLabel: "અપડેટ", lowestLevelNote: "સૌથી નીચું સ્તર: {level}",
-    latestOn: "છેલ્લે: {date}", latestAvailable: "છેલ્લે ઉપલબ્ધ", currentMonth: "આ મહિનો", currentCycle: "આ ચક્ર", currentHalf: "આ અર્ધવર્ષ", currentYear: "આ વર્ષ",
+    latestOn: "છેલ્લે: {date}", asOn: "{date} ના રોજ", latestAvailable: "છેલ્લે ઉપલબ્ધ", currentMonth: "આ મહિનો", currentCycle: "આ ચક્ર", currentHalf: "આ અર્ધવર્ષ", currentYear: "આ વર્ષ",
   },
   cascade: { title: "પ્રદર્શન સરખામણી", subtitle: "{name} દરેક સ્તરે · વિભાગથી રાજ્ય સુધી", overall: "સ્તરો વચ્ચે એકંદર સ્કોર" },
   compare: {

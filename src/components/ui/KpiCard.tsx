@@ -2,6 +2,7 @@ import type { KpiRecord, Level } from "@/types";
 import { rag, deltaToneClass } from "@/lib/colors";
 import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { buildTrend, cadenceOf, snapshotContextKey } from "@/lib/trend";
+import { getWorkingDateLabel } from "@/lib/format";
 import { useT, type Lang } from "@/i18n";
 import { Card } from "./atoms";
 import { Sparkline } from "./Sparkline";
@@ -34,9 +35,9 @@ export function KpiCard({
   // flat. GSQAC keeps its grade/status tone (untouched).
   const isGsqac = kpi.id.startsWith("sq_");
   const valueTone = isGsqac ? undefined : trend?.delta ? deltaToneClass(trend.delta, kpi.direction) : "text-neutral-900";
-  // Daily KPIs: show the latest data date (the last daily trend point, e.g. "1 Jun") next to the badge
+  // Daily KPIs: show today's working date (Sat/Sun → previous Fri) next to the badge → "Daily · 9 Jun"
   const isDaily = cadenceOf(kpi.frequency) === "daily";
-  const latestDate = isDaily && trend && trend.points.length ? trend.points[trend.points.length - 1].x : null;
+  const latestDate = isDaily ? getWorkingDateLabel(new Date(), lang) : null;
 
   return (
     <Card

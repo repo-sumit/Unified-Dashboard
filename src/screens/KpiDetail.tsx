@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useScope, useKpiRecord, useKpiCascade, useFramework } from "@/hooks";
 import { useT } from "@/i18n";
 import { rag, deltaToneClass } from "@/lib/colors";
-import { locNum } from "@/lib/format";
+import { locNum, getWorkingDateLabel } from "@/lib/format";
 import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { buildTrend, trendTitleKey, cadenceOf } from "@/lib/trend";
 import { gradeFor, GSQAC_BANDS } from "@/config/ratingBands";
@@ -42,12 +42,11 @@ export default function KpiDetail() {
   const trend = na || kpi.noTrend ? null : buildTrend(rec, lang);
 
   // the "current value" label, derived from the indicator's frequency/cadence:
-  // Daily → latest available date · Monthly → current month · Twice → current cycle ·
-  // Half-yearly → current half-year · Yearly → current year · else → latest available.
+  // Daily → "As on {working date}" (Sat/Sun → previous Fri) · Monthly → current month ·
+  // Twice → current cycle · Half-yearly → current half-year · Yearly → current year.
   const cadence = trend?.cadence ?? cadenceOf(kpi.frequency);
-  const latestDate = trend && trend.points.length ? trend.points[trend.points.length - 1].x : null;
   const currentLabel =
-    cadence === "daily" ? (latestDate ? t("kpi.latestOn", { date: latestDate }) : t("kpi.latestAvailable"))
+    cadence === "daily" ? t("kpi.asOn", { date: getWorkingDateLabel(new Date(), lang) })
       : cadence === "monthly" ? t("kpi.currentMonth")
         : cadence === "twice" ? t("kpi.currentCycle")
           : cadence === "half" ? t("kpi.currentHalf")

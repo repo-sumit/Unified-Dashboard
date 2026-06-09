@@ -21,6 +21,23 @@ export function formatDate(d: Date, lang: Lang = "en"): string {
   return `${locNum(d.getDate(), lang)} ${months[d.getMonth()]} ${locNum(d.getFullYear(), lang)}`;
 }
 
+/** The latest working day: Sat → previous Fri, Sun → previous Fri, else today. */
+export function getWorkingDate(date: Date = new Date()): Date {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = Sun … 6 = Sat
+  if (day === 6) d.setDate(d.getDate() - 1);
+  else if (day === 0) d.setDate(d.getDate() - 2);
+  return d;
+}
+
+/** Compact working-day label (day + short month, no year) — e.g. "9 Jun" / "૯ જૂન".
+ *  Used as the "as on" date context for Daily indicators. */
+export function getWorkingDateLabel(date: Date = new Date(), lang: Lang = "en"): string {
+  const d = getWorkingDate(date);
+  const months = lang === "gu" ? MONTHS_SHORT.gu : MONTHS_SHORT.en;
+  return `${locNum(d.getDate(), lang)} ${months[d.getMonth()]}`;
+}
+
 /** Format a KPI value with its unit, or an explicit em-dash for NA. */
 export function formatValue(value: number | null, unit: Unit, lang: Lang = "en"): string {
   if (value == null) return "—";

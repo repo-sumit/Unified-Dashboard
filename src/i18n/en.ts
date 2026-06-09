@@ -67,7 +67,7 @@ export const en = {
     deltaWeek: "Δ this week", deltaMonth: "Δ this month", deltaCycle: "Δ this cycle", deltaTime: "Δ this time", deltaYear: "Δ this year",
     pWeek: "today", pMonth: "this month", pCycle: "this cycle", pTime: "this half-year", pYear: "this year",
     formula: "How it's calculated", frequencyLabel: "Updated", lowestLevelNote: "Lowest level: {level}",
-    latestOn: "Latest: {date}", latestAvailable: "Latest available", currentMonth: "Current month", currentCycle: "Current cycle", currentHalf: "Current half-year", currentYear: "Current year",
+    latestOn: "Latest: {date}", asOn: "As on {date}", latestAvailable: "Latest available", currentMonth: "Current month", currentCycle: "Current cycle", currentHalf: "Current half-year", currentYear: "Current year",
   },
   cascade: { title: "Performance comparison", subtitle: "{name} across every level, Section to State", overall: "Overall score across levels" },
   compare: {
