@@ -84,7 +84,15 @@ export default function DomainView() {
           <SectionLabel className="mb-2">{t("domain.kpisIn", { name: tn(ds.domain.name, ds.domain.name_gu) })}</SectionLabel>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {ds.records.map((r) => (
-              <KpiCard key={r.kpi.id} rec={r} name={tn(r.kpi.name, r.kpi.name_gu)} lang={lang} onClick={() => navigate(`/app/kpi/${r.kpi.id}`)} />
+              <KpiCard
+                key={r.kpi.id}
+                rec={r}
+                name={tn(r.kpi.name, r.kpi.name_gu)}
+                lang={lang}
+                level={entity.level}
+                parentName={sc.parent ? tn(sc.parent.entity.name, sc.parent.entity.name_gu) : undefined}
+                onClick={() => navigate(`/app/kpi/${r.kpi.id}`)}
+              />
             ))}
           </div>
         </div>

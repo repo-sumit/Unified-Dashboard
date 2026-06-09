@@ -11,7 +11,7 @@ import { ArrowLeft } from "@/components/ui/Icon";
 /** Sub-domain view — tier 3 of the 3-click drill (Domain › Sub-domain › Indicators). */
 export default function SubDomainView() {
   const { domainId, subId } = useParams();
-  const { currentId } = useScope();
+  const { entity, currentId } = useScope();
   const sc = useScorecard(currentId);
   const { t, tn, lang } = useT();
   const navigate = useNavigate();
@@ -50,7 +50,15 @@ export default function SubDomainView() {
         <SectionLabel className="mb-2">{t("scorecard.indicators")}</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {ss.records.map((r) => (
-            <KpiCard key={r.kpi.id} rec={r} name={tn(r.kpi.name, r.kpi.name_gu)} lang={lang} onClick={() => navigate(`/app/kpi/${r.kpi.id}`)} />
+            <KpiCard
+              key={r.kpi.id}
+              rec={r}
+              name={tn(r.kpi.name, r.kpi.name_gu)}
+              lang={lang}
+              level={entity?.level}
+              parentName={sc.parent ? tn(sc.parent.entity.name, sc.parent.entity.name_gu) : undefined}
+              onClick={() => navigate(`/app/kpi/${r.kpi.id}`)}
+            />
           ))}
         </div>
       </div>

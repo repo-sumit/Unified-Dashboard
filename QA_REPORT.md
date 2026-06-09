@@ -1,5 +1,31 @@
 # Unified Portal — QA Report
 
+## KPI cards = domain-card family + N+1 on every KPI
+
+Screenshots at repo root: `kpicards-domain-375.png`, `kpicards-assessment-375.png`, `kpicards-assessment-desktop.png`, `kpicards-attendance-375-gu.png`.
+
+**N+1 on every KPI card** — the "KPIs in <domain>" lists ([KpiCard.tsx](app/src/components/ui/KpiCard.tsx)), the Key Indicators strip ([HeroKpiStrip.tsx](app/src/components/ui/HeroKpiStrip.tsx)) and the indicator detail all show the **next-level-up entity's name + that KPI's score at that level** (e.g. "Lakhapat · 91%"), formatted with the KPI's own unit (`91%`, `73`, `1.6`, `62`/`4.1K`). Same source as the domain cards: `peerAvg(kpi.id, level)` at the parent level + `sc.parent` name. Hidden at State (no parent) and for change-deltas (`displayStrategy: "delta_cycle"`, where the value isn't the same quantity as the baseline) — so "Assessment result %" / "Improvement in …" show no N+1, while every rate/count/score KPI does.
+
+**KpiCard rebuilt as a member of the domain-card family** — same card anatomy (`card` + `card-pad`, radius, shadow, `hover:shadow-raised`, chevron), the same **big-number value treatment** (`text-3xl font-extrabold`, `valueToneClass`), and the same **inline frequency delta** (arrow + value, e.g. `↘1.1`) replacing the old green "Δ this week" pill. The delta is **coloured good/bad by the indicator's direction** (a decline of a higher-is-better metric → red; of a lower-is-better metric → green) with **frequency-correct wording** kept: Daily → "this week", Monthly → "this month", Twice-a-year → "this cycle", Half-yearly → "this time", Yearly → "this year" (new `kpi.pWeek…pYear` keys + `periodLabelKey`). Each KPI keeps its **frequency-appropriate trend graph**. Net layout per card: name + chevron · value + delta · trend · N+1 line — a KPI card and a domain card now read as the same family.
+
+**Verified** (`tsc` + build clean): 375 / desktop, EN + ગુ — **0 horizontal overflow** everywhere; every KPI card shows "[parent] · score"; deltas colour by good/bad (chronic-absentee "↘1 this week" = green; "Assessment result %" "↘0.1 this cycle" = red) with localised wording ("this week" → "આ અઠવાડિયે"); **0 console/page errors**; verify suite **21/21**.
+
+---
+
+## Hero + School-Quality visual polish (+ indicator rename)
+
+Two craft passes on the homepage, mock data only, no logic/data changes. Screenshots at repo root: `polish-home-375.png`, `polish-home-320.png`, `polish-home-desktop.png`, `polish-home-375-gu.png`.
+
+**Indicator rename (from `Docs/GJ _ Unified App KPIs.xlsx`)** — re-parsed column C; one name changed in the sheet: `asm_remediation` "Data Driven Remediation %" → **"SAT report downloaded in classroom"** (gu "વર્ગખંડમાં SAT રિપોર્ટ ડાઉનલોડ"), with its formula/description updated to match (classrooms where the SAT report was downloaded ÷ total classrooms). All other names already matched ("Students below `<hierarchy>` avg" confirms the placeholder we substitute per scope).
+
+**1. Hero "Overall score" card** ([ScorecardHome.tsx](app/src/screens/ScorecardHome.tsx)) — the ring, the grade badge and the 30-day trend now read as **one unit on a premium surface**: a subtle green-tinted gradient (`from-tint-mintBg via-white to-tint-greenBg/40`) with a faint green border + raised elevation, setting it apart from the flat white domain cards (stays within the green/neutral system, no new colours). The score is the star (ring bumped to 104, grade badge beside it). The trend gained **context**: a "30-DAY TREND" label, a coloured **net-change pill ("+5 over 30 days" / "૩૦ દિવસમાં +૫")**, a dashed **baseline** at the start value and an emphasised **endpoint dot** ([Sparkline.tsx](app/src/components/ui/Sparkline.tsx) gained `baseline`, `emphasizeEnd`, `responsive`). The trend is **full-width responsive** (measured via ResizeObserver, jsdom-guarded) so there is no empty right-side gap on desktop; on mobile it stacks under the score.
+
+**2. School Quality card** ([ScorecardHome.tsx](app/src/screens/ScorecardHome.tsx)) — the flat washed-pink fill is replaced with a **refined pink gradient** (`from-tint-pinkBg to-white`) + a clear pink border, a richer pink **award-icon chip**, and a pink-700 "OUTPUT · ANNUAL" eyebrow (AA). Same radius / padding / shadow as the other cards. The 5 GSQAC bars, the **67 · B** grade badge (official colour), the coverage line (bumped to neutral-500) and "vs last cycle +1.4%" stay legible on the new surface.
+
+**Verified** (`tsc` + build clean): 375 / 320 / desktop, EN + ગુ — **0 horizontal overflow** at every width; net pill localises ("+5 over 30 days" → "૩૦ દિવસમાં +૫"); renamed indicator renders in Key Indicators (EN + gu); **0 console/page errors**; verify suite **21/21** (desktop + mobile).
+
+---
+
 ## Homepage simplification + mobile-first
 
 Built mobile-first (verified 375 + 320 first, then desktop, EN + ગુ). Screenshots at repo root: `audit-home-375-mobile.png`, `audit-home-desktop-new.png`, `audit-domain-page-375.png`.

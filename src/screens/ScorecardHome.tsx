@@ -8,7 +8,7 @@ import { pct, locNum, greetingKey } from "@/lib/format";
 import { overallTrendData } from "@/lib/trend";
 import { OUTPUT_DOMAIN_ID } from "@/config/frameworks";
 import { GSQAC_DOMAINS } from "@/config/kpiCatalog";
-import { Card, SectionLabel, Badge, ProgressBar } from "@/components/ui/atoms";
+import { SectionLabel, Badge, ProgressBar } from "@/components/ui/atoms";
 import { RatingRing } from "@/components/ui/RatingRing";
 import { RatingBadge } from "@/components/ui/RatingBadge";
 import { HeroKpiStrip } from "@/components/ui/HeroKpiStrip";
@@ -41,6 +41,11 @@ export default function ScorecardHome() {
   const gradeHex = sc.grade ? GRADE_GROUP[gradeGroupOf(sc.grade)].hex : "#9CA3AF";
   const parent = sc.parent;
 
+  // net movement of the overall score across the trend window (the "which way am I going")
+  const overallNet = overallTrend.length > 1 ? Math.round(overallTrend[overallTrend.length - 1]) - Math.round(overallTrend[0]) : 0;
+  const netStr = `${overallNet > 0 ? "+" : overallNet < 0 ? "−" : "±"}${locNum(Math.abs(overallNet), lang)}`;
+  const netTone = overallNet > 0 ? "bg-rag-greenSoft text-rag-greenText" : overallNet < 0 ? "bg-rag-redSoft text-rag-redText" : "bg-neutral-100 text-neutral-500";
+
   const domainWoW = (d: DomainScore) => {
     const ds = d.records
       .filter((r) => r.kpi.unit === "%" || r.kpi.unit === "score")
@@ -64,21 +69,27 @@ export default function ScorecardHome() {
         </div>
       </div>
 
-      {/* OVERALL SCORE — score + grade badge (right) + small 30-day trend */}
-      <Card className="card-pad sm:p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
-          <div className="flex items-center gap-3">
-            <RatingRing percent={sc.overallPercent} grade={sc.grade} size={96} stroke={10} lang={lang} sublabel={t("scorecard.overall")} />
+      {/* OVERALL SCORE — the hero: ring + grade + contextual 30-day trend read as one unit.
+          Subtle green-tinted surface + raised elevation sets it apart from the domain cards. */}
+      <div className="rounded-2xl border border-rag-green/20 bg-gradient-to-br from-tint-mintBg via-white to-tint-greenBg/40 p-4 shadow-raised sm:p-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex items-center gap-4 sm:shrink-0">
+            <RatingRing percent={sc.overallPercent} grade={sc.grade} size={104} stroke={11} lang={lang} sublabel={t("scorecard.overall")} />
             {sc.grade && <RatingBadge grade={sc.grade} size="lg" />}
           </div>
           {overallTrend.length > 1 && (
-            <div className="min-w-0 flex-1">
-              <p className="section-title !mb-1.5">{t("kpi.trendDaily")}</p>
-              <Sparkline data={overallTrend} color={gradeHex} width={320} height={44} />
+            <div className="min-w-0 flex-1 sm:border-l sm:border-line/60 sm:pl-6">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="section-title !mb-0">{t("kpi.trendDaily")}</p>
+                <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold tnum", netTone)}>
+                  {t("scorecard.netOver30", { delta: netStr, n: locNum(30, lang) })}
+                </span>
+              </div>
+              <Sparkline data={overallTrend} color={gradeHex} height={56} strokeWidth={2.5} baseline={overallTrend[0]} emphasizeEnd responsive />
             </div>
           )}
         </div>
-      </Card>
+      </div>
 
       {/* DOMAIN cards */}
       <div>
@@ -116,13 +127,13 @@ export default function ScorecardHome() {
 
       {/* SCHOOL QUALITY — GSQAC output, annual */}
       {output && output.percent != null && (
-        <button onClick={() => navigate(`/app/domain/${OUTPUT_DOMAIN_ID}`)} className="group card card-pad block w-full border border-pink-100 bg-pink-50/30 text-left transition-shadow hover:shadow-raised sm:p-5">
+        <button onClick={() => navigate(`/app/domain/${OUTPUT_DOMAIN_ID}`)} className="group block w-full rounded-2xl border border-tint-pinkRing/80 bg-gradient-to-br from-tint-pinkBg to-white p-4 text-left shadow-card transition-shadow hover:shadow-raised sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="flex items-center gap-2">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-tint-pinkBg"><Icon name="Award" className="text-pink-600" size={18} /></span>
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-tint-pinkRing"><Icon name="Award" className="text-pink-700" size={18} /></span>
               <span>
                 <span className="block text-sm font-bold text-neutral-900">{tn(output.domain.name, output.domain.name_gu)}</span>
-                <span className="block text-2xs font-semibold uppercase tracking-wide text-pink-500">{t("scorecard.output")} · {t("scorecard.annual")}</span>
+                <span className="block text-2xs font-semibold uppercase tracking-wide text-pink-700">{t("scorecard.output")} · {t("scorecard.annual")}</span>
               </span>
             </span>
             <span className="flex items-center gap-2">
@@ -133,7 +144,7 @@ export default function ScorecardHome() {
           </div>
           {gsqacCoverage && gsqacCoverage.schools >= 2 && (
             <p
-              className="mt-2 inline-flex items-center gap-1 text-2xs text-neutral-400"
+              className="mt-2 inline-flex items-center gap-1 text-2xs text-neutral-500"
               title={t("ogm.coverageHint")}
               aria-label={`${t("ogm.coverage", { real: locNum(gsqacCoverage.gsqacReal, lang), total: locNum(gsqacCoverage.schools, lang) })}. ${t("ogm.coverageHint")}`}
             >

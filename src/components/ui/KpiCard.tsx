@@ -1,58 +1,81 @@
 import { cn } from "@/lib/cn";
-import type { KpiRecord } from "@/types";
-import { rag, valueToneClass } from "@/lib/colors";
-import { formatValue } from "@/lib/format";
-import { buildTrend, deltaLabelKey } from "@/lib/trend";
+import type { KpiRecord, Level } from "@/types";
+import { rag, valueToneClass, deltaToneClass } from "@/lib/colors";
+import { formatValue, locNum, compactNum } from "@/lib/format";
+import { peerAvg, peerLevelOf } from "@/lib/peer";
+import { buildTrend, periodLabelKey } from "@/lib/trend";
 import { useT, type Lang } from "@/i18n";
-import { Card, DeltaPill, StatusDot } from "./atoms";
+import { Card } from "./atoms";
 import { Sparkline } from "./Sparkline";
-import { ChevronRight } from "./Icon";
+import { ChevronRight, ArrowUpRight, ArrowDownRight } from "./Icon";
 
-/** The per-KPI tile: full name · value · frequency-aware mini trend · cadence delta tag.
- *  Same card language as the homepage (no truncation, no "% score" clutter). */
+/**
+ * Per-KPI tile — same visual family as the homepage DOMAIN cards: the big-number
+ * value treatment + an inline, direction-coloured frequency delta (arrow + value
+ * + frequency-correct word) + the chevron affordance, on the same card anatomy.
+ * The KPI-only additions: its own frequency-appropriate trend graph, and the N+1
+ * line (parent entity name + this KPI's score at the parent level).
+ */
 export function KpiCard({
-  rec, name, onClick, lang = "en",
-}: { rec: KpiRecord; name: string; onClick?: () => void; lang?: Lang }) {
+  rec, name, onClick, lang = "en", level, parentName,
+}: { rec: KpiRecord; name: string; onClick?: () => void; lang?: Lang; level?: Level; parentName?: string }) {
   const { t } = useT();
-  const c = rag(rec.status);
+  const kpi = rec.kpi;
   const na = rec.value == null;
+  const c = rag(rec.status);
   const trend = na ? null : buildTrend(rec, lang);
+  const delta = trend?.delta ?? null;
+
+  // N+1: parent entity name + this KPI's score at the parent level (hidden at State /
+  // when unpublished / for change-deltas, where value & baseline aren't the same quantity)
+  const isDelta = kpi.displayStrategy === "delta_cycle";
+  const peerScore = !isDelta && level && peerLevelOf(level) ? peerAvg(kpi.id, level) : null;
+  const showPeer = !na && peerScore != null && !!parentName;
+
+  const deltaMag =
+    delta != null
+      ? kpi.unit === "count"
+        ? compactNum(Math.abs(delta), lang)
+        : locNum(Math.round(Math.abs(delta) * 10) / 10, lang)
+      : null;
 
   return (
     <Card
       as="button"
       onClick={onClick}
-      className={cn(
-        "card-pad group flex w-full flex-col gap-3 text-left transition-shadow hover:shadow-raised",
-        na && "opacity-95",
-      )}
+      className="group card-pad flex w-full flex-col gap-2 text-left transition-shadow hover:shadow-raised"
     >
+      {/* identity */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-start gap-2">
-          <StatusDot status={rec.status} className="mt-1 shrink-0" />
-          <span className="text-sm font-semibold leading-snug text-neutral-700">{name}</span>
-        </div>
+        <span className="text-sm font-bold leading-snug text-neutral-900">{name}</span>
         <ChevronRight size={16} className="mt-0.5 shrink-0 text-neutral-300 transition-transform group-hover:translate-x-0.5" />
       </div>
 
+      {/* value (domain-card treatment) + inline direction-coloured frequency delta */}
       <div className="flex items-end justify-between gap-2">
-        <div className="min-w-0">
-          {na ? (
-            <span className="text-2xl font-extrabold text-rag-naText">NA</span>
-          ) : (
-            <span className={cn("text-2xl font-extrabold tnum", valueToneClass(rec.status))}>{formatValue(rec.value, rec.kpi.unit, lang)}</span>
-          )}
-        </div>
-        {trend && trend.points.length > 1 && (
-          <Sparkline data={trend.points.map((p) => p.value)} color={c.hex} />
+        <span className={cn("text-3xl font-extrabold tnum", na ? "text-rag-naText" : valueToneClass(rec.status))}>
+          {na ? "NA" : formatValue(rec.value, kpi.unit, lang)}
+        </span>
+        {trend && delta != null && delta !== 0 && (
+          <span className={cn("inline-flex items-center gap-0.5 pb-1 text-2xs font-bold", deltaToneClass(delta, kpi.direction))}>
+            {delta > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+            {deltaMag}
+            <span className="ml-0.5 font-semibold text-neutral-400">{t(periodLabelKey(trend.cadence))}</span>
+          </span>
         )}
       </div>
 
-      {na || !trend ? (
-        <p className="text-2xs text-neutral-400">{t("common.notTracked")}</p>
-      ) : (
-        <DeltaPill delta={trend.delta} unit={rec.kpi.unit} direction={rec.kpi.direction} lang={lang} label={t(deltaLabelKey(trend.cadence))} />
+      {/* the KPI's frequency-appropriate trend graph (kept) */}
+      {trend && trend.points.length > 1 && (
+        <Sparkline data={trend.points.map((p) => p.value)} color={c.hex} height={30} responsive />
       )}
+
+      {/* N+1: parent entity name + this KPI's score at the parent level */}
+      {showPeer ? (
+        <span className="truncate text-2xs text-neutral-400">{parentName} · {formatValue(peerScore, kpi.unit, lang)}</span>
+      ) : na ? (
+        <span className="text-2xs text-neutral-400">{t("common.notTracked")}</span>
+      ) : null}
     </Card>
   );
 }

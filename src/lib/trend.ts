@@ -56,6 +56,19 @@ export function deltaLabelKey(c: Cadence): string {
   return DELTA_KEY[c];
 }
 
+// the frequency-correct period word WITHOUT the "Δ" prefix — for the inline
+// arrow+value delta treatment (the arrow already signals "change").
+const PERIOD_KEY: Record<Cadence, string> = {
+  daily: "kpi.pWeek",
+  monthly: "kpi.pMonth",
+  twice: "kpi.pCycle",
+  half: "kpi.pTime",
+  yearly: "kpi.pYear",
+};
+export function periodLabelKey(c: Cadence): string {
+  return PERIOD_KEY[c];
+}
+
 const TITLE_KEY: Record<Cadence, string> = {
   daily: "kpi.trendDaily",
   monthly: "kpi.trendMonthly",
