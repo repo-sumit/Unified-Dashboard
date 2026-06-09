@@ -12,18 +12,22 @@ import { CheckCircle2, Info, ChevronRight } from "@/components/ui/Icon";
 import meta from "@/data/seed/meta.json";
 
 type Step = "form" | "verify";
-/** Two login surfaces. Role is resolved from the seed, not the digit length —
- *  the toggle only picks which second credential (School UDISE vs PIN) we ask for. */
-type Mode = "tp" | "officer";
-
 const TP_ROLES: Role[] = ["teacher", "principal"];
+
+/**
+ * Dynamic login — one User ID input first. The number of digits decides the role
+ * surface (no tabs): 8 digits → Teacher / Principal (asks 11-digit School ID); 2/4/6/10
+ * digits → Officer (asks 4-digit PIN). The actual role is still resolved from the seed;
+ * the digit length only chooses which second credential to ask for.
+ */
+const credType = (len: number): "tp" | "officer" | "none" =>
+  len === 8 ? "tp" : len === 2 || len === 4 || len === 6 || len === 10 ? "officer" : "none";
 
 export default function Login() {
   const { t, tn, lang } = useT();
   const login = useSession((s) => s.login);
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState<Mode>("tp");
   const [id, setId] = useState("");
   const [second, setSecond] = useState("");
   const [idTouched, setIdTouched] = useState(false);
@@ -33,27 +37,22 @@ export default function Login() {
   const [pending, setPending] = useState<AppUser | null>(null);
   const [showDemo, setShowDemo] = useState(false);
 
-  const isTP = mode === "tp";
   const greet = t(`greeting.${greetingKey()}`);
 
-  // ── validation (format only; identity is checked against the seed on submit) ──
-  const idValid = isTP ? /^\d{10}$/.test(id) : /^\d+$/.test(id);
-  const secondValid = isTP ? /^\d{11}$/.test(second) : /^\d{4}$/.test(second);
-  const idError = idTouched && id.length > 0 && !idValid && isTP ? t("login.errId10") : null;
-  const secondError =
-    secondTouched && second.length > 0 && !secondValid ? (isTP ? t("login.errUdise11") : t("login.errPin4")) : null;
+  const type = credType(id.length); // "tp" | "officer" | "none"
+  const isTP = type === "tp";
+  const isOfficer = type === "officer";
+  const idLenValid = type !== "none";
+  const secondValid = isTP ? /^\d{11}$/.test(second) : isOfficer ? /^\d{4}$/.test(second) : false;
+  const canContinue = idLenValid && secondValid;
 
-  const idLabel = isTP ? t("login.tpId") : t("login.officerId");
-  const idPh = isTP ? t("login.tpIdPh") : t("login.officerIdPh");
-  const secondLabel = isTP ? t("login.schoolUdise") : t("login.passcode");
-  const secondPh = isTP ? t("login.schoolUdisePh") : t("login.pinPh");
+  const idError = idTouched && id.length > 0 && !idLenValid ? t("login.errIdLen") : null;
+  const secondError = secondTouched && second.length > 0 && !secondValid ? (isTP ? t("login.errUdise11") : t("login.errPin4")) : null;
 
-  const switchMode = (m: Mode) => {
-    if (m === mode) return;
-    setMode(m);
-    setSecond("");
-    setIdTouched(false);
-    setSecondTouched(false);
+  const onIdChange = (v: string) => {
+    const next = v.replace(/\D/g, "").slice(0, 10); // numeric only, longest user ID is 10
+    if (credType(next.length) !== credType(id.length)) { setSecond(""); setSecondTouched(false); } // credential type changed → reset
+    setId(next);
     setError(null);
   };
 
@@ -61,28 +60,22 @@ export default function Login() {
     setError(null);
     setIdTouched(true);
     setSecondTouched(true);
-    if (!idValid || !secondValid) return;
+    if (!canContinue) return;
     const user = dataProvider.resolveLoginById(id, second);
-    // role from the seed must agree with the chosen surface (else credentials mismatch)
-    if (!user || TP_ROLES.includes(user.role) !== isTP) {
-      setError(t("login.invalid"));
-      return;
-    }
+    // role from the seed must agree with the surface implied by the ID length
+    if (!user || TP_ROLES.includes(user.role) !== isTP) { setError(t("login.invalid")); return; }
     setPending(user);
     setStep("verify");
   };
 
-  // straight to the dashboard after confirming details (interim — SSO later)
-  const finish = () => {
-    if (!pending) return;
-    login(pending);
-    navigate("/app", { replace: true });
-  };
+  const finish = () => { if (!pending) return; login(pending); navigate("/app", { replace: true }); };
 
-  const pickDemo = (lid: string, sec: string, role: Role) => {
-    switchMode(TP_ROLES.includes(role) ? "tp" : "officer");
-    setId(lid);
+  const pickDemo = (lid: string, sec: string) => {
+    setId(lid.replace(/\D/g, "").slice(0, 10));
     setSecond(sec);
+    setIdTouched(false);
+    setSecondTouched(false);
+    setError(null);
   };
 
   const scopeEntity = pending ? dataProvider.getEntity(pending.entity_id) : undefined;
@@ -98,7 +91,7 @@ export default function Login() {
       </div>
 
       <div className="flex flex-1 items-center justify-center p-4">
-        <div className="w-full max-w-[440px] animate-scale-in">
+        <div className="w-full max-w-[420px] animate-scale-in">
           <div className="card card-pad sm:p-7">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-primary-50 ring-1 ring-primary-100">
               {step === "verify" ? (
@@ -113,53 +106,46 @@ export default function Login() {
                 <h1 className="mt-4 text-center text-2xl font-extrabold leading-tight text-neutral-900">{t("login.welcome")}</h1>
                 <p className="mt-1 text-center text-sm text-neutral-500">{t("login.subtitle")}</p>
 
-                {/* surface toggle — never a 6-way role picker */}
-                <div role="tablist" aria-label={t("login.welcome")} className="mt-5 grid grid-cols-2 gap-1 rounded-xl bg-neutral-100 p-1">
-                  {(["tp", "officer"] as Mode[]).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      role="tab"
-                      aria-selected={mode === m}
-                      onClick={() => switchMode(m)}
-                      className={cn(
-                        "rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-                        mode === m ? "bg-white text-primary-600 shadow-card" : "text-neutral-500 hover:text-neutral-700",
-                      )}
-                    >
-                      {m === "tp" ? t("login.modeTP") : t("login.modeOfficer")}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-4 space-y-3">
+                <div className="mt-6 space-y-4">
                   <Field
-                    label={idLabel}
+                    label={t("login.userId")}
                     value={id}
-                    onChange={setId}
+                    onChange={onIdChange}
                     onBlur={() => setIdTouched(true)}
-                    placeholder={idPh}
-                    maxLength={isTP ? 10 : 10}
+                    placeholder={t("login.userIdPh")}
+                    maxLength={10}
+                    autoComplete="username"
                     error={idError}
                     autoFocus
                   />
-                  {id.length > 0 && (
+
+                  {idLenValid && (
+                    <span className="inline-flex w-fit items-center rounded-full bg-primary-50 px-2.5 py-0.5 text-2xs font-bold uppercase tracking-wide text-primary-600">
+                      {isTP ? t("login.modeTP") : t("login.officerLogin")}
+                    </span>
+                  )}
+
+                  {idLenValid && (
                     <Field
-                      label={secondLabel}
+                      key={type}
+                      label={isTP ? t("login.schoolId") : t("login.passcode")}
                       value={second}
-                      onChange={setSecond}
+                      onChange={(v) => setSecond(v.replace(/\D/g, "").slice(0, isTP ? 11 : 4))}
                       onBlur={() => setSecondTouched(true)}
-                      placeholder={secondPh}
+                      placeholder={isTP ? t("login.schoolIdPh") : t("login.pinPh")}
                       type={isTP ? "text" : "password"}
                       maxLength={isTP ? 11 : 4}
+                      autoComplete={isTP ? "off" : "current-password"}
+                      helper={isTP ? t("login.helpSchool") : t("login.helpPin")}
                       error={secondError}
                       className="animate-fade-in"
+                      autoFocus
                     />
                   )}
                 </div>
 
-                {error && <p className="mt-3 rounded-lg bg-rag-redSoft px-3 py-2 text-xs font-medium text-rag-redText">{error}</p>}
-                <Button full type="submit" className="mt-5" disabled={!idValid || !secondValid}>{t("login.continue")}</Button>
+                {error && <p className="mt-4 rounded-lg bg-rag-redSoft px-3 py-2 text-xs font-medium text-rag-redText">{error}</p>}
+                <Button full type="submit" className="mt-6" disabled={!canContinue}>{t("login.continue")}</Button>
               </form>
             )}
 
@@ -200,7 +186,7 @@ export default function Login() {
   );
 }
 
-function DemoTable({ onPick }: { onPick: (id: string, second: string, role: Role) => void }) {
+function DemoTable({ onPick }: { onPick: (id: string, second: string) => void }) {
   const { t } = useT();
   const logins = useMemo(() => meta.demoLogins.filter((d, i, a) => a.findIndex((x) => x.role === d.role) === i), []);
   return (
@@ -208,12 +194,12 @@ function DemoTable({ onPick }: { onPick: (id: string, second: string, role: Role
       {logins.map((d) => (
         <button
           key={d.role}
-          onClick={() => onPick(d.login_id, (d.passcode ?? d.school_id) ?? "", d.role as Role)}
+          onClick={() => onPick(d.login_id, (d.passcode ?? d.school_id) ?? "")}
           className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-neutral-50"
         >
           <span className="shrink-0 font-semibold text-neutral-700">{t(`roles.${d.role}`)}</span>
           <span className="min-w-0 truncate text-neutral-500">
-            {d.login_id} · {d.passcode ? `${t("login.passcode")} ${d.passcode}` : `${t("login.schoolUdise")} ${d.school_id}`}
+            {d.login_id} · {d.passcode ? `${t("login.passcode")} ${d.passcode}` : `${t("login.schoolId")} ${d.school_id}`}
           </span>
           <ChevronRight size={13} className="shrink-0 text-neutral-300" />
         </button>
@@ -223,12 +209,12 @@ function DemoTable({ onPick }: { onPick: (id: string, second: string, role: Role
 }
 
 function Field({
-  label, value, onChange, onBlur, placeholder, type = "text", autoFocus, maxLength, error, className,
+  label, value, onChange, onBlur, placeholder, type = "text", autoFocus, maxLength, autoComplete, helper, error, className,
 }: {
   label: string; value: string; onChange: (v: string) => void; onBlur?: () => void;
-  placeholder?: string; type?: string; autoFocus?: boolean; maxLength?: number; error?: string | null; className?: string;
+  placeholder?: string; type?: string; autoFocus?: boolean; maxLength?: number; autoComplete?: string;
+  helper?: string; error?: string | null; className?: string;
 }) {
-  // every credential here (ID, UDISE, PIN) is numeric — strip stray characters
   return (
     <label className={cn("block", className)}>
       <span className="mb-1 block text-sm font-semibold text-neutral-700">{label}</span>
@@ -236,18 +222,24 @@ function Field({
         type={type}
         value={value}
         autoFocus={autoFocus}
-        onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
+        onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         placeholder={placeholder}
         maxLength={maxLength}
         inputMode="numeric"
+        pattern="[0-9]*"
+        autoComplete={autoComplete}
         aria-invalid={!!error}
         className={cn(
           "w-full rounded-xl border bg-neutral-50 px-4 py-3 text-sm outline-none transition-colors focus:bg-white",
           error ? "border-rag-red focus:border-rag-red" : "border-line focus:border-primary-400",
         )}
       />
-      {error && <span className="mt-1 block text-xs font-medium text-rag-redText">{error}</span>}
+      {error ? (
+        <span className="mt-1 block text-xs font-medium text-rag-redText">{error}</span>
+      ) : helper ? (
+        <span className="mt-1 block text-2xs text-neutral-400">{helper}</span>
+      ) : null}
     </label>
   );
 }

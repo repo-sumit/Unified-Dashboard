@@ -1,5 +1,28 @@
 # Unified Portal — QA Report
 
+## Dynamic login flow (no tabs; ID length decides the surface)
+
+[Login.tsx](app/src/screens/Login.tsx) rebuilt: removed the Teacher/Principal | Officer tab toggle. The user enters **one User ID** first; the digit count reveals the right second field:
+- **8 digits → Teacher / Principal** → 11-digit **School ID** field (helper "Teacher / Principal login requires your 11-digit School ID.").
+- **2 / 4 / 6 / 10 digits → Officer** → 4-digit **PIN** field (helper "Officer login requires a 4-digit PIN.").
+- **1 / 3 / 5 / 7 / 9 digits** → no second field; after blur a subtle helper "Enter a valid 2, 4, 6, 8, or 10 digit ID."
+
+A small muted pill ("Teacher / Principal" or "Officer login") appears once the ID length is valid.
+
+**Validation / inputs** (all `inputMode="numeric"` + `pattern="[0-9]*"`, paste sanitised to digits): User ID `maxLength 10` + `autoComplete="username"`; School ID `maxLength 11` + `autoComplete="off"`; PIN `maxLength 4` + `autoComplete="current-password"` + masked (`type=password`). **Continue is disabled** until lengths are exact (8+11 for TP, {2/4/6/10}+4 for officer). **Reset:** changing the first ID across the TP↔officer boundary clears the second field (and an invalid length hides it).
+
+**Auth preserved:** still calls `dataProvider.resolveLoginById(id, second)`; role comes from the seed, and the seed role must agree with the length-implied surface. Verify step + session routing unchanged.
+
+**Seed compatibility (per §9):** the new product rule is Teacher/Principal **8-digit** ID. The committed seed had 10-digit teacher/principal IDs (collided with the new "10 = cluster officer"), so [appUsers.json](app/src/data/seed/appUsers.json) + [meta.json](app/src/data/seed/meta.json) teacher/principal `login_id`s were shortened to 8 digits (`"24" + last 6`, e.g. 2400000001 → 24000001; principal 2400000002 → 24000002). CRC stays 10-digit (cluster), BRC 6, DEO 4, State 2 (+ PIN). Demo logins updated and still work: 24000001/School 24010100101 (teacher), 24/0000 (state), 2401/3456 (deo), 240101/2345 (brc), 2401010005/1234 (crc).
+
+**Copy:** `login.invalid` → "Could not find a matching user. Check the ID and credential." New i18n keys `errIdLen`/`officerLogin`/`helpSchool`/`helpPin` (en + gu).
+
+**Known follow-ups (not run / not build-blocking):** the Playwright helpers (`scripts/verify.mjs`, `verify-access.mjs`, `roles-smoke.mjs`) still drive the old tab flow + 10-digit teacher ID `2400000001` and will need updating to the tab-less flow (User ID → School ID/PIN, 8-digit teacher `24000001`). The seed **generator** (`scripts/generateSeed.*`) still derives 10-digit teacher IDs from `entities.json`; re-running `npm run seed` would regenerate 10-digit IDs — the generator needs the same 8-digit rule before it's next run. Runtime/app uses the committed JSON (already 8-digit), so this doesn't affect the build or the running app.
+
+**Files:** `Login.tsx`, `i18n/en.ts`, `i18n/gu.ts`, `data/seed/appUsers.json`, `data/seed/meta.json`, `QA_REPORT.md`. **Build:** `npm run build` passes clean. No post-login routing / access-control / role-scope / dashboard / KPI / PM-Shri / provider changes.
+
+---
+
 ## Homepage School Quality card → domain-card delta style
 
 [GsqacSummaryCard](app/src/components/ui/GsqacSummaryCard.tsx) (homepage School Quality / GSQAC card) now matches the regular domain cards:

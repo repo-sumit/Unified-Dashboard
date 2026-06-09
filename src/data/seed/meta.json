@@ -42,7 +42,7 @@
   "demoLogins": [
     {
       "role": "teacher",
-      "login_id": "2400000001",
+      "login_id": "24000001",
       "name": "Manisha Shah",
       "designation": "Teacher",
       "school_id": "24010100101",
@@ -50,7 +50,7 @@
     },
     {
       "role": "principal",
-      "login_id": "2400000002",
+      "login_id": "24000002",
       "name": "Ramesh Modi",
       "designation": "Principal",
       "school_id": "24010100101",

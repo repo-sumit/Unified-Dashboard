@@ -1,7 +1,7 @@
 [
   {
     "id": "u-teacher",
-    "login_id": "2400000001",
+    "login_id": "24000001",
     "name": "Manisha Shah",
     "name_gu": "",
     "role": "teacher",
@@ -12,7 +12,7 @@
   },
   {
     "id": "u-principal",
-    "login_id": "2400000002",
+    "login_id": "24000002",
     "name": "Ramesh Modi",
     "name_gu": "",
     "role": "principal",
@@ -67,7 +67,7 @@
   },
   {
     "id": "u-teacher-0",
-    "login_id": "2400000013",
+    "login_id": "24000013",
     "name": "Mitesh Desai",
     "name_gu": "",
     "role": "teacher",
@@ -78,7 +78,7 @@
   },
   {
     "id": "u-teacher-1",
-    "login_id": "2400000014",
+    "login_id": "24000014",
     "name": "Ila Parmar",
     "name_gu": "",
     "role": "teacher",
@@ -89,7 +89,7 @@
   },
   {
     "id": "u-teacher-2",
-    "login_id": "2400000015",
+    "login_id": "24000015",
     "name": "Anjali Shah",
     "name_gu": "",
     "role": "teacher",
@@ -100,7 +100,7 @@
   },
   {
     "id": "u-teacher-3",
-    "login_id": "2400000029",
+    "login_id": "24000029",
     "name": "Dilip Patel",
     "name_gu": "",
     "role": "teacher",
