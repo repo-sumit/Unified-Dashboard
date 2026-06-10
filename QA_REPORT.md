@@ -1,5 +1,29 @@
 # Unified Portal — QA Report
 
+## Balanced two-column KPI grid (Pass 25)
+
+Fixed the uneven KPI-card layout on the domain / sub-domain listing pages. The old `PageGrid` (CSS grid, 1/2/3 columns, `items-start`) left awkward gaps and an uneven rhythm because cards of different metric counts (and the taller Compare-applied cards) flowed into fixed grid rows. Replaced it with a balanced two-column flex layout that distributes cards by estimated height.
+
+### Balanced grid implementation
+- New reusable `src/components/ui/BalancedKpiGrid.tsx`:
+  - `getKpiCardLayoutWeight(kpi, compareApplied)` — height estimate: 1 metric = 1, 2 = 2, 3+ = 3; `+2` when Compare is applied (every card grows an embedded chart).
+  - `splitIntoBalancedColumns(items, weightOf)` — greedy split: the first (hero) KPI is pinned top-left, then each remaining card drops into the **currently shorter** column.
+  - `BalancedKpiGrid` — renders **one column on mobile** (`< md`, original logical order, natural scroll) and **two flex columns on desktop/tablet** (`>= md`, `flex flex-col gap-3` each, NOT grid rows).
+- Cards keep their natural, content-aware height — the grid only decides *which* column each card lands in. No `auto-rows-fr`, no `items-stretch`, no fixed large min-height. The existing per-tier `min-h` (compact/medium/tall by metric count) is unchanged.
+
+### Behaviour
+- **Desktop two-column balancing:** greedy by weight, hero pinned first. On Attendance this yields exactly the brief's example — Left: *Students absent* · *Student attendance* · *Schools & Class Sections*; Right: *Teacher attendance* · *MDM*. On School Quality (6 KPIs) it yields a clean 3/3 split with the 2-metric CET & CGMS card balancing the singles.
+- **Mobile one-column:** cards render in original KPI order, no reordering.
+- **Compare applied:** weights bump `+2`, charts render inside cards, columns re-balance; only the chart strip scrolls — the page never scrolls horizontally.
+
+**Files changed:** `src/components/ui/BalancedKpiGrid.tsx` (new), `src/screens/DomainView.tsx` (KPI listing → `BalancedKpiGrid`; reads `compareApplied` from `useCompare`), `src/screens/SubDomainView.tsx` (same). The sub-domain navigation grid and the home/scorecard layout are untouched (different components). No change to KPI data, formulas, titles, metric rows, Compare behaviour, hierarchy, filters, export, language, or KPI detail pages.
+
+**Build:** `tsc --noEmit` ✓ (exit 0) and `vite build` ✓ (`built in 15.12s`). (The chained `npm run build` still trips the known vite `html-inline-proxy` race on Windows; each stage passes on its own.)
+
+**Visual QA (Playwright, 1280 px + 390 px, before & after Compare):** Attendance and School Quality columns are balanced and tightly stacked with no mid-grid gaps; the hero KPI stays first; single-metric cards no longer strand awkward gaps; 2/3-metric cards align cleanly. Mobile stays one-column in logical order. Compare charts render inside cards and only the strip scrolls — no full-page horizontal overflow (desktop `1280 === 1280`, mobile `375 === 375`). No card content clipped.
+
+---
+
 ## Single-KPI value text + route-aware header — Claude Design handoff (Pass 24)
 
 Implemented the latest Claude Design output (`3UB6HIFoWB84PJ66UfWzcg`, `ui_kits/vsk-dashboard/index.html`) — two focused fixes from the latest review, layered on the already-built design.

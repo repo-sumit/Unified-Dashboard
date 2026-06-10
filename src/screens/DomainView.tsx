@@ -1,8 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useScope, useScorecard } from "@/hooks";
 import { useT } from "@/i18n";
+import { useCompare } from "@/components/compare/CompareContext";
 import { Card, StatusDot } from "@/components/ui/atoms";
 import { KpiCardAuto } from "@/components/ui/MultiMetricKpiCard";
+import { BalancedKpiGrid, getKpiCardLayoutWeight } from "@/components/ui/BalancedKpiGrid";
 import { GsqacGradeLegend } from "@/components/ui/GsqacGradeLegend";
 import { ChevronRight } from "@/components/ui/Icon";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
@@ -20,6 +22,7 @@ export default function DomainView() {
   const { entity, currentId } = useScope();
   const sc = useScorecard(currentId);
   const { t, tn, lang } = useT();
+  const { applied: compareApplied } = useCompare();
   const navigate = useNavigate();
 
   if (!sc || !entity) return null;
@@ -61,10 +64,12 @@ export default function DomainView() {
         </PageSection>
       ) : (
         <PageSection title={t("domain.kpisIn", { name: tn(ds.domain.name, ds.domain.name_gu) })}>
-          <PageGrid cols="kpi">
-            {ds.records.map((r) => (
+          <BalancedKpiGrid
+            items={ds.records}
+            getKey={(r) => r.kpi.id}
+            getWeight={(r) => getKpiCardLayoutWeight(r.kpi, compareApplied)}
+            renderItem={(r) => (
               <KpiCardAuto
-                key={r.kpi.id}
                 rec={r}
                 name={tn(r.kpi.name, r.kpi.name_gu)}
                 lang={lang}
@@ -73,8 +78,8 @@ export default function DomainView() {
                 currentId={currentId}
                 onClick={() => navigate(`/app/kpi/${r.kpi.id}`)}
               />
-            ))}
-          </PageGrid>
+            )}
+          />
         </PageSection>
       )}
 
