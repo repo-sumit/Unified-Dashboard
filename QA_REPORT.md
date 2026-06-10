@@ -1,5 +1,36 @@
 # Unified Portal — QA Report
 
+## sq_d5 trend lines coloured by GSQAC grade scale (Pass 14)
+
+The two lines on `kpi/sq_d5`'s "Yearly trend: CET & CGMS (State Exams)" graph are now coloured **by the GSQAC grade scale** — each line takes the colour of its latest value's grade band (same palette as the grade-scale legend on the School Quality page), replacing the previous fixed blue/pink.
+
+- Promoted the report-faithful band palette to `src/lib/colors.ts` as `GSQAC_BAND_HEX` + `gsqacGradeHex(grade)` (single source of truth); `GsqacGradeLegend` now imports it instead of a local copy.
+- `GsqacMultiTrend` colours each series via `gsqacGradeHex(gradeFor(value, GSQAC_BANDS).grade)`; removed the `GSQAC_LINE_COLORS` constant.
+
+**Files changed:** `src/lib/colors.ts` (shared palette + helper), `src/components/ui/GsqacGradeLegend.tsx` (use shared map), `src/screens/KpiDetail.tsx` (grade-based line colour), `QA_REPORT.md`.
+
+**Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+> Note: high participation values keep both CET & CGMS in the green A-tier, so the lines are distinct green shades (e.g. A4★ vs A3★); the chart legend labels disambiguate them.
+
+---
+
+## sq_d5 CET/CGMS lines reuse the Assessment participation data (Pass 13)
+
+The two lines on `kpi/sq_d5`'s "Yearly trend: CET & CGMS (State Exams)" graph (and the two rows on its School Quality card) now use the **exact same series** as the "Participation · Yearly trend" graphs on `/kpi/asm_cet` and `/kpi/asm_cgms`.
+
+- New optional `KpiMetricDef.sourceKpiId` — a metric can reuse another (sub-)indicator's series verbatim while keeping its own label. `metricKpiDef` adopts that id, so value, benchmark **and** trend (seeded on `kpi.id`) are byte-identical to the source.
+- `sq_d5` metrics: **CET** → `sourceKpiId: "asm_cet__participation"`, **CGMS** → `sourceKpiId: "asm_cgms__participation"`. Previously these were derived from the seed's D5 score (ratios 0.87/1.13); that derivation and the `sq_d5__cet`/`sq_d5__cgms` anchors + provider special-case are removed (no longer referenced).
+- Result: sq_d5's CET line ≡ asm_cet Participation; sq_d5's CGMS line ≡ asm_cgms Participation — identical curve and values at every level.
+
+**Files changed:** `src/types/index.ts` (`sourceKpiId`), `src/engine/score.ts` (`metricKpiDef` id), `src/config/kpiCatalog.ts` (sq_d5 metrics + removed anchors), `src/data/provider/mockProvider.ts` (removed D5-derivation special-case), `QA_REPORT.md`.
+
+**Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+**Manual QA:** open `/kpi/asm_cet` (Participation · Yearly trend) and `/kpi/sq_d5` (CET line) — same curve/values; same for `/kpi/asm_cgms` vs the CGMS line.
+
+---
+
 ## GSQAC grade-scale legend on School Quality page (Pass 12)
 
 Added a compact **grade-scale legend** at the foot of the School Quality page (`/app/domain/school_quality`) explaining the GSQAC grading pattern — grade + % range + colour — verbatim from the `GSQAC_Report_2024_25_English.pdf` footer:

@@ -66,12 +66,14 @@ export function buildKpiRecord(kpi: KpiDef, entity: Entity, raw: RawSeries, peri
  * deterministic series for it from `METRIC_PUBLISHED` — reusing the exact same
  * anchoring/PM-Shri/trend machinery as a normal indicator (no UI hardcoding, §9).
  * Inherits the parent's frequency, schedule, source and level-representation; takes
- * the metric's own label/unit/direction/formula.
+ * the metric's own label/unit/direction/formula. When `m.sourceKpiId` is set the
+ * synthesized record adopts THAT id (so its value/benchmark/trend mirror the source
+ * indicator exactly), while still showing this metric's label.
  */
 export function metricKpiDef(parent: KpiDef, m: KpiMetricDef): KpiDef {
   return {
     ...parent,
-    id: `${parent.id}__${m.id}`,
+    id: m.sourceKpiId ?? `${parent.id}__${m.id}`,
     name: m.label,
     name_gu: m.label_gu,
     unit: m.unit,

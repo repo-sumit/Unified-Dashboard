@@ -2,9 +2,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { KpiRecord, Level } from "@/types";
 import { useScope, useKpiRecord, useKpiMetrics, useFramework } from "@/hooks";
 import { useT, type Lang } from "@/i18n";
-import { rag } from "@/lib/colors";
+import { rag, gsqacGradeHex } from "@/lib/colors";
 import { resolveMetricLabel } from "@/lib/format";
 import { buildTrend, trendTitleKey, getLastUpdatedLabel } from "@/lib/trend";
+import { gradeFor, GSQAC_BANDS } from "@/config/ratingBands";
 import { GSQAC_DOMAINS, GSQAC_SUBDOMAINS } from "@/config/kpiCatalog";
 import { Card, SectionLabel, EmptyNA } from "@/components/ui/atoms";
 import { TrendChart, MultiTrendChart } from "@/components/ui/TrendChart";
@@ -12,9 +13,6 @@ import { FrequencyBadge } from "@/components/ui/DataBadges";
 import { Database } from "@/components/ui/Icon";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { BackLink } from "@/components/layout/PageHeader";
-
-/** distinct line colours for GSQAC multi-series trends (e.g. CET vs CGMS). */
-const GSQAC_LINE_COLORS = ["#2563EB", "#DB2777"];
 
 export default function KpiDetail() {
   const { kpiId } = useParams();
@@ -146,12 +144,16 @@ function GsqacMultiTrend({ recs, name, level, lang }: { recs: KpiRecord[]; name:
       <SectionLabel>{t(trendTitleKey(cadence))}: {name}</SectionLabel>
       <div className="mt-2">
         <MultiTrendChart
-          series={series.map((s, i) => ({
-            key: s.rec.kpi.id,
-            label: resolveMetricLabel(s.rec.kpi.name, s.rec.kpi.name_gu, level, lang),
-            color: GSQAC_LINE_COLORS[i % GSQAC_LINE_COLORS.length],
-            points: s.trend.points,
-          }))}
+          series={series.map((s) => {
+            // line colour follows the GSQAC grade scale — by each metric's latest value
+            const v = s.rec.value ?? s.trend.points[s.trend.points.length - 1].value;
+            return {
+              key: s.rec.kpi.id,
+              label: resolveMetricLabel(s.rec.kpi.name, s.rec.kpi.name_gu, level, lang),
+              color: gsqacGradeHex(gradeFor(v, GSQAC_BANDS).grade),
+              points: s.trend.points,
+            };
+          })}
           unit={series[0].rec.kpi.unit}
           cadence={cadence}
           lang={lang}

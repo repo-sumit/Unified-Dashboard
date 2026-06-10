@@ -163,12 +163,7 @@ class MockProviderImpl implements DataProvider {
       if (g) {
         if (kpi.id === "sq_gsqac") v = round1(g.total_percent * 100);
         else if (kpi.id === "sq_improvement") v = g.improvement ?? null;
-        else if (kpi.id === "sq_d5__cet" || kpi.id === "sq_d5__cgms") {
-          // CET/CGMS sub-metrics of D5 — derived from the D5 domain score (report:
-          // CET 40% · CGMS 52% vs D5 46% → ratios 0.87 / 1.13), so the two lines differ.
-          const d5 = g.domains?.D5;
-          v = d5 == null ? null : round1(clamp(d5 * (kpi.id.endsWith("cet") ? 0.87 : 1.13) * 100, 0, 100));
-        } else if (kpi.id.startsWith("sq_d")) {
+        else if (kpi.id.startsWith("sq_d")) {
           // sq_d1 → GSQAC domain "D1" (0..1 achieved → 0..100)
           const dv = g.domains?.["D" + kpi.id.slice(4)];
           v = dv == null ? null : round1(dv * 100);

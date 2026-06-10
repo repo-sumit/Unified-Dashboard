@@ -1,21 +1,7 @@
 import { useT } from "@/i18n";
 import { GSQAC_BANDS } from "@/config/ratingBands";
+import { GSQAC_BAND_HEX } from "@/lib/colors";
 import { Card, SectionLabel } from "./atoms";
-
-/**
- * Report-faithful band colours from the GSQAC School Report Card 2024–25 footer:
- * a green (best) → lime → amber → orange → red (lowest) spectrum across the 8 bands.
- */
-const BAND_HEX: Record<string, string> = {
-  "A5★": "#1B7F4B",
-  "A4★": "#2E9E5B",
-  "A3★": "#56AE57",
-  "A2★": "#8BBF45",
-  "A1★": "#C0CA33",
-  "B": "#E0A400",
-  "C": "#EF6C00",
-  "D": "#D33A2C",
-};
 
 /**
  * GSQAC grade-scale legend — the official % → grade bands with their report colours.
@@ -34,7 +20,7 @@ export function GsqacGradeLegend() {
           const range = i === 0 ? `>${b.min}%` : `>${b.min}–${bands[i - 1].min}%`;
           return (
             <li key={b.grade} className="flex items-center gap-2">
-              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: BAND_HEX[b.grade] ?? "#9CA3AF" }} aria-hidden />
+              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: GSQAC_BAND_HEX[b.grade] ?? "#9CA3AF" }} aria-hidden />
               <span className="text-sm font-bold tnum text-neutral-900">{b.grade}</span>
               <span className="text-2xs text-neutral-500">{range}</span>
             </li>

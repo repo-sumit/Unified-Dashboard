@@ -119,6 +119,12 @@ export interface KpiMetricDef {
   /** plain-language formula line (shown in the parent's "How it's calculated"). */
   formula?: string;
   formula_gu?: string;
+  /** reuse another (sub-)indicator's series verbatim for this metric's data, while
+   *  displaying this metric's own label. The synthesized record adopts this id, so
+   *  its value/benchmark/trend are byte-identical to that source indicator (e.g. the
+   *  CET/CGMS lines on the State-Exams domain reuse `asm_cet__participation` /
+   *  `asm_cgms__participation`). */
+  sourceKpiId?: string;
 }
 
 /** domains table. */

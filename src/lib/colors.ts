@@ -62,6 +62,24 @@ export function gradeGroupOf(grade: string): "A" | "B" | "C" | "D" {
   return c === "A" ? "A" : c === "B" ? "B" : c === "C" ? "C" : "D";
 }
 
+/** Report-faithful GSQAC grade-scale colours (GSQAC Report Card 2024–25 footer):
+ *  a green (best) → lime → amber → orange → red (lowest) spectrum, keyed by grade. */
+export const GSQAC_BAND_HEX: Record<string, string> = {
+  "A5★": "#1B7F4B",
+  "A4★": "#2E9E5B",
+  "A3★": "#56AE57",
+  "A2★": "#8BBF45",
+  "A1★": "#C0CA33",
+  "B": "#E0A400",
+  "C": "#EF6C00",
+  "D": "#D33A2C",
+};
+
+/** Grade label → its GSQAC grade-scale colour (falls back to the grade-group hex). */
+export function gsqacGradeHex(grade: string): string {
+  return GSQAC_BAND_HEX[grade] ?? GRADE_GROUP[gradeGroupOf(grade)].hex;
+}
+
 /** Soft domain-accent tints — bg/ring reference the `tint` theme tokens
  *  (no raw hex in classes); `hex` is the chart-fill colour (a JS value). */
 export const ACCENT: Record<string, { bg: string; ring: string; icon: string; hex: string }> = {
