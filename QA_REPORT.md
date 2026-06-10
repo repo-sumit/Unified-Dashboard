@@ -1,5 +1,34 @@
 # Unified Portal — QA Report
 
+## Single-KPI value text + route-aware header — Claude Design handoff (Pass 24)
+
+Implemented the latest Claude Design output (`3UB6HIFoWB84PJ66UfWzcg`, `ui_kits/vsk-dashboard/index.html`) — two focused fixes from the latest review, layered on the already-built design.
+
+**Design URL implemented:** `https://api.anthropic.com/v1/design/h/3UB6HIFoWB84PJ66UfWzcg?open_file=ui_kits%2Fvsk-dashboard%2Findex.html`
+
+### 1. Single-KPI value row no longer repeats the title
+- The single-metric value row used to repeat the full card title (`936 students absent from past 7+ consecutive days` directly under the same title). New `getSingleMetricValueSuffix(kpiId, lang)` in `lib/format.ts` returns a short suffix instead — **never the full title**.
+- `att_chronic` → `students absent` (`4.7K students absent`); `ret_dropout` → `dropout students` (both count KPIs, where a bare number is ambiguous). All other single cards return `""` and show just the bare value — `100%`, `1.7`, `66.8` — under their title.
+- `KpiInlineRow` now drops the value's trailing margin and the empty label span when the suffix is empty, so bare-value cards read cleanly. Multi-metric rows (`88.2% Present`, `100% Submitted`) are untouched; N+1 stays right-aligned.
+- Home **domain** cards are unaffected (their header is the domain name, not the KPI title, so the full inline sentence there is not a repeat).
+
+### 2. Homepage top section hidden on domain / KPI pages
+- The big "homepage top section" (hierarchy selector + PM SHRI/All Schools + Language + Export) now renders **only on the scorecard** (`/app`). Driven by a route check in `AppShell` (`isHome = pathname === "/app"`). The block is unmounted (not hidden), so no blank space is left behind.
+- Domain / sub-domain / KPI / export pages keep only the slim identity bar (logo · user · logout), so they start cleanly with their own content (`← Scorecard` / `KPIS IN ATTENDANCE`, or `← Back` / KPI title / trend chart).
+- **Compare stays reachable on domain & sub-domain pages** (new `DomainCompareBar` — a slim right-aligned Compare pill) so the in-card "Tap Compare" hint still has a control. It renders nothing on the scorecard (Compare is in the full block there), on KPI detail, on export, or at a leaf scope — no leftover bar. This reconciles "hide the homepage top section" with "Compare must work on domain pages / be hidden only on `/app/kpi/*`".
+
+**Files changed:** `src/lib/format.ts` (new `getSingleMetricValueSuffix`), `src/components/ui/KpiCard.tsx` (suffix instead of repeated title), `src/components/ui/kpiCardParts.tsx` (`KpiInlineRow` clean empty-label case), `src/components/layout/AppShell.tsx` (route-aware header + `DomainCompareBar`).
+
+**Pages updated:** `/app` (full top section kept), `/app/domain/attendance|assessment|administration|school_quality` + sub-domains (top section hidden, Compare kept), `/app/kpi/*` (top section hidden, Compare hidden), `/app/export` (top section hidden).
+
+**Build:** `tsc --noEmit` ✓ (exit 0) and `vite build` ✓ (`built in 13.14s`). (The chained `npm run build` still trips the known vite `html-inline-proxy` race on Windows when a second dev server holds port 5173; each stage passes on its own.)
+
+**Manual checks (Playwright, 1440 px + 390 px):** `/app` keeps the full top section (desktop + mobile) — navigator, Compare/Export, All Schools, EN|ગુ, greeting. `/app/domain/attendance` (and the other three domains, shared header) drop the large block and start at `← Scorecard / KPIS IN ATTENDANCE` with no blank space; the chronic-absence card shows `4.7K students absent` (not the repeated sentence); MDM shows bare `100%`; multi cards show `88.2% Present` / `100% Submitted`. `/app/kpi/att_chronic` shows no top section and no Compare. Compare still opens the drawer, applies, renders embedded charts (`Compare · 10`, 5 district charts) on the domain page. No horizontal page overflow (desktop `1425 === 1425`, mobile `375 === 375`).
+
+**Unavoidable deviation:** §2 of the brief lists Compare among the action rows to hide on domain pages, while §4 requires Compare to work on domain pages (hidden only on `/app/kpi/*`). The design file itself hides the whole action row on non-home views and applies Compare from the scorecard — its own author flagged this as a tradeoff. To satisfy §4 + the QA checks, this build keeps a slim Compare-only control on domain/sub-domain pages rather than removing it entirely; everything else in the homepage top block is hidden as specified.
+
+---
+
 ## Inline KPI grammar + action-row priority — Claude Design handoff (Pass 23)
 
 Implemented the latest Claude Design output (`boETLkYBGUSZ5TNRlsRrHg`, `ui_kits/vsk-dashboard/index.html`). The handoff's two newest iterations were a KPI-card alignment fix and a top action-row priority polish; the rest of the design (hierarchy navigator, domain cards, compare drawer, embedded charts, content-aware heights, bar spacing) was already in place from earlier passes, so this pass closed the two remaining gaps.

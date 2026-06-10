@@ -137,6 +137,21 @@ export function formatKpiCardTitlePhrase(name: string, name_gu: string, unit: Un
   return name;
 }
 
+/**
+ * Short value-row suffix for a SINGLE-metric KPI card — never the full KPI title
+ * (the title already sits in the card header, so repeating it reads as a dupe).
+ * A bare count is ambiguous, so the count KPIs get a short unit noun
+ * ("4.7K students absent"); percent / score / visit cards return "" and show just
+ * the value ("96.3%", "1.8") under their title. Keyed by KPI id; unknown → "".
+ */
+const SINGLE_METRIC_SUFFIX: Record<string, { en: string; gu: string }> = {
+  att_chronic: { en: "students absent", gu: "ગેરહાજર વિદ્યાર્થીઓ" },
+  ret_dropout: { en: "dropout students", gu: "ડ્રોપઆઉટ વિદ્યાર્થીઓ" },
+};
+export function getSingleMetricValueSuffix(kpiId: string, lang: Lang): string {
+  return SINGLE_METRIC_SUFFIX[kpiId]?.[lang] ?? "";
+}
+
 /** Time-based greeting key (FCR-1.2): 05–11 morning · 12–16 afternoon · else evening. */
 export function greetingKey(d: Date = new Date()): "morning" | "afternoon" | "evening" {
   const h = d.getHours();

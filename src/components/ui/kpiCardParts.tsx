@@ -58,13 +58,14 @@ export function KpiCardHeader({ title, frequency, context }: { title: string; fr
 
 /**
  * One inline KPI row — the unified grammar shared by single- and multi-metric
- * cards: the value (big, bold) with its metric/descriptor inline immediately
- * after it ("4.7K students absent…", "88.2% Present"), and the N+1 peer
- * comparison right-aligned. `descriptor` (single-metric) uses a larger value and
- * a lighter, wrapping descriptor, and pins the comparison to the row's end;
- * metric rows sit on one baseline with a thin divider between them. The inline
- * label replaces the old uppercase label-above-value pattern. No "Parent avg",
- * no source line.
+ * cards: the value (big, bold) with its metric/suffix inline immediately after it
+ * ("4.7K students absent", "88.2% Present"), and the N+1 peer comparison
+ * right-aligned. `descriptor` (single-metric) uses a larger value and pins the
+ * comparison to the row's end; metric rows sit on one baseline with a thin
+ * divider between them. An empty `label` renders just the bare value (no trailing
+ * margin, no empty span) — percent/score single cards read "96.3%" alone. The
+ * inline label replaces the old uppercase label-above-value pattern. No "Parent
+ * avg", no source line.
  */
 export function KpiInlineRow({
   value, label, descriptor = false, valueTone, peerLabel, delta, divider,
@@ -80,8 +81,8 @@ export function KpiInlineRow({
   return (
     <div className={cn("flex items-baseline justify-between gap-3 py-2", divider && "border-t border-line/60")}>
       <span className="min-w-0 flex-1 leading-snug">
-        <b className={cn("mr-1.5 align-[-1px] font-extrabold tnum", descriptor ? "text-3xl" : "text-xl", valueTone ?? "text-neutral-900")}>{value}</b>
-        <span className={cn("text-neutral-500", descriptor ? "text-[15px] font-medium" : "text-sm font-semibold")}>{label}</span>
+        <b className={cn("align-[-1px] font-extrabold tnum", label && "mr-1.5", descriptor ? "text-3xl" : "text-xl", valueTone ?? "text-neutral-900")}>{value}</b>
+        {label && <span className={cn("text-neutral-500", descriptor ? "text-[15px] font-medium" : "text-sm font-semibold")}>{label}</span>}
       </span>
       {(peerLabel || delta) && (
         <span className={cn("flex shrink-0 items-baseline gap-2 whitespace-nowrap text-right", descriptor && "self-end")}>

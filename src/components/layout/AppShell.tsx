@@ -40,6 +40,10 @@ export function AppShell() {
 
   const isOfficer = user.role === "crc" || user.role === "brc" || user.role === "deo" || user.role === "state";
   const onExport = loc.pathname.startsWith("/app/export");
+  // The big "homepage top section" (hierarchy selector + PM SHRI + language +
+  // Export) shows only on the scorecard. Domain/sub-domain pages keep just the
+  // prominent Compare action; KPI detail + export start clean (no top block).
+  const isHome = loc.pathname === "/app" || loc.pathname === "/app/";
 
   const onLogout = () => {
     logout();
@@ -70,26 +74,34 @@ export function AppShell() {
             </div>
           </div>
 
-          {/* navigator + actions — navigator owns its own line on mobile, shares the row on desktop.
-              Action priority Compare > Export > All Schools > Language: mobile shows two tidy rows
-              ([Compare][Export] / [All Schools ▾][EN|ગુ]) via flex order + 50% basis; desktop is one
-              row [All Schools] [Compare] [EN|ગુ] [Export]. */}
-          <div className="mx-auto flex max-w-content flex-wrap items-center gap-2 px-4 pb-2.5">
-            <HierarchyNavigator className="w-full lg:w-auto lg:min-w-0 lg:flex-1" />
-            <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap">
-              {isOfficer && <PmShriFilter className="order-3 inline-flex lg:order-1" />}
-              <CompareControl className="order-1 grow basis-[calc(50%-0.25rem)] lg:order-2 lg:grow-0 lg:basis-auto" />
-              <LanguageToggle className="order-4 ml-auto lg:order-3 lg:ml-0" />
-              {!onExport && (
-                <Link
-                  to="/app/export"
-                  className="order-2 inline-flex grow basis-[calc(50%-0.25rem)] items-center justify-center gap-1.5 rounded-full bg-primary-500 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-600 lg:order-4 lg:grow-0 lg:basis-auto lg:py-1.5"
-                >
-                  <Download size={14} /> {t("nav.export")}
-                </Link>
-              )}
+          {/* HOME ONLY — the full navigator + actions block. Navigator owns its own line on
+              mobile, shares the row on desktop. Action priority Compare > Export > All Schools >
+              Language: mobile shows two tidy rows ([Compare][Export] / [All Schools ▾][EN|ગુ]) via
+              flex order + 50% basis; desktop is one row [All Schools] [Compare] [EN|ગુ] [Export].
+              Domain/KPI pages drop this block so they start clean (see CompareBarBelowHome). */}
+          {isHome && (
+            <div className="mx-auto flex max-w-content flex-wrap items-center gap-2 px-4 pb-2.5">
+              <HierarchyNavigator className="w-full lg:w-auto lg:min-w-0 lg:flex-1" />
+              <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap">
+                {isOfficer && <PmShriFilter className="order-3 inline-flex lg:order-1" />}
+                <CompareControl className="order-1 grow basis-[calc(50%-0.25rem)] lg:order-2 lg:grow-0 lg:basis-auto" />
+                <LanguageToggle className="order-4 ml-auto lg:order-3 lg:ml-0" />
+                {!onExport && (
+                  <Link
+                    to="/app/export"
+                    className="order-2 inline-flex grow basis-[calc(50%-0.25rem)] items-center justify-center gap-1.5 rounded-full bg-primary-500 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-600 lg:order-4 lg:grow-0 lg:basis-auto lg:py-1.5"
+                  >
+                    <Download size={14} /> {t("nav.export")}
+                  </Link>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* DOMAIN/SUB-DOMAIN — keep Compare reachable (it's the primary action) without the
+              big home block. Renders nothing on the scorecard, on KPI detail, on export, or at a
+              leaf scope, so those pages start cleanly with no leftover bar. */}
+          {!isHome && <DomainCompareBar />}
         </header>
 
         <main className="mx-auto min-w-0 max-w-content px-4 py-4 pb-10 sm:py-5">
@@ -126,6 +138,22 @@ function CompareControl({ className }: { className?: string }) {
       <BarChart3 size={15} className="text-primary-600" />
       {n ? `${t("compare.button")} · ${n}` : t("compare.button")}
     </button>
+  );
+}
+
+/** Slim Compare-only bar for domain / sub-domain pages — keeps the prominent
+ *  Compare action reachable (per the compare-on-domain requirement) once the big
+ *  home navigator/action block is dropped. Returns null when there's nothing to
+ *  compare (leaf scope) or on KPI detail / export, so those pages leave no blank
+ *  bar. CompareControl itself also guards these cases. */
+function DomainCompareBar() {
+  const { childLevel } = useCompare();
+  const loc = useLocation();
+  if (!childLevel || loc.pathname.includes("/kpi/") || loc.pathname.startsWith("/app/export")) return null;
+  return (
+    <div className="mx-auto flex max-w-content justify-end px-4 pb-2.5">
+      <CompareControl />
+    </div>
   );
 }
 
