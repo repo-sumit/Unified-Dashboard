@@ -57,23 +57,38 @@ export function KpiCardHeader({ title, frequency, context }: { title: string; fr
 }
 
 /**
- * One compact metric row: the metric value on the left, the N+1 comparison (and
- * any delta) right-aligned. The metric label sits above. Right-aligning the N+1
- * keeps the row scannable instead of stranding "Kachchh · 94%" in the middle.
+ * One inline KPI row — the unified grammar shared by single- and multi-metric
+ * cards: the value (big, bold) with its metric/descriptor inline immediately
+ * after it ("4.7K students absent…", "88.2% Present"), and the N+1 peer
+ * comparison right-aligned. `descriptor` (single-metric) uses a larger value and
+ * a lighter, wrapping descriptor, and pins the comparison to the row's end;
+ * metric rows sit on one baseline with a thin divider between them. The inline
+ * label replaces the old uppercase label-above-value pattern. No "Parent avg",
+ * no source line.
  */
-export function KpiMetricRow({
-  label, value, valueTone, parentLabel, delta,
-}: { label: string; value: string; valueTone?: string; parentLabel?: string | null; delta?: ReactNode }) {
+export function KpiInlineRow({
+  value, label, descriptor = false, valueTone, peerLabel, delta, divider,
+}: {
+  value: string;
+  label: string;
+  descriptor?: boolean;
+  valueTone?: string;
+  peerLabel?: string | null;
+  delta?: ReactNode;
+  divider?: boolean;
+}) {
   return (
-    <div className="py-2 first:pt-1 last:pb-0">
-      <span className="block text-2xs font-semibold uppercase tracking-wide text-neutral-400">{label}</span>
-      <div className="mt-0.5 flex items-baseline justify-between gap-2">
-        <span className={cn("truncate text-xl font-extrabold tnum leading-none", valueTone)}>{value}</span>
-        <span className="flex shrink-0 items-baseline gap-2 text-right">
-          {parentLabel && <span className="text-2xs text-neutral-400">{parentLabel}</span>}
+    <div className={cn("flex items-baseline justify-between gap-3 py-2", divider && "border-t border-line/60")}>
+      <span className="min-w-0 flex-1 leading-snug">
+        <b className={cn("mr-1.5 align-[-1px] font-extrabold tnum", descriptor ? "text-3xl" : "text-xl", valueTone ?? "text-neutral-900")}>{value}</b>
+        <span className={cn("text-neutral-500", descriptor ? "text-[15px] font-medium" : "text-sm font-semibold")}>{label}</span>
+      </span>
+      {(peerLabel || delta) && (
+        <span className={cn("flex shrink-0 items-baseline gap-2 whitespace-nowrap text-right", descriptor && "self-end")}>
+          {peerLabel && <span className="text-xs font-semibold text-neutral-500">{peerLabel}</span>}
           {delta}
         </span>
-      </div>
+      )}
     </div>
   );
 }

@@ -7,14 +7,14 @@ import { shouldShowCardDelta } from "@/lib/displayPolicy";
 import { useKpiMetrics } from "@/hooks";
 import { useT, type Lang } from "@/i18n";
 import { FrequencyDelta } from "./FrequencyDelta";
-import { KpiCardShell, KpiCardHeader, KpiMetricRow } from "./kpiCardParts";
+import { KpiCardShell, KpiCardHeader, KpiInlineRow } from "./kpiCardParts";
 import { KpiCompareSection } from "./KpiCompareSection";
 import { KpiCard } from "./KpiCard";
 
 /**
  * Multi-metric indicator card (Teacher/Student attendance · att_report · SAT1/SAT2/ORF/
  * CET/CGMS · Average CPD Time Per Teacher) — compact, graph-free score table. Each
- * metric is one `KpiMetricRow` (resolved label · value · N+1 · policy-gated delta).
+ * metric is one inline `KpiInlineRow` (value + resolved label · N+1 · policy-gated delta).
  * "% below hierarchy average" resolves to the current scope ("% below block average").
  * No source on cards; charts live on the KPI detail page only.
  */
@@ -37,9 +37,9 @@ export function MultiMetricKpiCard({
     <KpiCardShell onClick={onClick} compare={<KpiCompareSection kpi={kpi} />} metrics={metrics.length || 1}>
       <KpiCardHeader title={name} frequency={kpi.frequency} context={lastUpdated} />
 
-      <div className="mt-2 divide-y divide-line/60">
+      <div className="mt-2">
         {metrics.length ? (
-          metrics.map((m) => <MetricRow key={m.kpi.id} rec={m} level={level} parentName={parentName} lang={lang} />)
+          metrics.map((m, i) => <MetricRow key={m.kpi.id} rec={m} level={level} parentName={parentName} lang={lang} divider={i > 0} />)
         ) : (
           <span className="block py-2 text-2xs text-neutral-400">{t("common.notTracked")}</span>
         )}
@@ -48,10 +48,11 @@ export function MultiMetricKpiCard({
   );
 }
 
-/** One metric row — label resolved to the current scope level, delta only where allowed. */
+/** One metric row — inline `value + label`, label resolved to the current scope
+ *  level, delta only where allowed. Divider drawn above every row after the first. */
 function MetricRow({
-  rec, level, parentName, lang,
-}: { rec: KpiRecord; level?: Level; parentName?: string; lang: Lang }) {
+  rec, level, parentName, lang, divider,
+}: { rec: KpiRecord; level?: Level; parentName?: string; lang: Lang; divider?: boolean }) {
   const kpi = rec.kpi;
   const na = rec.value == null;
   const showDelta = !na && shouldShowCardDelta(kpi);
@@ -62,11 +63,12 @@ function MetricRow({
   const label = resolveMetricLabel(kpi.name, kpi.name_gu, level ?? "school", lang);
 
   return (
-    <KpiMetricRow
+    <KpiInlineRow
+      divider={divider}
       label={label}
       value={na ? "—" : formatValue(rec.value, kpi.unit, lang)}
       valueTone={tone}
-      parentLabel={parentName && peer != null ? `${parentName} · ${formatValue(peer, kpi.unit, lang)}` : null}
+      peerLabel={parentName && peer != null ? `${parentName} · ${formatValue(peer, kpi.unit, lang)}` : null}
       delta={delta != null && delta !== 0 ? (
         <FrequencyDelta delta={delta} unit={kpi.unit} direction={kpi.direction} cadence={trend!.cadence} lang={lang} />
       ) : null}

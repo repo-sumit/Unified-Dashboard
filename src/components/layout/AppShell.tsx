@@ -70,17 +70,20 @@ export function AppShell() {
             </div>
           </div>
 
-          {/* navigator + actions — navigator owns its own line on mobile, shares the row on desktop */}
+          {/* navigator + actions — navigator owns its own line on mobile, shares the row on desktop.
+              Action priority Compare > Export > All Schools > Language: mobile shows two tidy rows
+              ([Compare][Export] / [All Schools ▾][EN|ગુ]) via flex order + 50% basis; desktop is one
+              row [All Schools] [Compare] [EN|ગુ] [Export]. */}
           <div className="mx-auto flex max-w-content flex-wrap items-center gap-2 px-4 pb-2.5">
             <HierarchyNavigator className="w-full lg:w-auto lg:min-w-0 lg:flex-1" />
             <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap">
-              {isOfficer && <PmShriFilter className="inline-flex" />}
-              <CompareControl />
-              <LanguageToggle />
+              {isOfficer && <PmShriFilter className="order-3 inline-flex lg:order-1" />}
+              <CompareControl className="order-1 grow basis-[calc(50%-0.25rem)] lg:order-2 lg:grow-0 lg:basis-auto" />
+              <LanguageToggle className="order-4 ml-auto lg:order-3 lg:ml-0" />
               {!onExport && (
                 <Link
                   to="/app/export"
-                  className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary-500 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-600 lg:py-1.5"
+                  className="order-2 inline-flex grow basis-[calc(50%-0.25rem)] items-center justify-center gap-1.5 rounded-full bg-primary-500 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-600 lg:order-4 lg:grow-0 lg:basis-auto lg:py-1.5"
                 >
                   <Download size={14} /> {t("nav.export")}
                 </Link>
@@ -99,11 +102,13 @@ export function AppShell() {
   );
 }
 
-/** Compare action button — "Compare" → "Compare · N" once applied; opens the
+/** Compare action button — the prominent primary action: always a filled
+ *  light-blue pill with a brand border + bar-chart icon (more visible than the
+ *  muted "All Schools" filter). "Compare" → "Compare · N" once applied; opens the
  *  child-unit selector. Hidden at leaf scopes (nothing below to compare) and on
  *  KPI/Indicator detail pages (`/app/kpi/*`), where comparison doesn't apply —
  *  the compare state itself is left untouched so it reappears on domain/home. */
-function CompareControl() {
+function CompareControl({ className }: { className?: string }) {
   const { childLevel, applied, selectedIds, setOpen } = useCompare();
   const { t } = useT();
   const isKpiDetail = useLocation().pathname.includes("/kpi/");
@@ -114,11 +119,11 @@ function CompareControl() {
       type="button"
       onClick={() => setOpen(true)}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-colors lg:py-1.5",
-        n ? "bg-primary-50 text-primary-700 ring-1 ring-primary-200" : "border border-line bg-white text-neutral-600 hover:bg-neutral-50",
+        "inline-flex items-center justify-center gap-1.5 rounded-full border border-primary-500 bg-primary-50 px-3.5 py-2 text-xs font-bold text-primary-700 transition-colors hover:bg-primary-100 lg:py-1.5",
+        className,
       )}
     >
-      <BarChart3 size={14} className={n ? "text-primary-600" : "text-neutral-400"} />
+      <BarChart3 size={15} className="text-primary-600" />
       {n ? `${t("compare.button")} · ${n}` : t("compare.button")}
     </button>
   );

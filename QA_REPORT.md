@@ -1,5 +1,35 @@
 # Unified Portal — QA Report
 
+## Inline KPI grammar + action-row priority — Claude Design handoff (Pass 23)
+
+Implemented the latest Claude Design output (`boETLkYBGUSZ5TNRlsRrHg`, `ui_kits/vsk-dashboard/index.html`). The handoff's two newest iterations were a KPI-card alignment fix and a top action-row priority polish; the rest of the design (hierarchy navigator, domain cards, compare drawer, embedded charts, content-aware heights, bar spacing) was already in place from earlier passes, so this pass closed the two remaining gaps.
+
+**Design URL implemented:** `https://api.anthropic.com/v1/design/h/boETLkYBGUSZ5TNRlsRrHg?open_file=ui_kits%2Fvsk-dashboard%2Findex.html`
+
+### 1. Inline KPI row grammar (single + multi cards now align)
+- Replaced the uppercase **label-above-value** pattern (the design's explicit "bad" case — `PRESENT` / `88.2%`) with one shared inline row: **`{value} {metric/descriptor}`** left, **N+1 peer comparison** right-aligned. New `KpiInlineRow` in `kpiCardParts.tsx` is used by both single- and multi-metric cards so they share one grammar and align across the grid.
+- **Single-metric cards** read as a sentence — `4.7K students absent from past 7+ consecutive days`, `100% Students consuming Mid-day Meal (MDM)`, `1.7 No of CRC/URC Visits per school` — value large/bold, descriptor smaller inline (via the existing `formatKpiCardTitlePhrase`, which lower-cases the leading word for count KPIs). N+1 pinned to the row end.
+- **Multi-metric cards** — `88.2% Present` / `100% Submitted`, `93.4% Schools` / `95.6% Class sections`, `87.7% CET` / `84.9% CGMS` — same inline grammar, thin divider between rows, delta only where policy allows.
+- No `Parent avg`, no source on cards; chart units still match KPI units (count→count bars, %→% bars, visits→decimal bars). Heights stay content-aware (Pass 22).
+
+### 2. Top action-row priority: Compare > Export > All Schools > Language
+- **Compare** is now the prominent action at all times: filled light-blue (`bg-primary-50`) with a brand border (`border-primary-500`), bar-chart icon, brand text — clearly stronger than the muted **All Schools** filter (it was previously a plain white pill until applied). Still toggles `Compare` ↔ `Compare · N`.
+- **Export** stays solid blue and now sits in the same action group.
+- **All Schools** (PM SHRI filter) stays a muted-grey secondary pill; **Language** stays a compact `EN | ગુ` toggle.
+- **Mobile** is two tidy rows via flex `order` + 50% basis — Row 1 `[Compare] [Export]` (equal width), Row 2 `[All Schools ▾] … [EN | ગુ]` — no more scattered/wrapping controls. **Desktop** is one row `[All Schools] [Compare] [EN | ગુ] [Export]`.
+
+**Key components changed:** `src/components/ui/kpiCardParts.tsx` (new inline `KpiInlineRow`, replacing `KpiMetricRow`), `src/components/ui/KpiCard.tsx` (single card → inline descriptor row), `src/components/ui/MultiMetricKpiCard.tsx` (rows → `KpiInlineRow` with dividers), `src/components/layout/AppShell.tsx` (`CompareControl` prominence + responsive 2-row/1-row action layout).
+
+**Pages updated (shared components, so all at once):** `/app/scorecard` (home domain cards), `/app/domain/attendance`, `/app/domain/assessment`, `/app/domain/administration`, `/app/domain/school_quality`. KPI detail (`/app/kpi/*`) left unchanged — Compare hidden there, trend charts + source kept.
+
+**Build:** `tsc --noEmit` ✓ (exit 0) and `vite build` ✓ (`built in 17.05s`). Note: the chained `npm run build` intermittently trips a known vite `html-inline-proxy` race on Windows (worsened by a second dev server holding port 5173); each stage passes cleanly when run on its own.
+
+**Manual checks (Playwright, 1440 px + 390 px):** latest design implemented closely; mobile action buttons aligned in two rows (not scattered); Compare visually prominent, All Schools secondary, Export aligned; single + multi KPI cards read inline and align despite differing metric counts; School Quality single-metric score cards compact, CET & CGMS 2-metric card taller; compare drawer works (right-drawer desktop / bottom-sheet mobile); embedded charts appear only after Apply, with units matching KPI units; clearing all selected units after Apply shows **Remove comparison**; KPI detail pages do not show Compare; no full-page horizontal scroll (desktop `1425 === 1425`, mobile `375 === 375`).
+
+**Unavoidable deviation:** the design uses a deterministic mock `Gujarat · X` state benchmark for the N+1 on KPI cards. The real app keeps its actual parent/peer-average value (`{parent} · X`) per "do not change provider/values", so the N+1 is hidden at State level (no parent) and shows the real parent average at lower levels — same right-aligned inline grammar, real data.
+
+---
+
 ## Metric-count-based KPI card heights (Pass 22)
 
 KPI cards are now content-aware: a single-metric card is compact instead of being stretched to a neighbouring 2/3-metric card's height (the School Quality KPI page — GSQAC score, Teaching and Learning, etc. — was the worst offender).
