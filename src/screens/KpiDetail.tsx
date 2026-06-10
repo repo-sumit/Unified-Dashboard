@@ -2,11 +2,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { KpiRecord, Level } from "@/types";
 import { useScope, useKpiRecord, useKpiMetrics, useFramework } from "@/hooks";
 import { useT, type Lang } from "@/i18n";
-import { rag, gsqacGradeHex } from "@/lib/colors";
+import { rag } from "@/lib/colors";
 import { resolveMetricLabel } from "@/lib/format";
+import { shouldShowSource } from "@/lib/displayPolicy";
 import { buildTrend, trendTitleKey, getLastUpdatedLabel } from "@/lib/trend";
-import { gradeFor, GSQAC_BANDS } from "@/config/ratingBands";
-import { GSQAC_DOMAINS, GSQAC_SUBDOMAINS } from "@/config/kpiCatalog";
 import { Card, SectionLabel, EmptyNA } from "@/components/ui/atoms";
 import { TrendChart, MultiTrendChart } from "@/components/ui/TrendChart";
 import { FrequencyBadge } from "@/components/ui/DataBadges";
@@ -14,6 +13,12 @@ import { Database } from "@/components/ui/Icon";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { BackLink } from "@/components/layout/PageHeader";
 
+/**
+ * KPI / indicator detail — the ONLY place source is shown (title meta line),
+ * and the only place trend charts live. Every chart carries a clear title.
+ * Formula copy resolves "hierarchy" to the current scope level, so the word
+ * never reaches the UI.
+ */
 export default function KpiDetail() {
   const { kpiId } = useParams();
   const { entity, currentId } = useScope();
@@ -35,22 +40,25 @@ export default function KpiDetail() {
 
   const trend = na || kpi.noTrend ? null : buildTrend(rec, lang);
   const luLabel = getLastUpdatedLabel(kpi, new Date(), lang);
+  const resolveCopy = (s: string, s_gu?: string) => resolveMetricLabel(s, s_gu ?? s, entity.level, lang);
 
   return (
     <ScreenContainer>
       <BackLink label={t("common.back")} onClick={() => navigate(-1)} />
 
-      {/* ── compact page header — title + meta only; no value/summary strip ── */}
+      {/* ── compact page header — title + meta (frequency · date · SOURCE) ── */}
       <div className="pb-2">
         {domain && <p className="text-xs font-semibold text-primary-600">{tn(domain.name, domain.name_gu)}</p>}
         <h1 className="mt-0.5 text-xl font-extrabold leading-snug text-neutral-900">{name}</h1>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-400">
           <FrequencyBadge frequency={kpi.frequency} />
           {luLabel && <span>· {luLabel}</span>}
-          <span className="inline-flex items-center gap-1 truncate" title={kpi.data_source}>
-            <Database size={10} className="shrink-0" />
-            <span className="truncate">{kpi.data_source}</span>
-          </span>
+          {shouldShowSource("detail") && (
+            <span className="inline-flex items-center gap-1 truncate" title={kpi.data_source}>
+              <Database size={10} className="shrink-0" />
+              <span className="truncate">{kpi.data_source}</span>
+            </span>
+          )}
         </div>
       </div>
 
@@ -73,9 +81,6 @@ export default function KpiDetail() {
         </Card>
       ) : null}
 
-      {/* GSQAC SUB-DOMAIN BREAKDOWN — per-domain only (not on the overall GSQAC score page) */}
-      {isGsqac && kpi.id !== "sq_gsqac" && <GsqacBreakdown kpiId={kpi.id} />}
-
       {/* HOW IT'S CALCULATED */}
       {isMulti ? (
         <Card className="card-pad">
@@ -86,7 +91,7 @@ export default function KpiDetail() {
                 <dt className="text-xs font-bold text-neutral-800">
                   {resolveMetricLabel(mr.kpi.name, mr.kpi.name_gu, entity.level, lang)}
                 </dt>
-                <dd className="text-sm text-neutral-600">{mr.kpi.formula}</dd>
+                <dd className="text-sm text-neutral-600">{mr.kpi.formula ? resolveCopy(mr.kpi.formula, mr.kpi.formula_gu) : null}</dd>
               </div>
             ))}
           </dl>
@@ -95,7 +100,7 @@ export default function KpiDetail() {
       ) : kpi.formula ? (
         <Card className="card-pad">
           <SectionLabel>{t("kpi.formula")}</SectionLabel>
-          <p className="mt-2 text-sm text-neutral-700">{kpi.formula}</p>
+          <p className="mt-2 text-sm text-neutral-700">{resolveCopy(kpi.formula)}</p>
           {kpi.dataLagNote && <p className="mt-2 text-2xs text-neutral-400">{kpi.dataLagNote}</p>}
         </Card>
       ) : null}
@@ -103,30 +108,9 @@ export default function KpiDetail() {
   );
 }
 
-/**
- * GSQAC sub-domain breakdown for a single domain (sq_dN) — the report's
- * sub-domain → indicator structure. Reference structure from the report card,
- * not per-entity scores. Not rendered for the overall GSQAC score page.
- */
-function GsqacBreakdown({ kpiId }: { kpiId: string }) {
-  const { t, tn } = useT();
-  const domain = GSQAC_DOMAINS.find((d) => d.kpiId === kpiId);
-  const subs = domain ? GSQAC_SUBDOMAINS[domain.key] ?? [] : [];
-  if (!subs.length) return null;
-  return (
-    <Card className="card-pad">
-      <SectionLabel>{t("kpi.subdomains")}</SectionLabel>
-      <ul className="mt-3 space-y-2">
-        {subs.map((s) => (
-          <li key={s.name} className="rounded-xl bg-neutral-50 px-3 py-2">
-            <p className="text-sm font-semibold text-neutral-800">{tn(s.name, s.name_gu)}</p>
-            <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">{s.indicators.join(" · ")}</p>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
+/** Categorical line palette for intentional multi-line charts — clearly distinct,
+ *  colour-blind-safe pairings (CET deep teal vs CGMS purple, never two greens). */
+const MULTI_LINE_HEX = ["#0E7490", "#7C3AED", "#EA580C", "#DB2777"];
 
 /**
  * GSQAC multi-metric trend — all sub-metrics on ONE chart, one line each (e.g. CET
@@ -144,16 +128,12 @@ function GsqacMultiTrend({ recs, name, level, lang }: { recs: KpiRecord[]; name:
       <SectionLabel>{t(trendTitleKey(cadence))}: {name}</SectionLabel>
       <div className="mt-2">
         <MultiTrendChart
-          series={series.map((s) => {
-            // line colour follows the GSQAC grade scale — by each metric's latest value
-            const v = s.rec.value ?? s.trend.points[s.trend.points.length - 1].value;
-            return {
-              key: s.rec.kpi.id,
-              label: resolveMetricLabel(s.rec.kpi.name, s.rec.kpi.name_gu, level, lang),
-              color: gsqacGradeHex(gradeFor(v, GSQAC_BANDS).grade),
-              points: s.trend.points,
-            };
-          })}
+          series={series.map((s, i) => ({
+            key: s.rec.kpi.id,
+            label: resolveMetricLabel(s.rec.kpi.name, s.rec.kpi.name_gu, level, lang),
+            color: MULTI_LINE_HEX[i % MULTI_LINE_HEX.length],
+            points: s.trend.points,
+          }))}
           unit={series[0].rec.kpi.unit}
           cadence={cadence}
           lang={lang}

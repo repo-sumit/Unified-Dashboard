@@ -3,18 +3,20 @@ import { deltaToneClass } from "@/lib/colors";
 import { formatValue, resolveMetricLabel } from "@/lib/format";
 import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { buildTrend, getLastUpdatedLabel } from "@/lib/trend";
+import { shouldShowCardDelta } from "@/lib/displayPolicy";
 import { useKpiMetrics } from "@/hooks";
 import { useT, type Lang } from "@/i18n";
 import { FrequencyDelta } from "./FrequencyDelta";
-import { KpiCardShell, KpiCardHeader, KpiMetricRow, KpiSourceLine } from "./kpiCardParts";
+import { KpiCardShell, KpiCardHeader, KpiMetricRow } from "./kpiCardParts";
+import { KpiCompareSection } from "./KpiCompareSection";
 import { KpiCard } from "./KpiCard";
 
 /**
  * Multi-metric indicator card (Teacher/Student attendance · att_report · SAT1/SAT2/ORF/
- * CET/CGMS · Average CPD Time Per Teacher) — compact, graph-free
- * score table. Each metric is one `KpiMetricRow` (resolved label · value · N+1 · delta).
- * "Below hierarchy avg" is resolved to the current scope level (e.g. "Below block avg").
- * No sparklines; charts live on the KPI detail page only.
+ * CET/CGMS · Average CPD Time Per Teacher) — compact, graph-free score table. Each
+ * metric is one `KpiMetricRow` (resolved label · value · N+1 · policy-gated delta).
+ * "% below hierarchy average" resolves to the current scope ("% below block average").
+ * No source on cards; charts live on the KPI detail page only.
  */
 export function MultiMetricKpiCard({
   rec, metrics, name, onClick, lang = "en", level, parentName,
@@ -32,7 +34,7 @@ export function MultiMetricKpiCard({
   const lastUpdated = getLastUpdatedLabel(kpi, new Date(), lang);
 
   return (
-    <KpiCardShell onClick={onClick}>
+    <KpiCardShell onClick={onClick} compare={<KpiCompareSection kpi={kpi} />}>
       <KpiCardHeader title={name} frequency={kpi.frequency} context={lastUpdated} />
 
       <div className="mt-2 divide-y divide-line/60">
@@ -42,23 +44,21 @@ export function MultiMetricKpiCard({
           <span className="block py-2 text-2xs text-neutral-400">{t("common.notTracked")}</span>
         )}
       </div>
-
-      <KpiSourceLine label={t("common.source")} source={kpi.data_source} />
     </KpiCardShell>
   );
 }
 
-/** One metric row — resolves "Below hierarchy avg" to "Below {level} avg" dynamically. */
+/** One metric row — label resolved to the current scope level, delta only where allowed. */
 function MetricRow({
   rec, level, parentName, lang,
 }: { rec: KpiRecord; level?: Level; parentName?: string; lang: Lang }) {
   const kpi = rec.kpi;
   const na = rec.value == null;
-  const trend = na ? null : buildTrend(rec, lang);
+  const showDelta = !na && shouldShowCardDelta(kpi);
+  const trend = showDelta ? buildTrend(rec, lang) : null;
   const delta = trend?.delta ?? null;
   const peer = level && peerLevelOf(level) ? peerAvg(kpi.id, level) : null;
   const tone = na ? "text-rag-naText" : delta ? deltaToneClass(delta, kpi.direction) : "text-neutral-900";
-  // Resolve "hierarchy" → current scope level (e.g. "Below block avg" at block level).
   const label = resolveMetricLabel(kpi.name, kpi.name_gu, level ?? "school", lang);
 
   return (

@@ -51,7 +51,10 @@ export function FrequencyDelta({
   }
 
   const Arrow = delta > 0 ? ArrowUpRight : ArrowDownRight;
-  const mag = unit === "count" ? compactNum(Math.abs(delta), lang) : locNum(Math.round(Math.abs(delta) * 10) / 10, lang);
+  // percent metrics carry the % in the delta too ("↗ 1.1% this year", never bare 1.1)
+  const mag = unit === "count"
+    ? compactNum(Math.abs(delta), lang)
+    : `${locNum(Math.round(Math.abs(delta) * 10) / 10, lang)}${unit === "%" ? "%" : ""}`;
 
   if (variant === "pill") {
     const tone = deltaIsGood(delta, direction) ? "bg-rag-greenSoft text-rag-greenText" : "bg-rag-redSoft text-rag-redText";

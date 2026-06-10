@@ -79,9 +79,9 @@ export function metricKpiDef(parent: KpiDef, m: KpiMetricDef): KpiDef {
     unit: m.unit,
     direction: m.direction,
     formula: m.formula,
+    formula_gu: m.formula_gu,
     metrics: undefined,
     hero: false,
-    topIndicator: false,
     context: false,
   };
 }

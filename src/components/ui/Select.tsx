@@ -9,9 +9,9 @@ export interface SelectOption { value: string; label: string }
 /**
  * Design-system single-select — the on-brand replacement for native <select>.
  * Mirrors the header "All Schools" pill (rounded-full trigger, neutral-100 bg,
- * primary accent) and the MultiSelect popover. Type-to-search for long lists,
- * truncate + tooltip on long names, full combobox keyboard a11y (ArrowUp/Down,
- * Home/End, Enter, Esc, type-to-filter), hover + selected states.
+ * primary accent). Type-to-search for long lists, truncate + tooltip on long
+ * names, full combobox keyboard a11y (ArrowUp/Down, Home/End, Enter, Esc,
+ * type-to-filter), hover + selected states.
  */
 export function Select({
   value, onChange, options, placeholder, ariaLabel, leadingIcon, searchable, className, triggerClassName, align = "left",
@@ -109,7 +109,7 @@ export function Select({
 
       {open && (
         <>
-          {/* click-away backdrop (matches MultiSelect) */}
+          {/* click-away backdrop */}
           <div className="fixed inset-0 z-30" onClick={() => close(false)} aria-hidden />
           <div
             className={cn(

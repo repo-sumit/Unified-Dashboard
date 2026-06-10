@@ -1,100 +1,116 @@
 import { useNavigate } from "react-router-dom";
-import type { DomainScore } from "@/types";
-import { useScope, useScorecard, useScopeStats } from "@/hooks";
+import type { RagStatus } from "@/types";
+import { useScope, useScorecard, useChildLeaderboard, useFramework } from "@/hooks";
+import { useCompare } from "@/components/compare/CompareContext";
 import { useT } from "@/i18n";
 import { greetingKey } from "@/lib/format";
+import { gradeFor } from "@/config/ratingBands";
 import { OUTPUT_DOMAIN_ID } from "@/config/frameworks";
-import { Badge } from "@/components/ui/atoms";
-import { HeroKpiStrip } from "@/components/ui/HeroKpiStrip";
-import { VskBadge } from "@/components/ui/VskBadge";
-import { DomainSummaryCard } from "@/components/ui/DomainSummaryCard";
-import { GsqacSummaryCard } from "@/components/ui/GsqacSummaryCard";
+import { statusFromGrade } from "@/engine";
+import { DomainInsightCard } from "@/components/ui/DomainInsightCard";
+import type { ChildBar } from "@/components/ui/ComparisonBars";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { PageSection, PageGrid } from "@/components/layout/PageSection";
 
 /**
- * Homepage (mobile-first, same for every role). Starts straight on actionable
- * content: Domain cards → School Quality → Key indicators. No generic overall-score
- * hero. Composed from shared components so the visual language stays consistent.
+ * Homepage — mobile-first, ~95% of users are on a phone. A compact context-aware
+ * greeting, then one full-width insight card per domain. Embedded child-unit bar
+ * charts are hidden until the user applies Compare (top action row); each card
+ * then shows the domain score across the selected n-1 units. No standalone
+ * comparison strip; filters, Compare, Export and the navigator live in the shell.
  */
 export default function ScorecardHome() {
-  const { user, entity, currentId } = useScope();
+  const { user, entity, currentId, setScope } = useScope();
   const sc = useScorecard(currentId);
-  const stats = useScopeStats(currentId);
+  const childEntries = useChildLeaderboard(currentId);
+  const fw = useFramework();
+  const { childLevel, applied, selectedIds } = useCompare();
   const { t, tn } = useT();
   const navigate = useNavigate();
 
   if (!entity || !sc) return null;
 
-  const greeting = t(`greeting.${greetingKey()}`);
   const inputs = sc.domainScores.filter((d) => d.domain.kind === "input" && d.records.length > 0);
   const output = sc.domainScores.find((d) => d.domain.id === OUTPUT_DOMAIN_ID);
-  const gsqac = entity.meta.gsqac;
-  const allRecords = sc.domainScores.flatMap((d) => d.records);
   const parent = sc.parent;
   const parentName = parent ? tn(parent.entity.name, parent.entity.name_gu) : undefined;
+  const levelLabel = t(`levels.${entity.level}`);
 
-  const domainWoW = (d: DomainScore) => {
-    const ds = d.records
-      .filter((r) => r.kpi.unit === "%" || r.kpi.unit === "score")
-      .map((r) => r.deltaWoW)
-      .filter((v): v is number => v != null);
-    return ds.length ? Math.round((ds.reduce((a, b) => a + b, 0) / ds.length) * 10) / 10 : null;
-  };
+  const greeting = t(`greeting.${greetingKey()}`);
+  const displayName = user ? tn(user.name, user.name_gu) || t(`roles.${user.role}`) : "";
+  const designation = user ? user.designation || t(`roles.${user.role}`) : "";
+
+  const statusOf = (v: number | null): RagStatus => (v == null ? "na" : statusFromGrade(gradeFor(v, fw.rating_bands).group));
+  const selectedSet = new Set(selectedIds);
+
+  // the domain score across the SELECTED child units, lowest (worst) first
+  const childBars = (domainId: string): ChildBar[] =>
+    childEntries
+      .filter((en) => selectedSet.has(en.entity.id))
+      .map((en) => {
+        const value = en.domainPercents?.[domainId] ?? null;
+        return { id: en.entity.id, label: tn(en.entity.name, en.entity.name_gu), value, status: statusOf(value) };
+      })
+      .filter((b) => b.value != null)
+      .sort((a, b) => (a.value as number) - (b.value as number));
+
+  const comparable = !!childLevel;
+  const chartTitle = childLevel ? t("compare.chartTitle", { level: t(`levels.${childLevel}`) }) : "";
+  const hint = childLevel ? t("compare.hint", { level: t(`levels.${childLevel}`).toLowerCase() }) : "";
+  const drillChild = (id: string) => setScope(id);
 
   return (
     <ScreenContainer>
-      <PageHeader
-        icon={<VskBadge size={40} />}
-        eyebrow={user ? `${greeting}, ${tn(user.name, user.name_gu).split(" ")[0]}` : undefined}
-        title={tn(entity.name, entity.name_gu)}
-        badge={<Badge className="bg-neutral-100 text-neutral-500">{t(`levels.${entity.level}`)}</Badge>}
-      />
+      {/* compact, context-aware greeting (entity + parent live in the navigator) */}
+      <div className="min-w-0">
+        <h1 className="truncate text-lg font-extrabold tracking-tight text-neutral-900 sm:text-xl">{greeting}, {displayName}</h1>
+        <p className="truncate text-xs text-neutral-500">{designation} · {t("hierarchy.viewingLevel", { level: levelLabel })}</p>
+      </div>
 
-      {/* DOMAIN cards — primary value = each domain's homepage (hero) indicator */}
       <PageSection title={t("scorecard.domainsHeader")}>
         <PageGrid cols="domain">
           {inputs.map((d) => {
             const hero = d.records.find((r) => r.kpi.hero) ?? null;
             return (
-              <DomainSummaryCard
+              <DomainInsightCard
                 key={d.domain.id}
                 ds={d}
                 name={tn(d.domain.name, d.domain.name_gu)}
+                level={entity.level}
                 heroRec={hero}
                 heroName={hero ? tn(hero.kpi.name, hero.kpi.name_gu) : undefined}
-                level={entity.level}
-                delta={domainWoW(d)}
                 parentName={parentName}
-                parentPercent={parent?.domainPercents[d.domain.id] ?? null}
-                onClick={() => navigate(`/app/domain/${d.domain.id}`)}
+                comparable={comparable}
+                comparing={applied}
+                bars={childBars(d.domain.id)}
+                chartTitle={chartTitle}
+                hint={hint}
+                onDrill={() => navigate(`/app/domain/${d.domain.id}`)}
+                onOpenChild={drillChild}
               />
             );
           })}
+
+          {output && (
+            <DomainInsightCard
+              ds={output}
+              name={tn(output.domain.name, output.domain.name_gu)}
+              level={entity.level}
+              parentName={parentName}
+              gsqacImprovement={entity.meta.gsqac?.improvement ?? null}
+              outputPercent={output.percent}
+              parentPercent={parent?.domainPercents[OUTPUT_DOMAIN_ID] ?? null}
+              comparable={comparable}
+              comparing={applied}
+              bars={childBars(OUTPUT_DOMAIN_ID)}
+              chartTitle={chartTitle}
+              hint={hint}
+              onDrill={() => navigate(`/app/domain/${OUTPUT_DOMAIN_ID}`)}
+              onOpenChild={drillChild}
+            />
+          )}
         </PageGrid>
       </PageSection>
-
-      {/* SCHOOL QUALITY — GSQAC output, compact (breakdown lives on the detail page) */}
-      {output && (
-        <GsqacSummaryCard
-          output={output}
-          gsqac={gsqac}
-          parentName={parentName}
-          parentPercent={parent?.domainPercents[OUTPUT_DOMAIN_ID] ?? null}
-          onClick={() => navigate(`/app/domain/${OUTPUT_DOMAIN_ID}`)}
-        />
-      )}
-
-      {/* TOP INDICATORS — intervention indicators (kpi.topIndicator), excludes the
-          domain-card homepage indicators so the homepage never repeats them */}
-      <HeroKpiStrip
-        records={allRecords}
-        level={entity.level}
-        enrolment={stats?.enrolment}
-        parentName={parentName}
-        onOpen={(rec) => navigate(`/app/kpi/${rec.kpi.id}`)}
-      />
     </ScreenContainer>
   );
 }

@@ -38,6 +38,23 @@ export function deltaIsGood(delta: number, direction: Direction): boolean {
   return direction === "higher" ? delta > 0 : delta < 0;
 }
 
+/**
+ * RAG status for one bar in an embedded Compare chart (the design's treatment):
+ *  • ratio (CRC/URC visits, target 3) — absolute: ≥2 green · ≥1.3 amber · else red
+ *  • lower-is-better OR count — RELATIVE within the compared set (worst third red …)
+ *    so the units that need attention always stand out, whatever the absolute scale
+ *  • higher-is-better % / score — absolute: ≥85 green · ≥72 amber · else red
+ */
+export function compareBarStatus(value: number, unit: string, direction: Direction, all: number[]): RagStatus {
+  if (unit === "ratio") return value >= 2 ? "green" : value >= 1.3 ? "amber" : "red";
+  if (direction === "lower" || unit === "count") {
+    const mn = Math.min(...all), mx = Math.max(...all);
+    const t = (value - mn) / ((mx - mn) || 1);
+    return t < 0.34 ? "green" : t < 0.67 ? "amber" : "red";
+  }
+  return value >= 85 ? "green" : value >= 72 ? "amber" : "red";
+}
+
 /** delta text-colour, direction-aware: good → green, flat → neutral, bad → red. */
 export function deltaToneClass(delta: number | null | undefined, direction: Direction): string {
   if (delta == null || delta === 0) return "text-neutral-400";
@@ -74,11 +91,6 @@ export const GSQAC_BAND_HEX: Record<string, string> = {
   "C": "#EF6C00",
   "D": "#D33A2C",
 };
-
-/** Grade label → its GSQAC grade-scale colour (falls back to the grade-group hex). */
-export function gsqacGradeHex(grade: string): string {
-  return GSQAC_BAND_HEX[grade] ?? GRADE_GROUP[gradeGroupOf(grade)].hex;
-}
 
 /** Soft domain-accent tints — bg/ring reference the `tint` theme tokens
  *  (no raw hex in classes); `hex` is the chart-fill colour (a JS value). */

@@ -1,6 +1,5 @@
 import type {
   Callout,
-  CascadeRow,
   DomainScore,
   Entity,
   FrameworkConfig,
@@ -18,12 +17,10 @@ import { kpiApplies, kpiAppliesAtLevel } from "@/config/applicability";
 import { buildDomainScore, buildKpiRecord, buildOverall, metricKpiDef, scoreEntity } from "./score";
 import { buildLeaderboard } from "./leaderboard";
 import { isImproving } from "./story";
-import { kpiCascade, overallCascade } from "./rollup";
 
 export * from "./rag";
 export * from "./score";
 export * from "./leaderboard";
-export * from "./rollup";
 export { kpiStory, isImproving } from "./story";
 
 /** binds the provider so engine callers don't thread `getSeries` everywhere. */
@@ -189,70 +186,37 @@ export function getKpiMetricRecords(fw: FrameworkConfig, kpiId: string, entityId
   });
 }
 
-// ── Leaderboards ───────────────────────────────────────────────────────
-/** peers at the same level (siblings) — ranked. */
-export function getPeerLeaderboard(fw: FrameworkConfig, entityId: string, periods: Period[], role?: Role): LeaderboardEntry[] {
-  const entity = dataProvider.getEntity(entityId);
-  if (!entity) return [];
-  const peers = [entity, ...dataProvider.getSiblings(entityId)];
-  return buildLeaderboard(fw, peers, entityId, seriesFn(periods), periods, role);
-}
-
-/** the children directly below this entity — ranked (drill-down leaderboard). */
+// ── Child comparison ───────────────────────────────────────────────────
+/** the children directly below this entity — scored + graded. Powers the
+ *  embedded n-1 comparison bar charts (home + domain pages). */
 export function getChildLeaderboard(fw: FrameworkConfig, entityId: string, periods: Period[], role?: Role): LeaderboardEntry[] {
   const children = dataProvider.getChildren(entityId);
   if (!children.length) return [];
   return buildLeaderboard(fw, children, null, seriesFn(periods), periods, role);
 }
 
-// ── Cascade comparisons ────────────────────────────────────────────────
-export function getOverallCascade(fw: FrameworkConfig, entityId: string, periods: Period[], role?: Role): CascadeRow[] {
-  const entity = dataProvider.getEntity(entityId);
-  if (!entity) return [];
-  return overallCascade(fw, entity, dataProvider.getAncestors(entityId), seriesFn(periods), periods, role);
-}
-
-export function getKpiCascade(fw: FrameworkConfig, kpiId: string, entityId: string, periods: Period[]): CascadeRow[] {
-  const entity = dataProvider.getEntity(entityId);
-  const kpi = fw.kpis.find((k) => k.id === kpiId);
-  if (!entity || !kpi) return [];
-  // §C: the entity's OWN level + its ancestors up to State (the N+1 chain) — never
-  // descendants. `chain` is ordered top → own (State … own). A State user has no
-  // ancestors, so this yields a single row and the section is hidden by the caller.
-  const ancestors = dataProvider.getAncestors(entityId); // nearest → State
-  const chain = [...ancestors.slice().reverse(), entity];
-  return kpiCascade(kpi, chain, entity, seriesFn(periods), periods);
-}
-
-// ── Section comparison (sections of a grade ranked on a chosen KPI) ─────
-export interface SectionCompareRow {
-  entity: Entity;
-  value: number | null;
-  status: KpiRecord["status"];
-  rank: number | null;
-  isCurrent: boolean;
-}
-
-export function getKpiAmong(
-  fw: FrameworkConfig,
-  kpiId: string,
-  entities: Entity[],
-  periods: Period[],
-  currentId?: string,
-): SectionCompareRow[] {
-  const kpi = fw.kpis.find((k) => k.id === kpiId);
-  if (!kpi) return [];
+/**
+ * One KPI's (or one sub-metric's) value for each given entity — the data behind a
+ * KPI card's embedded Compare chart. Every value is in the KPI/metric's OWN unit
+ * (count stays count, % stays %, …) so the chart unit always matches the card.
+ * `metricId` picks a single sub-metric of a multi-metric indicator (else the parent).
+ */
+export function getKpiChildSeries(
+  fw: FrameworkConfig, kpiId: string, entityIds: string[], periods: Period[], metricId?: string,
+): { id: string; value: number | null }[] {
+  const parent = fw.kpis.find((k) => k.id === kpiId);
+  if (!parent) return [];
+  let def: KpiDef = parent;
+  if (metricId && parent.metrics?.length) {
+    const m = parent.metrics.find((mm) => mm.id === metricId);
+    if (m) def = metricKpiDef(parent, m);
+  }
   const getSeries = seriesFn(periods);
-  const rows = entities.map((e) => {
-    const rec = buildKpiRecord(kpi, e, getSeries(e, kpi), periods);
-    return { entity: e, value: rec.value, status: rec.status, rank: null as number | null, isCurrent: e.id === currentId };
+  return entityIds.map((id) => {
+    const e = dataProvider.getEntity(id);
+    if (!e) return { id, value: null };
+    return { id, value: buildKpiRecord(def, e, getSeries(e, def), periods).value };
   });
-  const withVals = rows.filter((r) => r.value != null).sort((a, b) => {
-    const av = a.value as number, bv = b.value as number;
-    return kpi.direction === "lower" ? av - bv : bv - av;
-  });
-  withVals.forEach((r, i) => (r.rank = i + 1));
-  return rows;
 }
 
 /** the levels a role/entity can drill DOWN into (one level beneath it). */

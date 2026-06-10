@@ -24,7 +24,9 @@ const COLS: Record<string, string> = {
   // so KPI cards in the same row stretch to match (single/dual/triple-metric alike).
   // Left off at the 1-col mobile breakpoint so phone cards keep their natural height.
   kpi: "grid-cols-1 sm:grid-cols-2 sm:auto-rows-fr xl:grid-cols-3",
-  domain: "grid-cols-1 sm:grid-cols-3",
+  // domain insight cards carry embedded charts → a 2-column grid (2×2) on tablet+
+  // so each card stays wide and information-rich; full-width on mobile.
+  domain: "grid-cols-1 sm:grid-cols-2 sm:auto-rows-fr",
   two: "grid-cols-1 sm:grid-cols-2",
 };
 

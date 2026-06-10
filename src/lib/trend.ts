@@ -226,7 +226,8 @@ function labelsFor(cadence: Cadence, n: number, lang: Lang): string[] {
 
 function clampVal(v: number, unit: Unit, isContext: boolean, cur: number): number {
   if (unit === "count") return Math.max(0, Math.round(v));
-  if (unit === "ratio") return clamp(v, 0, Math.max(2, Math.abs(cur) * 1.15));
+  // ratio = CRC/URC visits per school — hard product cap of 3 visits/month
+  if (unit === "ratio") return clamp(v, 0, 3);
   if (unit === "score") return clamp(v, 0, Math.max(100, Math.abs(cur) * 1.2));
   if (isContext) return clamp(v, -30, 100); // change-deltas may dip negative
   return clamp(v, 0, 100);

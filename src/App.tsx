@@ -10,8 +10,6 @@ const ScorecardHome = lazy(() => import("@/screens/ScorecardHome"));
 const DomainView = lazy(() => import("@/screens/DomainView"));
 const SubDomainView = lazy(() => import("@/screens/SubDomainView"));
 const KpiDetail = lazy(() => import("@/screens/KpiDetail"));
-const CascadeComparison = lazy(() => import("@/screens/CascadeComparison"));
-const Leaderboard = lazy(() => import("@/screens/Leaderboard"));
 const Export = lazy(() => import("@/screens/Export"));
 const NotFound = lazy(() => import("@/screens/NotFound"));
 
@@ -41,8 +39,9 @@ export default function App() {
             <Route path="domain/:domainId" element={<DomainView />} />
             <Route path="domain/:domainId/:subId" element={<SubDomainView />} />
             <Route path="kpi/:kpiId" element={<KpiDetail />} />
-            <Route path="compare" element={<CascadeComparison />} />
-            <Route path="leaderboard" element={<Leaderboard />} />
+            {/* standalone Compare & Leaderboard are retired — old links land on the scorecard */}
+            <Route path="compare" element={<Navigate to="/app" replace />} />
+            <Route path="leaderboard" element={<Navigate to="/app" replace />} />
             <Route path="export" element={<Export />} />
           </Route>
           <Route path="*" element={<NotFound />} />

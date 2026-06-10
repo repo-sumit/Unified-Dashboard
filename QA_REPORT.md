@@ -1,5 +1,212 @@
 # Unified Portal — QA Report
 
+## Compare action — gated embedded charts (Claude Design `vsk-dashboard`, Pass 18)
+
+**Design implemented:** the Claude Design handoff `swiftchat-design-system/ui_kits/vsk-dashboard/index.html` (run `N4v5-UUHsk3kJJDtUfMTww`), read in full with its chat transcript, `dashboard.jsx`, `app.jsx`, `data.js`. This iteration turns the always-on embedded charts into a **Compare action**: charts are hidden by default and appear only after the user picks which n-1 child units to compare and applies. Implemented against the existing provider/engine, KPI catalog, hierarchy, PM SHRI, i18n and access control (no product-logic changes).
+
+### Behaviour (matches the design)
+
+- **Compare is an action, not a page.** New `Compare` button in the top action row (`Compare` → `Compare · N` once applied; reopens the selector). Hidden at leaf scopes (nothing below to compare). No route, no nav entry.
+- **Charts hidden by default.** Every domain card (home) and KPI card (domain/sub-domain pages) shows a compact dashed hint *"Tap Compare to view {level}-wise chart"* instead of a chart — no reserved empty space.
+- **Selection UI** (`CompareSheet`): a **bottom sheet on mobile, right-side drawer on desktop** (one CSS-responsive component, portaled to `<body>` past the header's backdrop-blur). Title "Compare {Level}s" + "Select units to show in the charts", search, "N of M selected" + Select all / Clear all, **all child units preselected on open**, Cancel + Apply (Apply disabled with nothing selected).
+- **Level-specific + resets on scope change** (`CompareContext`): applying compares the selected n-1 units; changing scope (drill up/down) resets the selection and re-preselects the new scope's children, so a District's block selection never leaks into a Block's clusters.
+- **After Apply** each card reveals an embedded bar chart of the selected units only, worst-first, RAG-coloured, value labels, abbreviated unit labels, tap-a-bar to drill. Chart strips scroll horizontally inside the card (a "scroll ›" hint appears beyond six bars); **the page never scrolls horizontally** (verified at 375 px after fixing an action-row overflow by letting it wrap on mobile).
+- **Unit consistency (critical):** the chart uses the KPI/metric's OWN unit, never a mismatched %. New `engine.getKpiChildSeries` computes each selected child's value in the KPI's unit (count→count, %→%, visits→`ratio`, score→score). Verified: "Students absent · 225" → count bars (64/62/56/53/53), not percentages; CRC/URC visits cap at 3; GSQAC/score in score; % KPIs in %.
+- **Multi-metric KPI cards** (Teacher/Student attendance, SAT1/SAT2/ORF, CET, CGMS, attendance submission, GSQAC D5) show **"Compare by [metric]" chips**; switching a chip re-renders the chart in that metric's unit (one chart at a time — no mixed-unit stacks). Verified Present↔Submitted switching.
+- **Standalone bottom comparison panel removed** from domain pages (`ChildComparisonPanel` deleted); all comparison now lives inside the cards.
+- Preserved: KPI values/IDs/formulas, hierarchy + drill-down navigator, PM SHRI filter, language toggle, Export action, N+1 peer chips, RAG-status headlines, no source on cards, no line/sparkline graphs on cards.
+
+### Components changed
+
+New: `components/compare/CompareContext.tsx` (provider + `useCompare`), `components/compare/CompareSheet.tsx`, `components/ui/KpiCompareSection.tsx`. Changed: `components/layout/AppShell.tsx` (Compare button + sheet + provider; action-row wrap fix), `components/ui/ComparisonBars.tsx` (rewritten to the design's unit-aware worst-first BarChart; reference line dropped), `components/ui/DomainInsightCard.tsx` (chart gated behind Compare + dashed hint), `components/ui/KpiCard.tsx` + `MultiMetricKpiCard.tsx` + `kpiCardParts.tsx` (compare slot, `CompareHint`, shell split so the summary button no longer wraps the chart's buttons), `screens/ScorecardHome.tsx` + `screens/DomainView.tsx` (gating; standalone panel removed), `engine/index.ts` + `hooks/index.ts` (`getKpiChildSeries` / `useKpiChildSeries`), `lib/colors.ts` (`compareBarStatus`), `i18n/en.ts` + `i18n/gu.ts` (Compare strings; pruned dead comparison keys). Deleted: `components/ui/ChildComparisonPanel.tsx`.
+
+### Build & verification
+
+- `npm run typecheck` clean · `npm run build` ✓ (only the pre-existing entities-seed chunk-size warning).
+- Browser smoke test (Playwright, Block officer, 375 px + 1440 px): charts hidden by default with hint → Compare opens the preselected checklist (bottom sheet mobile / right drawer desktop) → Apply reveals per-card charts; "Compare · 5" state; count KPI shows count bars; multi-metric "Compare by" chips switch the chart; no page horizontal overflow; no console errors. The fetched design bundle was read then removed after extraction (reproducible from the URL).
+
+### Deviations from the design
+
+- **App bar** keeps the real `logo-vsk.png` + "Unified Portal" wording (the prototype used a GraduationCap stand-in because the logo wasn't in its upload).
+- **PM SHRI** stays a 3-option Select (All / PM SHRI / Non-PM SHRI), not the prototype's 2-state toggle (preserves existing product logic).
+- **KPI cards keep the N+1 peer chip** ("Kachchh · 94%") which the prototype omitted — it is existing product context and not disallowed by the design.
+- **Honest empty data:** where a selected level genuinely lacks a KPI's data (e.g. Administration at grade level), the card shows "Not tracked at this level" rather than fabricating bars (the prototype's data was illustrative).
+
+---
+
+## Design-handoff alignment — Claude Design `vsk-dashboard` kit (Pass 17)
+
+**Source:** a Claude Design handoff bundle (`swiftchat-design-system`, fetched from the design URL) whose `ui_kits/vsk-dashboard/index.html` is a recreation of *this app's* home, iterated against the same brief. Read the bundle README, the chat transcript, and the kit source (`dashboard.jsx`, `app.jsx`, `data.js`) per the README's instructions, then aligned the production home to the design's specific visual decisions. Pass 16 already delivered the structure (navigator, embedded charts, greeting, action row); this pass adopts the remaining visual differences. The bundle's app bar used a GraduationCap stand-in (no logo in the upload) — kept our real `logo-vsk.png`; kept our 3-option PM SHRI Select over the design's 2-state toggle (more functional). The bundle's illustrative "Admin areas / GSQAC domains" data was mapped onto our **real** sub-domain / GSQAC-domain scores, never invented.
+
+### Aspects implemented
+
+1. **N+1 comparison as a boxed chip** — home domain cards now show `vs {parent} · {value}` in a rounded grey chip (`bg-surface-sunken`, "vs" label + bold tnum value) instead of the plain muted line, matching the design's prominent treatment. New `N1Chip` in `DomainInsightCard.tsx`; `common.vs` i18n key (en "vs" / gu "vs"). (KPI cards on detail/domain pages keep the compact `Kachchh · 94%` line — the chip is the home-card treatment.)
+2. **Headline value colored by RAG status** — the big number reads in its status colour via `valueToneClass(status)` (green good / red at-risk / neutral for amber·NA), matching the design's `--rag-{status}-text`. Verified: School Quality 48.2% renders red with a C badge at an at-risk school; Attendance count renders green where the engine grades it healthy.
+3. **"scroll ›" affordance** on the embedded bar chart when there are more than 6 child units (`ChildComparisonBars`), alongside the kept dashed reference line (current scope's own value — transcript wants scope context). `common.scroll` i18n key. Verified at school level (8 grades) and is consistent with the 33-district horizontal scroll.
+4. **Sub-area fallback bars** — a domain with no child-unit data at the current level now shows its own sub-areas instead of an empty state (the design's pattern). Administration at school level → "Areas needing attention" from the four Administration sub-domains (School Observation · Classroom Observation · Student Retention · CPD), using real `subScores`. School Quality keeps its existing GSQAC D1–D5 fallback. New `compare.areasFocus` i18n key.
+5. **Greeting aligned to the design** — "Good evening, {name}" + "{designation} · viewing {level} level" (uses the user's real designation, e.g. "Block Resource Coordinator (BEO)"). Removed the VskBadge and the duplicated entity-name/parent lines (those live in the hierarchy navigator). New `hierarchy.viewingLevel` key.
+6. **Chart title row tidied** — dropped the redundant "Lowest first" caption from the card (worst-first ordering reads from colour + the bars; the scroll hint now carries the affordance), matching the design's single-title row.
+
+### Files changed
+
+`components/ui/DomainInsightCard.tsx` (N1Chip, RAG headline, title row), `components/ui/ComparisonBars.tsx` (scroll affordance), `screens/ScorecardHome.tsx` (greeting, sub-area fallback), `i18n/en.ts`, `i18n/gu.ts` (`common.vs`, `common.scroll`, `compare.areasFocus`, `hierarchy.viewingLevel`).
+
+### Build & verification
+
+- `npm run typecheck` clean; `npm run build` ✓ (only the pre-existing entities-seed chunk-size warning).
+- Browsed (Playwright) as **Ila Patel** (Block / BRC), 390px + 1440px: block (cluster bars), cluster (school bars, red at-risk bar), and school (grade bars with "scroll ›", Admin "Areas needing attention", GSQAC "GSQAC domains needing attention" with red worst bar) — N+1 chips, RAG headlines, and design-aligned greeting all render correctly on mobile and desktop; no console errors. The fetched design bundle was read, then removed after extraction (reproducible from the URL).
+
+---
+
+## Homepage redesign — smart hierarchy navigator + per-card embedded charts (Pass 16)
+
+**Goal:** redesign the home page mobile-first (≈95% of users are on a phone) against the supplied mobile + desktop layout references, keeping the established VSK/SwiftChat visual system. Government-school monitoring dashboard — calm, practical, readable in 6 seconds.
+
+### Reference layouts used
+
+- **Mobile reference (primary):** ~390px app frame — top app bar (logo · logout), a compact hierarchy pill (‹ current ›), an action row (All Schools · EN/ગુ · Export), a short greeting, then full-width vertical domain cards each with an embedded horizontal-scroll bar chart. No bottom standalone "needs attention" card.
+- **Desktop reference:** sticky top bar (logo + identity · clean breadcrumb · filter/language/export/logout), greeting row, then a 2-column (2×2) grid of wide, information-rich domain cards.
+
+### 1. Smart hierarchy navigator (replaces the long breadcrumb)
+
+New `components/layout/HierarchyNavigator.tsx`, mounted in the app shell in place of `Breadcrumb` (deleted).
+
+- **Mobile:** a rounded pill — `‹ up · current scope · drill ›`. Left steps **up one level** (bounded by the user's home scope; disabled at the top, labelled "You are at the top of your scope"). The centre + right open a **bottom-sheet picker** of the next level down.
+- **Desktop:** a clean inline trail (`Block · Lakhapat / Cluster · Dayapar`, current bold, each step navigable) plus a `Change {child level}` control that opens the same picker.
+- **Picker:** a bottom sheet on mobile (grab handle, thumb-reachable, ≥48px tap rows), a centred card on desktop; search appears for long lists (districts/schools); Esc + backdrop + ✕ close; body scroll locked while open.
+- **Behaviour by level** matches the spec: State→District, District→Block, …, School→Grade, Grade→Section; left always returns to the parent (within scope). Drilling sets scope and returns to `/app`.
+- **Bug fixed during QA:** the sheet is rendered through a **React portal to `document.body`**. The sticky header uses `backdrop-blur`, and `backdrop-filter` creates a containing block for `position: fixed` descendants, which was pinning the sheet to the header instead of the viewport.
+
+### 2. Top action row
+
+- `All Schools / PM SHRI` filter now uses a **sliders (filter) icon**, not the decorative sparkle (`PmShriFilter`).
+- Compact `EN | ગુ` segmented toggle and a primary **Export** button sit in the same row. Logout is a small muted circular icon in the identity row (does not compete with Export).
+- Mobile: navigator takes its own line, the actions wrap beneath with Export pushed right. Desktop: navigator + actions share one row.
+
+### 3. Greeting (corrected, context-aware)
+
+`ScorecardHome` shows a compact block (not an oversized hero): `Good evening, {user name}` / `Viewing {Level} · {Entity}` / `Parent: {parent}`. Uses the signed-in **user's name** (e.g. "Ila Patel"), fixing the old "Good evening, State" artefact; falls back to the role label if no name.
+
+### 4. Domain cards → `DomainInsightCard` (new), with embedded charts
+
+New `components/ui/DomainInsightCard.tsx` replaces the home use of `DomainSummaryCard` + `GsqacSummaryCard` (both deleted). One card per domain: a clickable head (icon · name · `Daily · 10 Jun` · headline KPI · N+1 · policy-gated delta) that drills into the domain, **plus its own embedded child-unit bar chart** under a hairline divider. The outer element is a `<div>` (head and each bar are separate buttons, so domain-drill and child-drill stay distinct).
+
+- **Attendance** (count hero) reads as a sentence: "**15** students absent from past 7+ consecutive days" (225 at block, 4.7K at state — real data).
+- **Assessment / Administration** (% / ratio) keep value + label ("86.1% · SAT reports downloaded in classrooms", "1.2 · No of CRC/URC Visits per school").
+- **School Quality** keeps the GSQAC score + official grade badge + allowed `↗ 1.4% this year`.
+- N+1 comparison on every card (`Nargadh · 62`, etc.). No source text, no card-level line graph/sparkline (all from the Pass-15 display policy, unchanged).
+
+### 5. Embedded child-unit bar charts (one per card; standalone strip removed)
+
+Each card's chart reuses `ChildComparisonBars` (`height: 96`) showing the **n-1 child units** for that domain, lowest first, status-coloured (red worst → green best, lower-is-better honoured), with a dashed reference line for the current scope's own value, and **tap-a-bar to drill** into that unit.
+
+- Level-aware titles: "Districts/Blocks/Clusters/Schools/Grades needing attention" (`compare.focusTitle`).
+- **Horizontal scroll** when units are many (verified at State: 33 districts scroll with a visible track; ≤10 clusters/schools stretch to fill).
+- **School Quality at school level** has no child GSQAC (grades aren't graded), so it falls back to the **5 GSQAC domains** ("GSQAC domains needing attention"); an empty state ("No lower level to compare") shows where a level genuinely has no comparable children (e.g. Administration at school level).
+- The old standalone bottom `ChildComparisonPanel` on the home page is **removed** (the component is kept — `DomainView` still uses it in-context).
+
+### 6. Layout / responsiveness
+
+- Home domain grid changed to `grid-cols-1 sm:grid-cols-2` (full-width cards on mobile, **2×2 on tablet/desktop** per the desktop reference), since each card now carries a chart.
+- New `sheet-up` keyframe (tailwind) for the mobile bottom sheet; `scale-in` for the desktop centred card; both respect `prefers-reduced-motion`.
+- 44px minimum tap targets on the navigator arrows and picker rows. No horizontal page overflow at 390px; Gujarati text expansion verified (labels + Gujarati numerals, no breakage).
+
+### 7. Files changed
+
+New: `components/layout/HierarchyNavigator.tsx`, `components/ui/DomainInsightCard.tsx`.
+Changed: `components/layout/AppShell.tsx`, `components/layout/PmShriFilter.tsx`, `components/layout/PageSection.tsx`, `components/ui/Icon.tsx` (+ `SlidersHorizontal`, `X`), `components/ui/index.ts`, `screens/ScorecardHome.tsx`, `i18n/en.ts`, `i18n/gu.ts`, `tailwind.config.ts`.
+Deleted: `components/layout/Breadcrumb.tsx`, `components/ui/DomainSummaryCard.tsx`, `components/ui/GsqacSummaryCard.tsx`.
+
+### 8. Build & verification
+
+- `npm run build` ✓ (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+- Browsed (Playwright) as **Ila Patel** (Block / BRC) and **State VSK Cell** at 390px and 1440px, EN + ગુ: hierarchy pill + drill sheet, drill-up/down, all four embedded charts, GSQAC grade + delta, state-level horizontal scroll, no console errors.
+
+### 9. Acceptance criteria — all met
+
+Mobile + desktop reference layouts (1, 2, 12, 13) · smart navigator replaces breadcrumb (3) · clear drill-up/down (4) · clean top actions (5) · corrected greeting (6) · four redesigned domain cards (7) · embedded child bar chart per card (8) · standalone bottom card removed (9) · N+1 on every card (10) · no card-level line graphs / no source (11) · `npm run build` passes (14) · QA report updated (15).
+
+---
+
+## Officer-first redesign — nav removal, display policy, embedded comparisons (Pass 15)
+
+**Source of truth:** `transcript.pdf` (June 2026 product-review transcript, 5 pages — extracted and applied in full), cross-checked against `Docs/GJ_Unified_App_KPIs.xlsx` (Sheet1, 45 rows) and `Docs/GSQAC_Report_2024_25_English.pdf`. Where the transcript supersedes the sheet (CRC/URC max 3 vs the sheet's "Max = 2"), the transcript wins.
+
+### 1. Navigation & app shell
+
+- **Standalone Leaderboard and Compare are removed.** Deleted `screens/Leaderboard.tsx`, `screens/CascadeComparison.tsx`, `components/ui/Leaderboard.tsx`, `components/ui/SchoolRiskTable.tsx`, `components/ui/MultiSelect.tsx`. `/app/leaderboard` and `/app/compare` now `<Navigate to="/app" replace />` (old links land safely on the scorecard).
+- **No navigation rails at all** (transcript: "no navigation buttons"): the desktop side nav and the mobile bottom nav are gone; content gets the full width.
+- **App shell = identity row + one compact filter/action row**: `[Hierarchy drill-down ▾] [All Schools / PM SHRI ▾] [EN|ગુ] [Export]`. The drill-down is a new `ScopeDrilldown` select (children of the current scope, one level down; breadcrumb handles going back up). PM SHRI moved out of the identity row into the filter row (officers only, unchanged logic). **Export is a top-right action**, hidden while on the export page itself; the Export screen gained a Back link.
+- Orphaned engine surface removed with the screens: `getPeerLeaderboard`, `getOverallCascade`, `getKpiCascade`, `getKpiAmong`, `engine/rollup.ts`, `CascadeRow` type, and the `usePeerLeaderboard`/`useOverallCascade`/`useKpiCascade` hooks. `getChildLeaderboard`/`buildLeaderboard` are kept — they power the new embedded comparisons.
+
+### 2. Homepage redesign
+
+- **Top Indicators section removed** (`HeroKpiStrip.tsx` deleted; `topIndicator` flag removed from types/catalog; `ogm.topIndicators`/`ogm.heroKpis`/`perMonthMax2` i18n keys removed).
+- **Domain cards in ONE row** on wide screens: Attendance · Assessment · Administration · School Quality (`PageGrid cols="domain"` → `xl:grid-cols-4`, 2-up on tablet, stacked on phone).
+- **Sentence-style hero copy** for count indicators: the Attendance card reads "**4.7K students absent from past 7+ consecutive days**" (new `formatKpiCardTitlePhrase` helper — count units only; % / ratio heroes keep value + label, so "1.8 no of CRC/URC visits…" never happens).
+- **Embedded child comparison** ("Which districts need attention?"): bar chart of every n-1 unit by input composite, lowest first, status-coloured, dashed line marking the current scope's own average, tap a bar to drill down. Horizontal scroll kicks in when units × 52px exceed the panel width (33 districts scroll; ~10 blocks stretch to fill).
+
+### 3. KPI card display policy (central, in `src/lib/displayPolicy.ts`)
+
+- **`shouldShowCardDelta(kpi)`** — single arbiter for card deltas: `suppressDelta` → false; Daily cadence → false; assessment domain → only SAT1/SAT2/CET/CGMS (and their sub-metrics; FLN/ORF excluded); school_quality → only the GSQAC score; everything else (all of Attendance by cadence, all of Administration incl. School Observation) → false. Edge handled: sq_d5's CET/CGMS rows reuse `asm_cet__participation`/`asm_cgms__participation` series but keep `domain_id: school_quality`, so they stay delta-free. Consumed by `KpiCard`, `MultiMetricKpiCard`, `DomainSummaryCard` and both Export delta paths.
+- **`shouldShowSource(context)`** — source renders only on the KPI detail page (title meta: `Yearly · Sep 2025 · Xamta bot`) and in the Export tables; **no card shows source** (the `KpiSourceLine`/`KpiContextTile` parts, `SourceBadge` and `KpiMetaRow` were deleted so no card can grow one back).
+- **No "Parent avg" label** — peer comparison is `Kachchh · 94%` everywhere (Export summary tiles now use the same `{parent name} · {value}` grammar).
+- **No RATE/LATEST/COUNT/SCORE labels** (i18n keys deleted), **no graphs/sparklines in cards** (`Sparkline.tsx` deleted; recharts only in detail-page `TrendChart`).
+- **Delta or date once per card**: the frequency + date chip (`Daily · 10 Jun`, `Yearly · Sep 2025`) lives only in the card header; deltas (where allowed) sit beside the value; value colour follows the delta only when a delta is actually shown, neutral otherwise.
+- **% in deltas**: `FrequencyDelta` inline variant now renders `↗ 1.1% this year` for percent metrics (count/score/hours stay bare).
+
+### 4. KPI naming / copy
+
+- "Students absent from past 7+ **consecutive** days", "Teacher attendance", "Student attendance" — verified app-wide (already renamed in Pass 8; no stale strings remain).
+- CET/CGMS metric label **"Result" → "Success rate of CET" / "Success rate of CGMS"** (cards, detail formulas, and the parent formula copy reworded too; Gujarati: "CET/CGMS સફળતા દર").
+- "% below `<level>` average": metric label is now "% below hierarchy average" resolved per scope (state→"% below state average" … section→"% below section average") via `resolveMetricLabel`, which now applies **both** the English and Gujarati replacement to whichever string renders — the literal word "hierarchy" cannot reach the UI in either language. New `formatBelowLevelAverageLabel(level, lang)` helper exported for future callers. Sub-metric Gujarati formulas now actually render in gu mode (`KpiDef.formula_gu` propagated through `metricKpiDef`).
+
+### 5. FLN / ORF correction
+
+- Frequency changed `Monthly` → `Yearly` (transcript: "random, mostly annually, 2–3×/year") — card chip now `Yearly · 2026`, detail trend uses a yearly axis, description documents the irregular cadence, formula notes the "this year's latest − last year's first" trend logic. **No delta on any of its three card metrics** (policy).
+
+### 6. Domain pages — embedded n-1 comparison
+
+All four domain pages (`/domain/attendance`, `assessment`, `administration`, `school_quality`) render a `ChildComparisonPanel` ("Compare Blocks · Attendance") under the indicator grid (outside the Administration sub-domain conditional, so it appears there too): each child unit's **domain score** as a bar, lowest first, grade-band colours, dashed current-scope reference line, tap-to-drill, horizontal scroll for many units. School Quality uses the GSQAC score per child. This is dashboard content, not the old Compare feature — no separate page exists.
+
+### 7. KPI detail pages
+
+- Source on detail only; trend charts kept; every chart titled (`AVG SCORE · YEARLY TREND`, `% BELOW DISTRICT AVERAGE · YEARLY TREND`, `30-day trend: …`).
+- `/kpi/att_chronic` "How it's calculated" is now exactly: *"Counts students who have been absent for 7 or more consecutive school days as of the selected date."* — the "Shown as an absolute count (summed up the hierarchy); the supporting rate = …" sentence is gone (also scrubbed from `ret_dropout` and `sq_gsqac` copy).
+- No comparison overlays in single-metric charts; the only multi-line chart is the intentional GSQAC sq_d5.
+
+### 8. GSQAC
+
+- **Sub-domain breakdown removed everywhere**: `GsqacBreakdown` component, `GSQAC_SUBDOMAINS` config and the `kpi.subdomains` i18n key deleted — no grey pill/list blocks remain.
+- **sq_d5 lines clearly differentiated**: CET deep teal `#0E7490`, CGMS purple `#7C3AED` (categorical `MULTI_LINE_HEX` palette by index; the old grade-colour-by-value logic that produced two near-identical greens is gone, and the now-unused `gsqacGradeHex` was removed).
+- Delta only on the **GSQAC score** (home card improvement + detail); D1–D5 cards show `Yearly · 2026` instead.
+- Official grade bands untouched (`A5★ >95 … D >0`); grade legend still on the School Quality page.
+
+### 9. Administration
+
+- **CRC/URC visits capped at 3** (transcript supersedes the sheet's Max 2): target "Max 3 / month", formula "(max 3)", mock provider hard-caps ratio values at 3, trend history clamps ratio at 3; anchors (1.4–1.9) sit realistically inside the cap. No "max 2" string remains.
+- **School Observation deltas removed** (whole administration domain is delta-free by policy).
+
+### 10. Files changed
+
+`App.tsx`, `components/layout/AppShell.tsx`, `Breadcrumb.tsx`, `PageSection.tsx`, `components/ui/{KpiCard,MultiMetricKpiCard,kpiCardParts,DomainSummaryCard,ComparisonBars,ChildComparisonPanel(new),DataBadges,Select,index}.tsx/ts`, `screens/{ScorecardHome,DomainView,KpiDetail,Export}.tsx`, `config/kpiCatalog.ts`, `types/index.ts`, `engine/{index,score}.ts`, `hooks/index.ts`, `data/provider/mockProvider.ts`, `lib/{displayPolicy(new),format,trend,colors}.ts`, `i18n/{en,gu}.ts`. Deleted: `screens/{Leaderboard,CascadeComparison}.tsx`, `components/ui/{Leaderboard,SchoolRiskTable,HeroKpiStrip,Sparkline,MultiSelect}.tsx`, `engine/rollup.ts`.
+
+### 11. Build & verification
+
+- `npm run build` ✓ (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+- Visual pass in-browser (state login `24`/`0000`): home (desktop+mobile, EN+ગુ), attendance/assessment/school-quality domain pages at state & district scope, `att_chronic`/`asm_sat1`/`sq_d5` detail, Export — all matched the spec.
+- Adversarial multi-agent verification over the 24 acceptance criteria: 42 checks confirmed; 1 blocker found and fixed (Gujarati branch of `resolveMetricLabel` could leak the literal word "hierarchy" in detail formulas — resolver made language-proof + `formula_gu` propagated), plus minor fixes (language toggle moved into the filter row per the preferred top-bar order; Export summary tile peer grammar; `shouldShowSource` actually wired into KpiDetail/Export; bar-chart label-height constant corrected; stale gu `scorecard.inputs` translation; dead exports pruned).
+
+### 12. Assumptions
+
+- The seed contains 10 districts (not all 33); the comparison chart's horizontal scroll is driven by `bars × 52px`, so a full 33-district feed scrolls as specified.
+- Comparison bars use the **domain score** (and input composite on home) as the comparable measure across child units — normalized 0–100, grade-band coloured; per-KPI child comparison can be added later on the detail pages if product wants it.
+- `KpiDef.target` ("Max 3 / month") remains informational config; it is not rendered on cards (the detail formula carries the cap).
+- Sentence-style hero copy keeps the big number first in Gujarati too ("૮૮૦ છેલ્લા 7+ સળંગ …") — a deliberate big-number-first card treatment.
+- Old `/leaderboard` / `/compare` deep links redirect to the scorecard rather than 404 (backward compatibility).
+
+---
+
 ## sq_d5 trend lines coloured by GSQAC grade scale (Pass 14)
 
 The two lines on `kpi/sq_d5`'s "Yearly trend: CET & CGMS (State Exams)" graph are now coloured **by the GSQAC grade scale** — each line takes the colour of its latest value's grade band (same palette as the grade-scale legend on the School Quality page), replacing the previous fixed blue/pink.

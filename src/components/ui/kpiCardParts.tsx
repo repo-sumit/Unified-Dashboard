@@ -3,24 +3,30 @@ import type { Frequency } from "@/types";
 import { cn } from "@/lib/cn";
 import { Card } from "./atoms";
 import { FrequencyBadge } from "./DataBadges";
-import { ChevronRight } from "./Icon";
+import { BarChart3, ChevronRight } from "./Icon";
 
 /**
  * Shared KPI-card layout pieces — a strict row grammar (header · meta · metrics ·
  * footer), graph-free and compact (trend charts live only on the KPI detail page).
- * Single- and multi-metric cards use the same shell, header, metric row and source
- * line so they read as one component and align across the grid.
+ * Single- and multi-metric cards use the same shell, header and metric row so they
+ * read as one component and align across the grid. No source line on cards.
  */
 
-/** Outer shell — compact height, bottom-anchored footer. */
-export function KpiCardShell({ onClick, children }: { onClick?: () => void; children: ReactNode }) {
+/**
+ * Outer shell — compact card with a clickable summary region (drills to the KPI
+ * detail) and an optional `compare` slot rendered as a sibling. The summary is a
+ * <button>; the compare slot has its own buttons (metric chips, bars), so it must
+ * live OUTSIDE the summary button — never nest interactive controls.
+ */
+export function KpiCardShell({ onClick, children, compare }: { onClick?: () => void; children: ReactNode; compare?: ReactNode }) {
   return (
-    <Card
-      as="button"
-      onClick={onClick}
-      className="group card-pad flex h-full min-h-[13rem] w-full flex-col text-left transition-shadow hover:shadow-raised"
-    >
-      {children}
+    <Card className="card-pad flex h-full min-h-[10rem] w-full flex-col transition-shadow hover:shadow-raised">
+      {onClick ? (
+        <button onClick={onClick} className="group flex flex-1 flex-col text-left">{children}</button>
+      ) : (
+        <div className="flex flex-1 flex-col">{children}</div>
+      )}
+      {compare}
     </Card>
   );
 }
@@ -64,21 +70,13 @@ export function KpiMetricRow({
   );
 }
 
-/** Stacked label + value context block (e.g. Parent avg, Source) for single-metric cards. */
-export function KpiContextTile({ label, value, valueTitle, className }: { label: string; value: ReactNode; valueTitle?: string; className?: string }) {
+/** Dashed "Tap Compare to view …" affordance shown before a comparison is applied
+ *  (keeps cards compact — no reserved empty chart space). */
+export function CompareHint({ text }: { text: string }) {
   return (
-    <div className={cn("min-w-0", className)}>
-      <span className="block text-2xs font-semibold uppercase tracking-wide text-neutral-400">{label}</span>
-      <span className="mt-0.5 block truncate text-xs font-semibold text-neutral-600" title={valueTitle}>{value}</span>
+    <div className="flex items-center gap-1.5 rounded-lg border border-dashed border-line px-2.5 py-2 text-2xs font-semibold text-neutral-400">
+      <BarChart3 size={13} className="shrink-0 text-neutral-300" /> {text}
     </div>
   );
 }
 
-/** Muted single-line source footer (one line, not a metric tile). */
-export function KpiSourceLine({ label, source }: { label: string; source: string }) {
-  return (
-    <p className="mt-auto truncate pt-2 text-2xs text-neutral-400" title={source}>
-      <span className="font-semibold uppercase tracking-wide">{label}</span> · {source}
-    </p>
-  );
-}

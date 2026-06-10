@@ -1,16 +1,15 @@
-import type { Frequency, KpiDef } from "@/types";
+import type { Frequency } from "@/types";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n";
-import { Clock, Database, Info } from "./Icon";
+import { Clock, Info } from "./Icon";
 
 /**
- * Data-state badges — the honesty layer. Every indicator declares its cadence
- * and source; the UI never fakes freshness.
+ * Data-state badges — the honesty layer. Every indicator declares its cadence;
+ * the UI never fakes freshness.
  *  • FrequencyBadge — how often it updates (drives the display strategy).
  *  • FreshnessBadge — cadence-appropriate recency ("Updated daily" / "2024–25").
- *  • SourceBadge    — where the number comes from.
- * (No "not in data lake" badge: every indicator is shown, with demo values where
- *  a live feed isn't wired yet; the `availableInDataLake` config flag is retained.)
+ * Source is detail-page meta only (see lib/displayPolicy) — no source badge
+ * exists, so cards cannot grow one back.
  */
 
 const FRESH_CADENCE: Frequency[] = ["Daily", "Weekly", "Monthly"];
@@ -29,15 +28,6 @@ export function FrequencyBadge({ frequency, className }: { frequency?: Frequency
   );
 }
 
-export function SourceBadge({ source, className }: { source?: string; className?: string }) {
-  if (!source) return null;
-  return (
-    <span className={chip(cn("max-w-[12rem] bg-neutral-50 text-neutral-400", className))} title={source}>
-      <Database size={11} className="shrink-0" /> <span className="truncate">{source}</span>
-    </span>
-  );
-}
-
 export function FreshnessBadge({ frequency, stale, className }: { frequency?: Frequency; stale?: boolean; className?: string }) {
   const { t } = useT();
   if (!frequency) return null;
@@ -47,16 +37,6 @@ export function FreshnessBadge({ frequency, stale, className }: { frequency?: Fr
       <span className={cn("h-1.5 w-1.5 rounded-full", isFresh ? "bg-emerald-500" : "bg-neutral-400")} />
       {t(`ogm.freshness.${frequency}`)}
     </span>
-  );
-}
-
-/** Compact one-line meta strip for a KPI tile/header (frequency · source). */
-export function KpiMetaRow({ kpi, className }: { kpi: KpiDef; className?: string }) {
-  return (
-    <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
-      <FrequencyBadge frequency={kpi.frequency} />
-      <SourceBadge source={kpi.data_source} />
-    </div>
   );
 }
 

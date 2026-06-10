@@ -222,7 +222,8 @@ class MockProviderImpl implements DataProvider {
       const jf = noise(offKey, 0.12);
       const trend = (higher ? -improve : improve) * 0.012;
       const v = anchor * (1 + jf) * (1 + trend) + noise(wob, anchor * 0.02);
-      const hi = kpi.unit === "ratio" ? Math.max(2, anchor * 1.1) : anchor * 1.6;
+      // ratio = CRC/URC visits per school — never above the product cap of 3/month
+      const hi = kpi.unit === "ratio" ? 3 : anchor * 1.6;
       return round1(clamp(v, 0, hi));
     }
     // % and score. Context-delta %s (YoY / reduction) are small magnitudes — a

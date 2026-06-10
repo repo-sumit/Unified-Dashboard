@@ -2,13 +2,12 @@ import { useSession, type PmShriMode } from "@/store/session";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { Select } from "@/components/ui/Select";
-import { Sparkles } from "../ui/Icon";
+import { SlidersHorizontal } from "../ui/Icon";
 
 /**
- * Global PM SHRI institutional filter (FCR-1.3) — All / PM SHRI / Non-PM SHRI.
- * Acts as an administrative toggle and an aspirational tracker for
- * non-qualifying campuses; scopes the aggregate rollups. Uses the shared
- * design-system Select, with an amber "tracker active" treatment.
+ * Global school-type filter (FCR-1.3) — All Schools / PM SHRI / Non-PM SHRI.
+ * Scopes the aggregate rollups. Uses the shared design-system Select with a
+ * clear filter (sliders) icon, and an amber "filtered" treatment when narrowed.
  */
 export function PmShriFilter({ className }: { className?: string }) {
   const pmShri = useSession((s) => s.pmShri);
@@ -27,9 +26,9 @@ export function PmShriFilter({ className }: { className?: string }) {
       ]}
       ariaLabel={t("pmShri.label")}
       searchable={false}
-      align="right"
+      align="left"
       className={className}
-      leadingIcon={<Sparkles size={14} className={active ? "text-amber-500" : "text-neutral-400"} />}
+      leadingIcon={<SlidersHorizontal size={14} className={active ? "text-amber-500" : "text-neutral-400"} />}
       triggerClassName={cn(active && "!bg-amber-50 ring-1 ring-amber-200")}
     />
   );

@@ -103,15 +103,38 @@ const LEVEL_NAME_GU: Record<Level, string> = {
 };
 
 /**
- * Resolves "Below hierarchy avg" → "Below block avg" (etc.) using the current scope
- * level. For Gujarati, replaces the generic "સ્તર" (level) with the specific level name.
- * Returns the input label unchanged when it contains no level placeholder.
+ * Resolves any "hierarchy" placeholder to the current scope level — labels
+ * ("% below hierarchy average" → "% below block average") and formula copy alike.
+ * For Gujarati, replaces the generic "સ્તર" (level) with the specific level name.
+ * Returns the input unchanged when it contains no level placeholder, so callers
+ * can apply it unconditionally.
  */
 export function resolveMetricLabel(name: string, name_gu: string, level: Level, lang: Lang): string {
-  if (lang === "gu") {
-    return name_gu.replace("સ્તર", LEVEL_NAME_GU[level]);
-  }
-  return name.replace("hierarchy", LEVEL_NAME_EN[level]);
+  // apply BOTH replacements to the selected string — gu copy may fall back to an
+  // English source string (e.g. formulas), and that English "hierarchy" must
+  // still resolve, never render literally.
+  const s = lang === "gu" && name_gu ? name_gu : name;
+  return s.replace(/hierarchy/g, LEVEL_NAME_EN[level]).replace(/સ્તર/g, LEVEL_NAME_GU[level]);
+}
+
+/** The scope-specific "% below <level> average" label (§ dynamic below-level avg). */
+export function formatBelowLevelAverageLabel(level: Level, lang: Lang = "en"): string {
+  if (lang === "gu") return `${LEVEL_NAME_GU[level]} સરેરાશથી નીચે %`;
+  return `% below ${LEVEL_NAME_EN[level]} average`;
+}
+
+/**
+ * Sentence-style card highlight — the phrase part of "225 students absent from
+ * past 7+ consecutive days" (the card renders the number big, then this phrase
+ * inline). Used only where it genuinely reads better than label-above-number:
+ * count indicators. "% / ratio / score" return null and keep the standard
+ * value + label layout ("1.8 no of CRC/URC visits…" would be worse).
+ */
+export function formatKpiCardTitlePhrase(name: string, name_gu: string, unit: Unit, lang: Lang): string | null {
+  if (unit !== "count") return null;
+  if (lang === "gu") return name_gu;
+  // lowercase the leading word unless it is an acronym (SAT, FLN, CET …)
+  return /^[A-Z][a-z]/.test(name) ? name.charAt(0).toLowerCase() + name.slice(1) : name;
 }
 
 /** Time-based greeting key (FCR-1.2): 05–11 morning · 12–16 afternoon · else evening. */

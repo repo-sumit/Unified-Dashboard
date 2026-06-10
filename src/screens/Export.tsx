@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { Direction, DomainScore, KpiRecord, Unit } from "@/types";
 import { useScope, useScorecard, usePmShri } from "@/hooks";
 import { statusFromScore } from "@/engine";
@@ -7,6 +8,7 @@ import { rag, accent } from "@/lib/colors";
 import { pct, locNum, formatValue, formatDate } from "@/lib/format";
 import { peerAvg, peerGapOf, peerLevelOf } from "@/lib/peer";
 import { buildTrend, type Cadence } from "@/lib/trend";
+import { shouldShowCardDelta, shouldShowSource } from "@/lib/displayPolicy";
 import { gradeFor, GSQAC_BANDS } from "@/config/ratingBands";
 import { GSQAC_DOMAINS } from "@/config/kpiCatalog";
 import { OUTPUT_DOMAIN_ID } from "@/config/frameworks";
@@ -15,9 +17,7 @@ import { ResponsiveDataTable, type DataColumn } from "@/components/ui/Responsive
 import { FrequencyDelta } from "@/components/ui/FrequencyDelta";
 import { Icon, Download, Sparkles } from "@/components/ui/Icon";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
-import { PageHeader } from "@/components/layout/PageHeader";
-
-const PERIODIC = new Set(["Daily", "Weekly", "Monthly"]);
+import { PageHeader, BackLink } from "@/components/layout/PageHeader";
 
 interface DeltaInfo { v: number; unit: Unit; direction: Direction; cadence: Cadence }
 
@@ -26,11 +26,15 @@ export default function Export() {
   const sc = useScorecard(currentId);
   const pmShri = usePmShri();
   const { t, tn, lang } = useT();
+  const navigate = useNavigate();
   if (!entity || !sc) return null;
 
   const today = formatDate(new Date(), lang);
   const peerLevel = peerLevelOf(entity.level);
   const peerAvgLabel = peerLevel ? `${t(`levels.${peerLevel}`)} ${t("export.parentAvg")}` : t("common.average");
+  // summary tiles use the card grammar "{parent name} · {value}" — the generic
+  // "{Level} avg" wording stays only as the indicator-table column header.
+  const parentEntityName = sc.parent ? tn(sc.parent.entity.name, sc.parent.entity.name_gu) : null;
   const improvement = entity.meta.gsqac?.improvement;
   const domains = sc.domainScores.filter((d) => d.records.length > 0);
 
@@ -52,8 +56,8 @@ export default function Export() {
   };
   const heroDeltaInfo = (d: DomainScore): DeltaInfo | null => {
     const h = heroOf(d);
-    if (!h || h.value == null) return null;
-    if (h.kpi.suppressDelta) return null; // as-on-date indicators show no delta (§2)
+    // central card-delta policy: Daily / FLN / School Observation / non-allowed → date only
+    if (!h || h.value == null || !shouldShowCardDelta(h.kpi)) return null;
     if (isGsqacHero(h)) return improvement != null && improvement !== 0 ? { v: improvement, unit: "%", direction: "higher", cadence: "yearly" } : null;
     const tr = buildTrend(h, lang);
     return tr.delta != null && tr.delta !== 0 ? { v: tr.delta, unit: h.kpi.unit, direction: h.kpi.direction, cadence: tr.cadence } : null;
@@ -70,11 +74,11 @@ export default function Export() {
     return `${locNum(Math.round(g.peer), lang)}${rec.kpi.unit === "%" ? "%" : ""}`;
   };
   const indicatorDeltaInfo = (rec: KpiRecord): DeltaInfo | null => {
-    if (rec.value == null) return null;
-    if (rec.kpi.suppressDelta) return null; // as-on-date indicators show no delta (§2)
-    if (PERIODIC.has(rec.kpi.frequency ?? "")) return rec.deltaWoW != null && rec.deltaWoW !== 0 ? { v: rec.deltaWoW, unit: rec.kpi.unit, direction: rec.kpi.direction, cadence: "daily" } : null;
-    if (rec.kpi.id.startsWith("sq_")) return improvement != null && improvement !== 0 ? { v: improvement, unit: "%", direction: "higher", cadence: "yearly" } : null;
-    return null;
+    // central card-delta policy: SAT1/SAT2/CET/CGMS + GSQAC score only
+    if (rec.value == null || !shouldShowCardDelta(rec.kpi)) return null;
+    if (rec.kpi.id === "sq_gsqac") return improvement != null && improvement !== 0 ? { v: improvement, unit: "%", direction: "higher", cadence: "yearly" } : null;
+    const tr = buildTrend(rec, lang);
+    return tr.delta != null && tr.delta !== 0 ? { v: tr.delta, unit: rec.kpi.unit, direction: rec.kpi.direction, cadence: tr.cadence } : null;
   };
   const valueCol = (rec: KpiRecord): string => {
     if (rec.value == null) return "NA";
@@ -103,13 +107,16 @@ export default function Export() {
         return di ? <FrequencyDelta delta={di.v} unit={di.unit} direction={di.direction} cadence={di.cadence} showPeriod={false} lang={lang} /> : <span className="text-neutral-300">—</span>;
       },
     },
-    { key: "source", header: t("common.source"), className: "text-2xs leading-tight text-neutral-400", render: (rec) => rec.kpi.data_source },
+    ...(shouldShowSource("export")
+      ? [{ key: "source", header: t("common.source"), className: "text-2xs leading-tight text-neutral-400", render: (rec: KpiRecord) => rec.kpi.data_source } satisfies DataColumn<KpiRecord>]
+      : []),
   ];
 
   return (
     <ScreenContainer animate={false}>
       <PageHeader
         className="no-print"
+        back={<BackLink label={t("common.back")} onClick={() => navigate("/app")} />}
         title={t("export.title")}
         subtitle={`${t("export.generatedOn")} ${today}`}
         actions={<Button onClick={() => window.print()}><Download size={16} /> {t("export.download")}</Button>}
@@ -149,7 +156,7 @@ export default function Export() {
                   <span className={cn("text-xl font-extrabold tnum", rag(heroStatus(d)).text)}>{heroValue(d)}</span>
                   {di && <FrequencyDelta delta={di.v} unit={di.unit} direction={di.direction} cadence={di.cadence} lang={lang} className="pb-0.5" />}
                 </div>
-                {peer && <p className="text-2xs text-neutral-400">{peerAvgLabel} {peer}</p>}
+                {peer && <p className="text-2xs text-neutral-400">{parentEntityName ? `${parentEntityName} · ${peer}` : `${peerAvgLabel} ${peer}`}</p>}
               </div>
             );
           })}

@@ -10,9 +10,10 @@ import { BackLink } from "@/components/layout/PageHeader";
 import { PageSection, PageGrid } from "@/components/layout/PageSection";
 
 /**
- * Domain view — tier 2 of the 3-click drill. No top summary card: the back link
- * is followed directly by the indicator section (Administration shows its
- * sub-domains first; other domains list their indicators).
+ * Domain view — tier 2 of the 3-click drill. Back link → indicator section
+ * (Administration shows its sub-domains first). The n-1 child comparison now
+ * lives INSIDE each KPI card, revealed by the top-bar Compare action — there is
+ * no standalone bottom comparison panel.
  */
 export default function DomainView() {
   const { domainId } = useParams();

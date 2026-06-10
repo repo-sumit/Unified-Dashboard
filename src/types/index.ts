@@ -181,9 +181,6 @@ export interface KpiDef {
   displayStrategy?: DisplayStrategy;
   /** the domain's "Home Page Indicator for any hierarchy" — drives the domain card's primary value. */
   hero?: boolean;
-  /** a top intervention indicator surfaced in the homepage "Top Indicators" strip
-   *  (distinct from `hero`, so it never duplicates a domain-card indicator). */
-  topIndicator?: boolean;
   /** snapshot/cycle indicator — suppress the time-trend chart + sparkline; show a
    *  date/cycle context line instead. */
   noTrend?: boolean;
@@ -201,6 +198,8 @@ export interface KpiDef {
   suppressDelta?: boolean;
   /** plain-language formula + numerator/denominator (shown in Indicator Detail). */
   formula?: string;
+  /** Gujarati formula copy (synthesized sub-metric defs carry the metric's own). */
+  formula_gu?: string;
   numerator?: string;
   denominator?: string;
   /** PM-Shri global filter applies to this indicator's denominators. */
@@ -333,17 +332,6 @@ export interface LeaderboardEntry {
   /** per-domain % (the 4A breakdown behind the composite) — powers the
    *  transparent "why is this ranked here?" hover on the risk table. */
   domainPercents?: Record<string, number | null>;
-}
-
-/** One step in the cascade comparison (this entity vs each level up). */
-export interface CascadeRow {
-  level: Level;
-  entity: Entity;
-  label: string;
-  label_gu: string;
-  value: number | null;
-  status: RagStatus;
-  isCurrent: boolean;
 }
 
 export interface Period {

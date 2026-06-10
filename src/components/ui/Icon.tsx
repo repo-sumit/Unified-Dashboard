@@ -3,7 +3,7 @@ import {
   CheckCircle2, Check, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, Drama, DoorOpen, Download, Flag,
   Gauge, GraduationCap, Landmark, LayoutGrid, LogOut, Map, Medal, Minus, Printer, Search, ShieldCheck, Sparkles,
   Target, TrendingDown, TrendingUp, Trophy, Users, User, AlertTriangle, ArrowUpRight, ArrowDownRight,
-  ArrowLeft, Info, Clock, Database, CloudOff, type LucideIcon,
+  ArrowLeft, Info, Clock, Database, CloudOff, SlidersHorizontal, X, type LucideIcon,
 } from "lucide-react";
 
 /** Curated registry so domain/KPI icons referenced by name in config resolve
@@ -24,4 +24,5 @@ export {
   ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, Download, Flag, Gauge, GraduationCap, Landmark, LayoutGrid,
   LogOut, Map, Medal, Minus, Printer, Search, ShieldCheck, Sparkles, Target, TrendingDown, TrendingUp, Trophy,
   Users, User, AlertTriangle, ArrowUpRight, ArrowDownRight, ArrowLeft, Info, Clock, Database, CloudOff,
+  SlidersHorizontal, X,
 };

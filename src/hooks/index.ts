@@ -4,12 +4,10 @@ import { PERIODS, getFramework } from "@/config";
 import { dataProvider } from "@/data/provider";
 import {
   getChildLeaderboard,
-  getKpiCascade,
+  getKpiChildSeries,
   getKpiMetricRecords,
   getKpiRecord,
   getOverallBenchmark,
-  getOverallCascade,
-  getPeerLeaderboard,
   getScorecard,
   childLevelOf,
 } from "@/engine";
@@ -90,16 +88,8 @@ export function useKpiMetrics(kpiId: string | undefined, entityId: string | null
   }, [fw, kpiId, entityId, pmShri]);
 }
 
-export function usePeerLeaderboard(entityId: string | null | undefined) {
-  const fw = useFramework();
-  const pmShri = usePmShri();
-  const role = useSession((s) => s.user?.role);
-  return useMemo(() => {
-    dataProvider.setSchoolFilter(pmShri);
-    return entityId ? getPeerLeaderboard(fw, entityId, PERIODS, role) : [];
-  }, [fw, entityId, pmShri, role]);
-}
-
+/** child units (one level below) scored + graded — powers the embedded
+ *  n-1 comparison bar charts on the home screen and domain pages. */
 export function useChildLeaderboard(entityId: string | null | undefined) {
   const fw = useFramework();
   const pmShri = usePmShri();
@@ -122,27 +112,23 @@ export function useOverallBenchmark(entityId: string | null | undefined) {
   }, [fw, entityId, pmShri, role]);
 }
 
-export function useOverallCascade(entityId: string | null | undefined) {
-  const fw = useFramework();
-  const pmShri = usePmShri();
-  const role = useSession((s) => s.user?.role);
-  return useMemo(() => {
-    dataProvider.setSchoolFilter(pmShri);
-    return entityId ? getOverallCascade(fw, entityId, PERIODS, role) : [];
-  }, [fw, entityId, pmShri, role]);
-}
-
-export function useKpiCascade(kpiId: string | undefined, entityId: string | null | undefined) {
-  const fw = useFramework();
-  const pmShri = usePmShri();
-  return useMemo(() => {
-    dataProvider.setSchoolFilter(pmShri);
-    return kpiId && entityId ? getKpiCascade(fw, kpiId, entityId, PERIODS) : [];
-  }, [fw, kpiId, entityId, pmShri]);
-}
-
 export function useEntity(id: string | null | undefined) {
   return useMemo(() => (id ? dataProvider.getEntity(id) : undefined), [id]);
+}
+
+/** Per-child values of one KPI (or sub-metric) for the embedded Compare chart.
+ *  Unit-consistent: each value is in the KPI/metric's own unit. Empty when no
+ *  ids are given (so callers pass `[]` until Compare is applied). */
+export function useKpiChildSeries(kpiId: string | undefined, entityIds: string[], metricId?: string) {
+  const fw = useFramework();
+  const pmShri = usePmShri();
+  const idsKey = entityIds.join(",");
+  return useMemo(() => {
+    dataProvider.setSchoolFilter(pmShri);
+    if (!kpiId || entityIds.length === 0) return [];
+    return getKpiChildSeries(fw, kpiId, entityIds, PERIODS, metricId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fw, kpiId, idsKey, metricId, pmShri]);
 }
 
 /** schools-in-scope coverage + enrolment (honours PM-Shri) — for the data-coverage

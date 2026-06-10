@@ -2,59 +2,91 @@ import { cn } from "@/lib/cn";
 import type { RagStatus, Unit } from "@/types";
 import { rag } from "@/lib/colors";
 import { formatValue, formatValueFull } from "@/lib/format";
-import type { Lang } from "@/i18n";
+import { useT, type Lang } from "@/i18n";
+import { ChevronRight } from "./Icon";
 
-export interface CompareBar {
-  key: string;
+export interface ChildBar {
+  id: string;
   label: string;
-  sublabel?: string;
   value: number | null;
   status: RagStatus;
-  isCurrent?: boolean;
+}
+
+/** shorten common unit names so bar labels stay readable ("Grade 5" → "G5"). */
+function abbrev(label: string): string {
+  return label
+    .replace(/^Grade\s+/, "G")
+    .replace(/^Section\s+/, "Sec ")
+    .replace(/\s+Pri\.\s*Sch\.$/, "")
+    .replace(/\s+Primary School$/, "");
 }
 
 /**
- * Grouped vertical comparison bars — the report-card "Performance
- * Comparison" pattern (this entity vs Cluster ▸ Block ▸ District ▸ State,
- * or Section ▸ Grade ▸ School …). Current bar is highlighted.
+ * Embedded comparison bars — the design's per-card chart. Compact vertical bars,
+ * one per selected child unit, worst-first (lower-is-better metrics put the
+ * highest/worst first), value label above, abbreviated unit label below, RAG
+ * fill. Scrolls horizontally inside the card (the page never scrolls sideways);
+ * a "scroll ›" hint shows when there are more than six bars. Tapping a bar drills
+ * into that unit. Unit-consistent: values format in the chart's own `unit`.
  */
-export function ComparisonBars({
-  bars, unit = "%", lang = "en", height = 168, max,
-}: { bars: CompareBar[]; unit?: Unit; lang?: Lang; height?: number; max?: number }) {
-  const vals = bars.map((b) => b.value ?? 0);
-  const top = max ?? Math.max(100, ...vals);
-  const naLabel = lang === "gu" ? "લાગુ નથી" : "NA";
-  const summary = bars.map((b) => `${b.label} ${b.value == null ? naLabel : formatValue(b.value, unit, lang)}`).join(", ");
+export function ChildComparisonBars({
+  title, bars, unit = "%", lang = "en", height = 88, lowerBetter = false, maxValue, onOpen,
+}: {
+  title?: string;
+  bars: ChildBar[];
+  unit?: Unit;
+  lang?: Lang;
+  height?: number;
+  lowerBetter?: boolean;
+  maxValue?: number;
+  onOpen?: (id: string) => void;
+}) {
+  const { t } = useT();
+  const valued = bars.filter((b) => b.value != null);
+  const sorted = [...valued].sort((a, b) =>
+    lowerBetter ? (b.value as number) - (a.value as number) : (a.value as number) - (b.value as number),
+  );
+  const top = maxValue ?? Math.max(...sorted.map((b) => b.value as number), 1);
+  const scrollable = sorted.length > 6;
+  const summary = sorted.map((b) => `${b.label} ${formatValue(b.value, unit, lang)}`).join(", ");
+
   return (
-    <div className="flex items-end gap-2 sm:gap-3" style={{ height }} role="img" aria-label={summary}>
-      {bars.map((b) => {
-        const h = b.value == null ? 0 : Math.max(3, (b.value / top) * (height - 38));
-        const c = rag(b.status);
-        return (
-          <div key={b.key} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
-            <span
-              className={cn("text-xs font-bold tnum", b.value == null ? "text-rag-naText" : c.text)}
-              title={b.value == null ? naLabel : formatValueFull(b.value, unit, lang)}
+    <div className="mt-3">
+      {(title || scrollable) && (
+        <div className="mb-2 flex items-center justify-between gap-2">
+          {title ? <span className="section-title !mb-0">{title}</span> : <span />}
+          {scrollable && (
+            <span className="inline-flex shrink-0 items-center gap-0.5 text-2xs font-semibold text-neutral-400">
+              {t("common.scroll")}<ChevronRight size={11} />
+            </span>
+          )}
+        </div>
+      )}
+      <div className="flex items-end gap-2.5 overflow-x-auto pb-1.5" role="img" aria-label={summary}>
+        {sorted.map((b) => {
+          const v = b.value as number;
+          const h = Math.max(6, (v / top) * height);
+          const c = rag(b.status);
+          return (
+            <button
+              key={b.id}
+              type="button"
+              onClick={() => onOpen?.(b.id)}
+              title={`${b.label} · ${formatValueFull(v, unit, lang)}`}
+              className="flex shrink-0 flex-col items-center gap-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+              style={{ width: 40, cursor: onOpen ? "pointer" : "default" }}
             >
-              {b.value == null ? naLabel : formatValue(b.value, unit, lang)}
-            </span>
-            <div className="relative flex w-full max-w-[56px] items-end justify-center">
-              {b.value == null ? (
-                <div className="h-1 w-full rounded-full border border-dashed border-rag-na/50" />
-              ) : (
-                <div
-                  className={cn("w-full origin-bottom animate-bar-grow rounded-t-lg", c.bg, b.isCurrent && "ring-2 ring-offset-2 ring-primary-500")}
-                  style={{ height: h }}
-                />
-              )}
-            </div>
-            <span className={cn("max-w-full truncate text-center text-2xs font-semibold", b.isCurrent ? "text-primary-600" : "text-neutral-500")} title={b.label}>
-              {b.label}
-            </span>
-            {b.sublabel && <span className="max-w-full truncate text-center text-2xs text-neutral-400" title={b.sublabel}>{b.sublabel}</span>}
-          </div>
-        );
-      })}
+              <span className={cn("text-2xs font-bold tnum leading-none", c.text)}>{formatValue(v, unit, lang)}</span>
+              <span className="flex w-full items-end" style={{ height }}>
+                <span className={cn("w-full origin-bottom animate-bar-grow", c.bg)} style={{ height: h, borderRadius: "6px 6px 3px 3px" }} />
+              </span>
+              <span className="block w-full truncate text-center text-2xs font-semibold leading-tight text-neutral-400" title={b.label}>
+                {abbrev(b.label)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
