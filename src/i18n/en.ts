@@ -66,7 +66,7 @@ export const en = {
     trendDaily: "30-day trend", trendMonthly: "Monthly trend", trendTwice: "Recent cycles", trendHalf: "Half-yearly trend", trendYearly: "Yearly trend",
     deltaWeek: "Δ this week", deltaMonth: "Δ this month", deltaCycle: "Δ this cycle", deltaTime: "Δ this time", deltaYear: "Δ this year",
     pWeek: "today", pMonth: "this month", pCycle: "this cycle", pTime: "this half-year", pYear: "this year",
-    formula: "How it's calculated", frequencyLabel: "Updated", lowestLevelNote: "Lowest level: {level}",
+    formula: "How it's calculated", subdomains: "Sub-domain breakdown", frequencyLabel: "Updated", lowestLevelNote: "Lowest level: {level}",
     parentAvgLabel: "Parent avg", lblRate: "Rate", lblCount: "Count", lblScore: "Score", lblValue: "Latest",
     latestOn: "Latest: {date}", asOn: "As on {date}", asOnShort: "as on {date}", latestAvailable: "Latest available", currentMonth: "Current month", currentCycle: "Current cycle", currentHalf: "Current half-year", currentYear: "Current year",
   },

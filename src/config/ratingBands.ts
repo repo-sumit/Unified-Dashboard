@@ -1,18 +1,22 @@
 import type { RatingBand } from "@/types";
 
 /**
- * GSQAC fine grade scale A++++ → D, grouped into broad bands A/B/C/D
- * (per GSQAC model-documentation: Grade_Sort[Grades] / [Grades (groups)]).
- * All thresholds are config — switching a framework swaps these rows.
+ * OFFICIAL GSQAC (Gunotsav 2.0) grade scale — verbatim from the GSQAC School
+ * Report Card 2024–25 footer:
+ *   >95% A5★ · >90–95% A4★ · >85–90% A3★ · >80–85% A2★ · >75–80% A1★
+ *   >50–75% B · >25–50% C · >0–25% D
+ * Grouped into broad bands A/B/C/D for RAG colouring (all A-stars → group A).
+ * `min` is the band's lower bound; gradeFor uses `>=`. All thresholds are config —
+ * switching a framework swaps these rows.
  */
 export const GSQAC_BANDS: RatingBand[] = [
-  { grade: "A++++", min: 97, group: "A" },
-  { grade: "A+++", min: 93, group: "A" },
-  { grade: "A++", min: 89, group: "A" },
-  { grade: "A+", min: 85, group: "A" },
-  { grade: "A", min: 75, group: "A" },
-  { grade: "B", min: 60, group: "B" },
-  { grade: "C", min: 40, group: "C" },
+  { grade: "A5★", min: 95, group: "A" },
+  { grade: "A4★", min: 90, group: "A" },
+  { grade: "A3★", min: 85, group: "A" },
+  { grade: "A2★", min: 80, group: "A" },
+  { grade: "A1★", min: 75, group: "A" },
+  { grade: "B", min: 50, group: "B" },
+  { grade: "C", min: 25, group: "C" },
   { grade: "D", min: 0, group: "D" },
 ];
 

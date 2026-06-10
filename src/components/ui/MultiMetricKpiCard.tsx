@@ -10,7 +10,8 @@ import { KpiCardShell, KpiCardHeader, KpiMetricRow, KpiSourceLine } from "./kpiC
 import { KpiCard } from "./KpiCard";
 
 /**
- * Multi-metric indicator card (SAT1/SAT2/ORF/CET/CGMS/att_report) — compact, graph-free
+ * Multi-metric indicator card (Teacher/Student attendance · att_report · SAT1/SAT2/ORF/
+ * CET/CGMS · Average CPD Time Per Teacher) — compact, graph-free
  * score table. Each metric is one `KpiMetricRow` (resolved label · value · N+1 · delta).
  * "Below hierarchy avg" is resolved to the current scope level (e.g. "Below block avg").
  * No sparklines; charts live on the KPI detail page only.

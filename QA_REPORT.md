@@ -1,5 +1,124 @@
 # Unified Portal — QA Report
 
+## KPI sheet + GSQAC re-audit — multi-metric & official grade bands (Pass 10)
+
+### Source of truth
+
+- **KPI sheet:** `Docs/GJ _ Unified App KPIs.xlsx` (Sheet1, 1 sheet, 45 populated rows). Re-parsed in full; columns: Focus Area · Home Page Indicator · sub-Domain · Indicator · Data Source · Available in Data Lake · Formula/Logic · Delta.
+- **GSQAC report:** `Docs/GSQAC_Report_2024_25_English.pdf` (Gunotsav 2.0 School Report Card 2024–25, Chhabhadiya Pri. Sch., 68.1% / grade B). Used for the 5 domains, sub-domains, indicator breakdown, and official grade bands.
+
+### 1. Attendance multi-metric fixes
+
+Every sheet row whose Formula/Logic defines ≥2 formulas is now a single multi-metric indicator (`metrics: KpiMetricDef[]`), rendered as a `MultiMetricKpiCard` (one row per metric) and one trend chart per metric on the detail page.
+
+| Indicator | id | Metrics (unit, direction) |
+|---|---|---|
+| Teacher attendance | `att_teacher` | Present (%, ↑) · Submitted (%, ↑) |
+| Student attendance | `att_student` | Present (%, ↑) · Submitted (%, ↑) |
+| Schools and Class Sections Submitting Attendance | `att_report` | Schools (%, ↑) · Class sections (%, ↑) — already multi-metric; class-sections formula corrected to "… / Total Classrooms × 100" per sheet |
+
+- New `METRIC_PUBLISHED` anchors: `att_teacher__present` (= parent), `att_teacher__submitted`, `att_student__present` (= parent), `att_student__submitted` (incl. `section` level). Each resolves its own value, N+1 peer, benchmark, trend and delta through the existing `metricKpiDef → getValueSeries → valueAt` machinery — no UI hardcoding.
+- Formula text per metric, cleaned per sheet (e.g. `Present: Teachers Present / Total Teachers × 100`, `Submitted: Teachers Submitted / Total Teachers × 100`).
+- **`att_chronic`** ("Students absent from past 7+ **consecutive** days") — kept single-metric **count** for UX (count_with_rate); formula text now ties to the sheet's rate definition (`… / Total Enrolled Students × 100`) as supporting context. Rename already applied app-wide in Pass 8 (catalog, i18n, cards, detail, Compare, Leaderboard, Export).
+- **`att_mdm`** kept single-metric (one formula in sheet).
+
+### 2. Assessment multi-metric — re-verified against sheet
+
+All five already multi-metric; metrics confirmed to match the latest sheet:
+
+| Indicator | Metrics |
+|---|---|
+| SAT1 / SAT2 (`asm_sat1`/`asm_sat2`) | Avg score · Below `<hierarchy>` avg · Participation |
+| FLN-ORF (`asm_orf`) | CWPM score · Below `<hierarchy>` avg · Participation |
+| CET (`asm_cet`) | Result · Participation (Class-5 present / enrolled) |
+| CGMS (`asm_cgms`) | Result · Participation (Class-8 present / enrolled) |
+
+ORF source kept as display alias "Oral Reading Fluency (ORF) Bot" (sheet: `ORFBot`); CET "Common Entrance Test (CET) Portal" (sheet: `CET Portal`); CGMS "CGMS Portal". No metric changes needed.
+
+### 3. Administration multi-metric fix
+
+| Indicator | id | Metrics |
+|---|---|---|
+| Average CPD Time Per Teacher | `cpd_hours` | **Average CPD time** (hours, ↑) · **Teachers engaged in CPD** (%, ↑) |
+
+- Mixed-unit multi-metric: the hours metric renders `42.5 hrs`, the % metric `78.4%` via `formatValue(value, metric.unit)`.
+- New anchors `cpd_hours__avgTime` (= parent hours anchor) + `cpd_hours__teachersEngaged` (%).
+- Domain scoring unchanged: the parent `cpd_hours` is unit `hours` (not scored); `cpd_50` (%) still drives the CPD sub-domain score. Adding `metrics` does not introduce new scored rows.
+- All other Administration rows re-audited against the sheet — each defines a single formula → kept single-metric (CRC/URC visits, observations, ICT/Library/WASH/SMC, classroom observation, lesson plans, teacher diaries, dropout, re-enrolment, 50-hour CPD target). No invented second metrics.
+
+### 4. Dynamic `<hierarchy>` label
+
+`resolveMetricLabel(name, name_gu, level, lang)` (added Pass 8) continues to replace "hierarchy"/"સ્તર" with the current scope level on cards, detail charts and formula breakdowns (e.g. **Below block avg** at block scope). Verified no literal "hierarchy" reaches the UI.
+
+### 5. GSQAC / School Quality update (from report)
+
+**5 domains** renamed to the report's wording (catalog `sq_d1…sq_d5` + `GSQAC_DOMAINS`):
+
+| key | Name (was → now) |
+|---|---|
+| D1 | Learning & Teaching → **Teaching and Learning** |
+| D2 | School Administration (unchanged) |
+| D3 | Co-curricular Activities → **Co-scholastic Activities** |
+| D4 | Resources & their Use → **Usage of Resources** |
+| D5 | Participation in Scholarships → **CET & CGMS (State Exams)** |
+
+> D5 rename aligns the label with the seed data: `entity.meta.gsqac.domains.D5` ≈ 0.468 (= report's CET & CGMS domain 46%), confirming D5 was always the State-Exams domain, mislabelled.
+
+**Sub-domains + indicators** — new `GSQAC_SUBDOMAINS` config (verbatim from the report card, pages 1–8): every sub-domain (e.g. Periodic/Formative Tests, Terminal Tests I & II, Reading-Writing-Arithmetic, …) with its full indicator list. Surfaced on **School Quality detail pages** via a new `GsqacBreakdown` card ("Sub-domain breakdown"): the overall GSQAC detail shows all 5 domains grouped; each `sq_dN` detail shows that domain's sub-domains, each with its indicators as a muted caption. Reference structure only — not fabricated per-entity scores. Homepage/domain cards unchanged (not overloaded).
+
+**Official grade bands** — `GSQAC_BANDS` replaced with the report footer's official scale:
+
+| Band | min ≥ | group |
+|---|---|---|
+| A5★ | 95 | A |
+| A4★ | 90 | A |
+| A3★ | 85 | A |
+| A2★ | 80 | A |
+| A1★ | 75 | A |
+| B | 50 | B |
+| C | 25 | C |
+| D | 0 | D |
+
+`gradeGroupOf` keys off the first character, so all `A#★` → group A (green), B → amber, C → red, D → black; `RatingBadge`/colors/Export pick up the new labels automatically. 68.1% → B (matches the report).
+
+### Files changed
+
+- `src/config/ratingBands.ts` — official GSQAC grade bands (A5★…D)
+- `src/config/kpiCatalog.ts` — `att_teacher`/`att_student`/`cpd_hours` multi-metric + anchors; `att_report` class-sections formula; `att_chronic` formula text; 5 GSQAC domain renames; new `GSQAC_SUBDOMAINS`; `presentSubmittedMetrics` helper; doc comments
+- `src/screens/KpiDetail.tsx` — `GsqacBreakdown` sub-domain card for `sq_*` detail pages
+- `src/i18n/en.ts`, `src/i18n/gu.ts` — `kpi.subdomains` label
+- `src/components/ui/MultiMetricKpiCard.tsx` — doc comment
+- `QA_REPORT.md` — this section
+
+### Build
+
+`npm run build` passes — `tsc --noEmit` clean, `vite build` ✓ (only the pre-existing `entities` seed chunk-size warning).
+
+### Assumptions / notes
+
+- **Sub-metric anchor values** (Present/Submitted spreads, Teachers-engaged %, Class-sections %) are deterministic demo figures chosen to be plausible (submission slightly above presence); they are not real data-lake values.
+- **Grade bands are framework-wide** (`rating_bands: GSQAC_BANDS`): the official A#★ scale now labels the Input Composite + input-domain grades too, not just GSQAC. This is consistent with the product's Gunotsav-2.0-aligned model; flagged in case a separate input-only band set is later desired.
+- **GSQAC sub-domain breakdown shows structure, not per-entity scores** — the report's marks are school-specific, so reproducing them across all entities would be misleading. Per-entity sub-domain scoring needs a real GSQAC sub-domain feed.
+- Export/Compare/Leaderboard show the **primary/parent value** for multi-metric indicators (tabular context); they auto-pick the renamed GSQAC domains and new grade labels.
+
+### Manual QA checklist
+
+- [ ] Teacher attendance card shows **Present** and **Submitted** rows (each value · N+1 · delta)
+- [ ] Student attendance card shows **Present** and **Submitted**
+- [ ] Attendance submission card shows **Schools** and **Class sections**
+- [ ] Average CPD Time Per Teacher shows **Average CPD time** (hrs) and **Teachers engaged in CPD** (%)
+- [ ] SAT1/SAT2/ORF show Avg score · Below {level} avg · Participation; CET/CGMS show Result · Participation
+- [ ] Single-metric KPIs unchanged (MDM, dropout, visits, observations, etc.)
+- [ ] Absentee KPI reads "Students absent from past 7+ **consecutive** days"
+- [ ] "Below hierarchy avg" never visible — resolves to "Below block avg" etc.
+- [ ] No KPI card shows Parent avg / Rate / Latest / Count / Score clutter labels
+- [ ] Multi-metric detail pages: one chart per metric with a clear title; per-metric formula breakdown
+- [ ] GSQAC uses the 5 report domains and official A5★…D bands (68.1% → B)
+- [ ] School Quality detail shows the **Sub-domain breakdown** card with report sub-domains + indicators
+- [ ] Export GSQAC section uses the renamed domains + new grade labels
+
+---
+
 ## KPI detail metric summary strip removed (Pass 9)
 
 ### Summary

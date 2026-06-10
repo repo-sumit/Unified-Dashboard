@@ -5,6 +5,7 @@ import { useT, type Lang } from "@/i18n";
 import { rag } from "@/lib/colors";
 import { resolveMetricLabel } from "@/lib/format";
 import { buildTrend, trendTitleKey, getLastUpdatedLabel } from "@/lib/trend";
+import { GSQAC_DOMAINS, GSQAC_SUBDOMAINS } from "@/config/kpiCatalog";
 import { Card, SectionLabel, EmptyNA } from "@/components/ui/atoms";
 import { TrendChart } from "@/components/ui/TrendChart";
 import { FrequencyBadge } from "@/components/ui/DataBadges";
@@ -27,6 +28,7 @@ export default function KpiDetail() {
   const na = rec.value == null;
   const domain = fw.domains.find((d) => d.id === kpi.domain_id);
   const isMulti = metricRecs.length > 0;
+  const isGsqac = kpi.id.startsWith("sq_");
 
   const name = tn(kpi.name, kpi.name_gu);
 
@@ -65,6 +67,9 @@ export default function KpiDetail() {
         </Card>
       ) : null}
 
+      {/* GSQAC SUB-DOMAIN BREAKDOWN — the report's domain → sub-domain → indicator structure */}
+      {isGsqac && <GsqacBreakdown kpiId={kpi.id} />}
+
       {/* HOW IT'S CALCULATED */}
       {isMulti ? (
         <Card className="card-pad">
@@ -89,6 +94,43 @@ export default function KpiDetail() {
         </Card>
       ) : null}
     </ScreenContainer>
+  );
+}
+
+/**
+ * GSQAC sub-domain breakdown — the report's domain → sub-domain → indicator
+ * structure. For the overall GSQAC score, all 5 domains are shown (each as a
+ * labelled group); for a single domain (sq_dN), only that domain's sub-domains.
+ * Reference structure from the report card — not per-entity scores.
+ */
+function GsqacBreakdown({ kpiId }: { kpiId: string }) {
+  const { t, tn } = useT();
+  const overall = kpiId === "sq_gsqac";
+  const domains = overall ? GSQAC_DOMAINS : GSQAC_DOMAINS.filter((d) => d.kpiId === kpiId);
+  if (!domains.length) return null;
+  return (
+    <Card className="card-pad">
+      <SectionLabel>{t("kpi.subdomains")}</SectionLabel>
+      <div className="mt-3 space-y-4">
+        {domains.map((d) => {
+          const subs = GSQAC_SUBDOMAINS[d.key] ?? [];
+          if (!subs.length) return null;
+          return (
+            <div key={d.key}>
+              {overall && <p className="mb-1.5 text-xs font-bold text-primary-600">{tn(d.name, d.name_gu)}</p>}
+              <ul className="space-y-2">
+                {subs.map((s) => (
+                  <li key={s.name} className="rounded-xl bg-neutral-50 px-3 py-2">
+                    <p className="text-sm font-semibold text-neutral-800">{tn(s.name, s.name_gu)}</p>
+                    <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">{s.indicators.join(" · ")}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 
