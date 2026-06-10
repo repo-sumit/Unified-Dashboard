@@ -1,5 +1,223 @@
 # Unified Portal — QA Report
 
+## KPI detail metric summary strip removed (Pass 9)
+
+### Summary
+
+Removed the multi-column metric summary strip from every KPI detail page (both single-metric and multi-metric indicators). The page now goes directly from the title/meta header to the trend chart cards — no value tiles, no delta pills, no N+1 comparisons above the charts.
+
+### What changed
+
+**`src/screens/KpiDetail.tsx`**
+
+- Removed the `{isMulti ? (<div mt-4 grid 3-col>metricRecs.map(MetricSummary)…</div>) : (<div mt-4 flex>ValueDisplay + NPlusOneLine + FrequencyDelta…</div>)}` block from inside the header `<div className="pb-2">`.
+- Deleted the `MetricSummary` local function entirely (was only used in this strip; not referenced outside this file).
+- Removed all variables that became unused after strip removal: `isContextDelta`, `parentRow`, `parentName`, `parentScore`, `peerLevel`, `valueTone`, `cadence`, `currentLabel`, `isGsqac`.
+- Removed the `useKpiCascade` hook call (result was only used by `parentRow`).
+- Removed unused imports: `useKpiCascade` (hook), `deltaToneClass` (colors), `getWorkingDateLabel` (format), `peerAvg`+`peerLevelOf` (peer), `RatingBadge`, `ValueDisplay`, `FrequencyDelta`, `NPlusOneLine`, `gradeFor`+`GSQAC_BANDS` (ratingBands), `cn`, `locNum`.
+- `MetricTrendCard` (per-metric trend charts) — **kept unchanged**. Title, chart, height all preserved.
+- Single-metric `TrendChart` card — **kept unchanged**.
+- Formula `<Card>` — **kept unchanged**.
+- Lightweight page header (domain breadcrumb, h1, frequency badge, last updated, source icon) — **kept unchanged**.
+
+### New KPI detail layout
+
+```
+← Back
+
+[Domain]
+[KPI title]
+[FrequencyBadge] · [last updated] · [source]
+
+[METRIC LABEL · CADENCE TREND]       ← chart title
+[chart]
+
+[METRIC LABEL · CADENCE TREND]
+[chart]
+
+How it's calculated
+[formula]
+```
+
+No value row, no metric summary columns, no N+1 tiles, no delta pills above the charts.
+
+### Files changed
+
+- `src/screens/KpiDetail.tsx` — summary strip and MetricSummary removed; unused variables/imports cleaned up
+
+### Build
+
+`npm run build` passes. `tsc --noEmit` clean. No new warnings.
+
+### Manual QA checklist
+
+- [ ] SAT1 detail page: no 3-column metric summary strip at top
+- [ ] SAT2 detail page: no metric summary strip
+- [ ] ORF / CET / CGMS detail pages: no metric summary strip
+- [ ] Attendance KPI detail pages: no top value summary
+- [ ] Administration KPI detail pages: no top value summary
+- [ ] School Quality KPI detail pages: no top value summary
+- [ ] Single-metric KPI detail: page goes directly from meta header to the trend chart card
+- [ ] All trend charts still render
+- [ ] All chart titles still show (e.g. "AVG SCORE · YEARLY TREND", "30-day trend: Teacher attendance")
+- [ ] No blank gap between meta header and first chart
+- [ ] Formula card still shows below charts
+- [ ] Build passes with no TypeScript errors
+
+---
+
+## Naming, label-cleanup, detail-page restructure, dynamic level labels (Pass 8)
+
+### Summary
+
+Comprehensive cleanup pass covering: KPI name renames, removal of metric-type labels from cards, removal of "Parent avg" label from cards, removal of the oversized KPI detail top card, graph titles that include KPI names, dynamic "Below {level} avg" resolution, and multi-metric support for `att_report`.
+
+### 1. KPI renames
+
+| ID | Old name | New name |
+|---|---|---|
+| `att_chronic` | Students absent from past 7+ days | **Students absent from past 7+ consecutive days** |
+| `att_teacher` | Teachers present today | **Teacher attendance** |
+| `att_student` | Students present today | **Student attendance** |
+
+- `kpiCatalog.ts`: updated `name` and `name_gu` for all three.
+- `gu.ts`: updated `principal.chronicAbs` to include "સળંગ" (consecutive).
+- `en.ts` `principal.chronicAbs` was already correct ("consecutive" was already present).
+- KPI IDs, formulas, values, frequency, delta logic unchanged.
+
+### 2. Removed metric-type labels from KPI cards
+
+Removed `RATE / COUNT / SCORE / LATEST` labels that appeared above the headline value on single-metric cards. The value is now shown directly without a type tag above it.
+
+Also removed the inline "as on {date}" label from the card body — the date context now lives exclusively in the header frequency chip row (`Daily · 10 Jun`, `Monthly · Jun 2026`, etc.), which is the single authoritative period label.
+
+**File:** `src/components/ui/KpiCard.tsx`
+- Removed `headlineLabelKey()` function
+- Removed the `<span>` rendering the unit label
+- Removed `asOnLabel` variable; the header always receives `lastUpdated` as the context
+- Added `!kpi.suppressDelta` guard to the delta display condition
+
+### 3. Removed "Parent avg" label from KPI cards
+
+The "PARENT AVG" uppercase label that appeared above the parent entity comparison value has been removed. The peer value (e.g. "Kachchh · 91%") is self-explanatory — the entity name makes the context clear without a label.
+
+**Files affected:** `src/components/ui/KpiCard.tsx`
+- Changed footer from `<KpiContextTile label={t("kpi.parentAvgLabel")} ...>` to a plain `<span>` showing `peerStr` directly.
+- Source still shows with its "SOURCE" label (unchanged).
+- Multi-metric cards already had no "Parent avg" label (metric rows inline via `KpiMetricRow`).
+- KPI detail pages used `NPlusOneLine` which never showed a label — no change needed there.
+- Export page uses `peerAvgLabel` for the column header (separate key `export.parentAvg`) — unchanged.
+
+### 4. KPI detail page: removed oversized top summary card
+
+The large `<Card>` that wrapped the entire header section (domain breadcrumb + h1 + frequency + value + cascade + delta) has been replaced with a compact borderless `<div>`. The page now starts with a plain header instead of a card-framed hero block.
+
+New layout:
+```
+← Back
+[Domain breadcrumb]
+KPI title (h1)
+[Frequency badge] · [Last updated] · [Source icon + name]
+[Current value] [Parent N+1] [Delta pill]
+───────────────────────────────────────────────
+[Trend chart card(s)]
+[Formula card]
+```
+
+**File:** `src/screens/KpiDetail.tsx`
+- Removed `<Card className="card-pad">` wrapping the header block
+- Replaced with `<div className="pb-2">` — no border, no background
+- Value, N+1 comparison, and delta pill remain visible inline
+
+### 5. KPI detail graph titles include KPI name
+
+Single-metric charts now show the KPI name in the chart title:
+- Before: `"30-day trend"` / `"Monthly trend"` / `"Yearly trend"`
+- After: `"30-day trend: Teacher attendance"` / `"Monthly trend: No of CRC/URC Visits per school"`
+
+Multi-metric charts resolve the metric label and show cadence:
+- `"Below block avg · Recent cycles"` (was `"Below hierarchy avg · Recent cycles"`)
+- `"Avg score · Recent cycles"`
+
+**File:** `src/screens/KpiDetail.tsx`
+- Single-metric: `<SectionLabel>{t(trendTitleKey(trend.cadence))}: {name}</SectionLabel>`
+- Multi-metric `MetricTrendCard`: now receives `level: Level` prop, uses `resolveMetricLabel` for the title
+
+### 6. Dynamic "Below {level} avg" — replaces "Below hierarchy avg"
+
+The literal word "hierarchy" no longer appears in the UI. A new helper `resolveMetricLabel(name, name_gu, level, lang)` replaces "hierarchy" with the current scope level.
+
+Examples at different levels:
+- State view → **Below state avg**
+- District view → **Below district avg**
+- Block view → **Below block avg**
+- Cluster view → **Below cluster avg**
+- School view → **Below school avg**
+
+**File:** `src/lib/format.ts`
+- Added `resolveMetricLabel(name, name_gu, level, lang)` with `LEVEL_NAME_EN` and `LEVEL_NAME_GU` maps.
+- Gujarati: replaces "સ્તર" (generic "level") with the specific level name (e.g. "બ્લોક", "ક્લસ્ટર").
+
+**Usage sites updated:**
+- `src/components/ui/MultiMetricKpiCard.tsx` — `MetricRow` label
+- `src/screens/KpiDetail.tsx` — `MetricSummary` label, `MetricTrendCard` title, formula `<dt>` labels
+
+### 7. att_report as multi-metric (Schools + Class sections)
+
+`att_report` ("Schools and Class Sections Submitting Attendance") is now a multi-metric indicator matching its name. Two metrics:
+
+| Metric id | Label | Formula |
+|---|---|---|
+| `schools` | Schools | Schools That Filled Attendance / Total Schools × 100 |
+| `classSections` | Class sections | Class Sections That Filled Attendance / Total Class Sections × 100 |
+
+**File:** `src/config/kpiCatalog.ts`
+- Added `metrics: [...]` to the `att_report` RAW entry
+- Added `METRIC_PUBLISHED` anchors: `att_report__schools` (= parent anchor) and `att_report__classSections`
+
+> **Assumption / Needs Verification:** The class sections formula is inferred from the KPI name. Verify against `GJ _ Unified App KPIs(11).xlsx` before considering production-ready.
+
+Other Attendance/Admin indicators audited for multi-metric:
+- `vis_crc_count`: ratio/count — single metric (count of visits per school), no secondary metric in formula. Kept single.
+- `ret_dropout`: count — absolute count only, kept single.
+- `ret_reenroll`: % — single metric, kept single.
+- All classroom observation / infrastructure indicators: single % metric each, kept single.
+
+### Files changed
+
+- `src/config/kpiCatalog.ts` — KPI name renames, att_report multi-metric, METRIC_PUBLISHED anchors
+- `src/lib/format.ts` — `resolveMetricLabel` helper
+- `src/components/ui/KpiCard.tsx` — removed unit label, removed Parent avg label, removed as-on inline
+- `src/components/ui/MultiMetricKpiCard.tsx` — `resolveMetricLabel` in MetricRow
+- `src/screens/KpiDetail.tsx` — header restructure, graph titles, resolveMetricLabel in sub-components
+- `src/i18n/gu.ts` — `principal.chronicAbs` updated (consecutive)
+- `QA_REPORT.md` — this update
+
+### Build
+
+`npm run build` passes. `tsc --noEmit` clean. Only the pre-existing `entities` seed chunk-size warning (expected, not a regression).
+
+### Manual QA checklist
+
+- [ ] `att_chronic` KPI card reads "Students absent from past 7+ **consecutive** days"
+- [ ] `att_teacher` card reads "Teacher attendance" (not "Teachers present today")
+- [ ] `att_student` card reads "Student attendance" (not "Students present today")
+- [ ] No KPI card shows "RATE", "COUNT", "SCORE", or "LATEST" label above the value
+- [ ] No KPI card shows "PARENT AVG" or "Parent avg" label — peer value shows as "Kachchh · 91%" etc.
+- [ ] `att_report` card shows two metric rows: Schools % + Class sections %
+- [ ] KPI detail pages: no oversized Card frame around the header
+- [ ] KPI detail single-metric chart title includes the KPI name (e.g. "30-day trend: Teacher attendance")
+- [ ] KPI detail multi-metric chart title uses resolved level (e.g. "Below block avg · Recent cycles")
+- [ ] "Below hierarchy avg" is **never** visible in the UI at any level
+- [ ] At block level: multi-metric label shows "Below block avg"
+- [ ] At cluster level: multi-metric label shows "Below cluster avg"
+- [ ] Gujarati mode: "Below block avg" → "બ્લોક સરેરાશથી નીચે"
+- [ ] Date/frequency chip still visible in card header (Daily · 10 Jun, Monthly · Jun 2026, etc.)
+- [ ] Source still visible in card footer (multi-metric as muted footer; single-metric as SOURCE tile)
+- [ ] KPI detail trend charts still render (no regression)
+
+---
+
 ## KPI card row-grammar cleanup (uniform, compact, premium)
 
 Follow-up to the graph removal: cards still felt irregular, so this pass enforces a strict **row grammar** (header · meta · metric rows · footer) shared by every KPI card, and fixes the duplicate period label.

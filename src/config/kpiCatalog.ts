@@ -28,6 +28,7 @@ const BASE_PUBLISHED: Record<string, Pub> = {
   att_student: { section: 88, school: 86, cluster: 87, block: 89, district: 91, state: 92 },
   att_mdm: { school: 94, cluster: 96, block: 97, district: 98, state: 99 },
   att_chronic: { section: 4, school: 18, cluster: 62, block: 215, district: 790, state: 4100 },
+  // att_report is multi-metric — parent anchor not used directly (sub-metrics resolve via METRIC_PUBLISHED)
   att_report: { school: 92, cluster: 91, block: 93, district: 94, state: 95 },
   // Assessment — all classroom-level (down to section); CET/CGMS hidden from teacher via roleVisibility.
   asm_sat1: { section: 72, school: 74, cluster: 76, block: 79, district: 81, state: 83 },
@@ -84,6 +85,9 @@ const METRIC_PUBLISHED: Record<string, Pub> = {
   asm_orf__cwpm: BASE_PUBLISHED.asm_orf,
   asm_orf__belowHierarchyAvg: { section: 40, school: 38, cluster: 36, block: 33, district: 30, state: 27 },
   asm_orf__participation: { section: 84, school: 85, cluster: 86, block: 88, district: 89, state: 90 },
+  // att_report — Schools submitting attendance (= parent anchor) + Class sections submitting
+  att_report__schools: BASE_PUBLISHED.att_report,
+  att_report__classSections: { school: 88, cluster: 89, block: 91, district: 92, state: 93 },
   // CET — result (= parent), class-5 participation
   asm_cet__result: BASE_PUBLISHED.asm_cet,
   asm_cet__participation: { section: 90, school: 91, cluster: 92, block: 93, district: 94, state: 95 },
@@ -138,11 +142,14 @@ const NON_TEACHER = ["principal", "crc", "brc", "deo", "state"] as const;
  *  grade/section). `roleVisibility:[...NON_TEACHER]` ⇒ column-J "No" (hidden from teacher). */
 const RAW: Array<Partial<CatItem> & Pick<CatItem, "id" | "domain_id" | "name" | "name_gu" | "unit" | "direction" | "data_source">> = [
   // ── Attendance — Daily · src "Attendance bot" ──
-  { id: "att_chronic", domain_id: "attendance", name: "Students absent from past 7+ days", name_gu: "છેલ્લા 7+ દિવસથી ગેરહાજર વિદ્યાર્થીઓ", unit: "count", direction: "lower", data_source: ATT, frequency: "Daily", displayStrategy: "count_with_rate", hero: true, showLastUpdatedOnUi: true, formula: "Counts unique students absent for 7 or more consecutive school days as of the selected/latest date. .", description: "Absolute count of students absent 7+ consecutive days as of the latest date; summed up the hierarchy (never an average per school)." },
-  { id: "att_teacher", domain_id: "attendance", name: "Teachers present today", name_gu: "આજે હાજર શિક્ષકો", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "Present: (Teachers Present / Total Teachers) × 100", description: "Officer-monitoring KPI — not a teacher self-evaluation card." },
-  { id: "att_student", domain_id: "attendance", name: "Students present today", name_gu: "આજે હાજર વિદ્યાર્થીઓ", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", showLastUpdatedOnUi: true, formula: "Present: (Students Present / Total Students) × 100" },
+  { id: "att_chronic", domain_id: "attendance", name: "Students absent from past 7+ consecutive days", name_gu: "છેલ્લા 7+ સળંગ દિવસથી ગેરહાજર વિદ્યાર્થીઓ", unit: "count", direction: "lower", data_source: ATT, frequency: "Daily", displayStrategy: "count_with_rate", hero: true, showLastUpdatedOnUi: true, formula: "Counts unique students absent for 7 or more consecutive school days as of the selected/latest date.", description: "Absolute count of students absent 7+ consecutive days as of the latest date; summed up the hierarchy (never an average per school)." },
+  { id: "att_teacher", domain_id: "attendance", name: "Teacher attendance", name_gu: "શિક્ષક હાજરી", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", roleVisibility: [...NON_TEACHER], showLastUpdatedOnUi: true, formula: "Present: (Teachers Present / Total Teachers) × 100", description: "Officer-monitoring KPI — not a teacher self-evaluation card." },
+  { id: "att_student", domain_id: "attendance", name: "Student attendance", name_gu: "વિદ્યાર્થી હાજરી", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", showLastUpdatedOnUi: true, formula: "Present: (Students Present / Total Students) × 100" },
   { id: "att_mdm", domain_id: "attendance", name: "Students consuming Mid-day Meal (MDM)", name_gu: "મધ્યાહ્ન ભોજન (MDM) લેતા વિદ્યાર્થીઓ", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", showLastUpdatedOnUi: true, formula: "(Students Consuming MDM / Total eligible Students) × 100" },
-  { id: "att_report", domain_id: "attendance", name: "Schools and Class Sections Submitting Attendance", name_gu: "હાજરી સબમિટ કરતી શાળાઓ અને વર્ગ વિભાગો", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", showLastUpdatedOnUi: true, formula: "Schools: (Schools That Filled Attendance / Total Schools) × 100" },
+  { id: "att_report", domain_id: "attendance", name: "Schools and Class Sections Submitting Attendance", name_gu: "હાજરી સબમિટ કરતી શાળાઓ અને વર્ગ વિભાગો", unit: "%", direction: "higher", data_source: ATT, frequency: "Daily", displayStrategy: "trend_30d", lowestLevel: "school", showLastUpdatedOnUi: true, formula: "Schools: (Schools That Filled Attendance / Total Schools) × 100\nClass sections: (Class Sections That Filled Attendance / Total Class Sections) × 100", metrics: [
+    { id: "schools", label: "Schools", label_gu: "શાળાઓ", unit: "%", direction: "higher", formula: "Schools That Filled Attendance / Total Schools × 100", formula_gu: "હાજરી ભરેલ શાળાઓ / કુલ શાળાઓ × 100" },
+    { id: "classSections", label: "Class sections", label_gu: "વર્ગ વિભાગો", unit: "%", direction: "higher", formula: "Class Sections That Filled Attendance / Total Class Sections × 100", formula_gu: "હાજરી ભરેલ વર્ગ વિભાગો / કુલ વર્ગ વિભાગો × 100" },
+  ] },
 
   // ── Assessment — classroom-level (down to section) ──
   { id: "asm_remediation", domain_id: "assessment", name: "SAT reports downloaded in classrooms", name_gu: "વર્ગખંડોમાં ડાઉનલોડ થયેલ SAT રિપોર્ટ", unit: "%", direction: "higher", data_source: "Gyan Prabhav bot", frequency: "Daily", displayStrategy: "compliance", hero: true, showLastUpdatedOnUi: true, suppressDelta: true, formula: "(Classrooms Where Report Was Downloaded / Total Classrooms) × 100", description: "Gyan Prabhav generates a SAT report card per classroom; this is the share of classrooms that downloaded it." },

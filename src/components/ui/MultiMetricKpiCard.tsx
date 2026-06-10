@@ -1,6 +1,6 @@
 import type { KpiRecord, Level } from "@/types";
 import { deltaToneClass } from "@/lib/colors";
-import { formatValue } from "@/lib/format";
+import { formatValue, resolveMetricLabel } from "@/lib/format";
 import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { buildTrend, getLastUpdatedLabel } from "@/lib/trend";
 import { useKpiMetrics } from "@/hooks";
@@ -10,11 +10,10 @@ import { KpiCardShell, KpiCardHeader, KpiMetricRow, KpiSourceLine } from "./kpiC
 import { KpiCard } from "./KpiCard";
 
 /**
- * Multi-metric indicator card (SAT1/SAT2/ORF/CET/CGMS) — a compact, graph-free score
- * table on the shared KPI-card shell. Each metric is one `KpiMetricRow` (label, then
- * value · N+1 · delta in three aligned columns), divided by hairlines, with one muted
- * source line at the foot. No sparklines (charts live on the KPI detail page). Lower-
- * is-better metrics (e.g. "Below hierarchy avg") still go green when they fall.
+ * Multi-metric indicator card (SAT1/SAT2/ORF/CET/CGMS/att_report) — compact, graph-free
+ * score table. Each metric is one `KpiMetricRow` (resolved label · value · N+1 · delta).
+ * "Below hierarchy avg" is resolved to the current scope level (e.g. "Below block avg").
+ * No sparklines; charts live on the KPI detail page only.
  */
 export function MultiMetricKpiCard({
   rec, metrics, name, onClick, lang = "en", level, parentName,
@@ -48,21 +47,22 @@ export function MultiMetricKpiCard({
   );
 }
 
-/** Computes one metric's value/N+1/delta and renders it through the shared row. */
+/** One metric row — resolves "Below hierarchy avg" to "Below {level} avg" dynamically. */
 function MetricRow({
   rec, level, parentName, lang,
 }: { rec: KpiRecord; level?: Level; parentName?: string; lang: Lang }) {
-  const { tn } = useT();
   const kpi = rec.kpi;
   const na = rec.value == null;
   const trend = na ? null : buildTrend(rec, lang);
   const delta = trend?.delta ?? null;
   const peer = level && peerLevelOf(level) ? peerAvg(kpi.id, level) : null;
   const tone = na ? "text-rag-naText" : delta ? deltaToneClass(delta, kpi.direction) : "text-neutral-900";
+  // Resolve "hierarchy" → current scope level (e.g. "Below block avg" at block level).
+  const label = resolveMetricLabel(kpi.name, kpi.name_gu, level ?? "school", lang);
 
   return (
     <KpiMetricRow
-      label={tn(kpi.name, kpi.name_gu)}
+      label={label}
       value={na ? "—" : formatValue(rec.value, kpi.unit, lang)}
       valueTone={tone}
       parentLabel={parentName && peer != null ? `${parentName} · ${formatValue(peer, kpi.unit, lang)}` : null}
@@ -74,10 +74,8 @@ function MetricRow({
 }
 
 /**
- * Selector used wherever a KPI tile is rendered: a multi-metric indicator (kpi.metrics)
- * renders the MultiMetricKpiCard with its provider-driven sub-metric records; everything
- * else falls back to the standard single-value KpiCard. The hook is always called (with
- * an undefined id for single-metric KPIs) so hook order stays stable.
+ * Selector: multi-metric indicator → MultiMetricKpiCard; everything else → KpiCard.
+ * Hook is always called (with undefined id for single-metric) to preserve stable order.
  */
 export function KpiCardAuto({
   rec, name, onClick, lang = "en", level, parentName, currentId,

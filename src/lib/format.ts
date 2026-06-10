@@ -1,5 +1,5 @@
 import type { Lang } from "@/i18n";
-import type { Unit } from "@/types";
+import type { Level, Unit } from "@/types";
 
 const GU_DIGITS = ["૦", "૧", "૨", "૩", "૪", "૫", "૬", "૭", "૮", "૯"];
 
@@ -91,6 +91,27 @@ export function formatDelta(delta: number | null, unit: Unit, lang: Lang = "en")
 export function pct(value: number | null, lang: Lang = "en"): string {
   if (value == null) return "—";
   return `${locNum(Math.round(value), lang)}%`;
+}
+
+const LEVEL_NAME_EN: Record<Level, string> = {
+  state: "state", district: "district", block: "block", cluster: "cluster",
+  school: "school", grade: "grade", section: "section",
+};
+const LEVEL_NAME_GU: Record<Level, string> = {
+  state: "રાજ્ય", district: "જિલ્લા", block: "બ્લોક", cluster: "ક્લસ્ટર",
+  school: "શાળા", grade: "ધોરણ", section: "વિભાગ",
+};
+
+/**
+ * Resolves "Below hierarchy avg" → "Below block avg" (etc.) using the current scope
+ * level. For Gujarati, replaces the generic "સ્તર" (level) with the specific level name.
+ * Returns the input label unchanged when it contains no level placeholder.
+ */
+export function resolveMetricLabel(name: string, name_gu: string, level: Level, lang: Lang): string {
+  if (lang === "gu") {
+    return name_gu.replace("સ્તર", LEVEL_NAME_GU[level]);
+  }
+  return name.replace("hierarchy", LEVEL_NAME_EN[level]);
 }
 
 /** Time-based greeting key (FCR-1.2): 05–11 morning · 12–16 afternoon · else evening. */
