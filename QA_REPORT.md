@@ -1,5 +1,43 @@
 # Unified Portal — QA Report
 
+## GSQAC grade-scale legend on School Quality page (Pass 12)
+
+Added a compact **grade-scale legend** at the foot of the School Quality page (`/app/domain/school_quality`) explaining the GSQAC grading pattern — grade + % range + colour — verbatim from the `GSQAC_Report_2024_25_English.pdf` footer:
+
+`>95% A5★ · >90–95% A4★ · >85–90% A3★ · >80–85% A2★ · >75–80% A1★ · >50–75% B · >25–50% C · >0–25% D`
+
+- New `GsqacGradeLegend` component: maps `GSQAC_BANDS` to rows (ranges derived from consecutive band mins, so they stay in sync with the scale) with report-faithful colours (green → lime → amber → orange → red).
+- Rendered in `DomainView` only when `ds.domain.kind === "output"` (School Quality) — not on input-domain pages.
+- Minimal by design (title + one-line hint + 8 colour-chip rows); no scoring math, per request.
+
+**Files changed:** `src/components/ui/GsqacGradeLegend.tsx` (new), `src/screens/DomainView.tsx`, `src/i18n/en.ts`, `src/i18n/gu.ts` (`scorecard.gradeScale` / `gradeScaleHint`), `QA_REPORT.md`.
+
+**Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+---
+
+## GSQAC follow-ups — CET & CGMS split + overall-page breakdown removed (Pass 11)
+
+Three targeted GSQAC tweaks:
+
+1. **Removed the "Sub-domain breakdown" card from the overall GSQAC score page** (`/kpi/sq_gsqac`). The breakdown now renders only on the five individual domain detail pages (`sq_d1`…`sq_d5`), not on the overall score. `GsqacBreakdown` simplified to single-domain; render gated with `kpi.id !== "sq_gsqac"`.
+2. **CET & CGMS (State Exams) `sq_d5` is now multi-metric** — two sub-metrics **CET** and **CGMS** (both %).
+   - **Scorecard (School Quality page / `DomainView`):** the card renders via `KpiCardAuto → MultiMetricKpiCard`, so it shows **two rows** (CET · CGMS), each with value · N+1 · delta.
+   - **Detail page (`/kpi/sq_d5`):** a single line chart with **two lines** (CET, CGMS) and a legend, titled **"Yearly trend: CET & CGMS (State Exams)"** — new `MultiTrendChart` (multi-series) + `GsqacMultiTrend` wrapper. Other multi-metric KPIs keep one-chart-per-metric.
+3. **Data:** CET/CGMS values are derived from the seed's D5 domain score in `mockProvider` (report ratios CET 40% · CGMS 52% vs D5 46% → ×0.87 / ×1.13), so the two lines carry genuinely different data at every level. N+1 anchors added (`sq_d5__cet`, `sq_d5__cgms`). All school-and-above entities carry `gsqac.domains.D5`, so both resolve at school→state (sq_d5 isn't shown at grade/section).
+
+**Files changed:** `src/config/kpiCatalog.ts` (sq_d5 `metrics` + anchors), `src/data/provider/mockProvider.ts` (CET/CGMS derivation), `src/components/ui/TrendChart.tsx` (`MultiTrendChart`), `src/screens/KpiDetail.tsx` (`GsqacMultiTrend`, breakdown gating), `QA_REPORT.md`.
+
+**Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+**Manual QA:**
+- [ ] `/kpi/sq_gsqac` shows no "Sub-domain breakdown" card (trend + formula only)
+- [ ] `/kpi/sq_d1`…`sq_d4` still show their sub-domain breakdown
+- [ ] School Quality page: "CET & CGMS (State Exams)" card shows two rows (CET, CGMS)
+- [ ] `/kpi/sq_d5` shows one chart with two lines (CET, CGMS) + legend, titled "Yearly trend: CET & CGMS (State Exams)"; below it the sub-domain breakdown + per-metric formulas
+
+---
+
 ## KPI sheet + GSQAC re-audit — multi-metric & official grade bands (Pass 10)
 
 ### Source of truth

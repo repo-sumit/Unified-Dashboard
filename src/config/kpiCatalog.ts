@@ -102,6 +102,10 @@ const METRIC_PUBLISHED: Record<string, Pub> = {
   // CPD — Average CPD time (hours, = parent anchor) + Teachers engaged in CPD (%)
   cpd_hours__avgTime: BASE_PUBLISHED.cpd_hours,
   cpd_hours__teachersEngaged: { school: 74, cluster: 76, block: 78, district: 80, state: 82 },
+  // GSQAC D5 — CET & CGMS sub-metrics (N+1 reference; value derived from gsqac meta in
+  // the provider). Report: CET 40% · CGMS 52% vs D5 46% → CET below, CGMS above.
+  sq_d5__cet: { school: 41, cluster: 42, block: 39, district: 43, state: 41 },
+  sq_d5__cgms: { school: 53, cluster: 54, block: 51, district: 55, state: 53 },
   // CET — result (= parent), class-5 participation
   asm_cet__result: BASE_PUBLISHED.asm_cet,
   asm_cet__participation: { section: 90, school: 91, cluster: 92, block: 93, district: 94, state: 95 },
@@ -226,7 +230,10 @@ const RAW: Array<Partial<CatItem> & Pick<CatItem, "id" | "domain_id" | "name" | 
   { id: "sq_d2", domain_id: "school_quality", name: "School Administration", name_gu: "શાળા વહીવટ", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
   { id: "sq_d3", domain_id: "school_quality", name: "Co-scholastic Activities", name_gu: "સહ-અભ્યાસિક પ્રવૃત્તિઓ", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
   { id: "sq_d4", domain_id: "school_quality", name: "Usage of Resources", name_gu: "સંસાધનોનો ઉપયોગ", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
-  { id: "sq_d5", domain_id: "school_quality", name: "CET & CGMS (State Exams)", name_gu: "CET અને CGMS (રાજ્ય પરીક્ષાઓ)", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER] },
+  { id: "sq_d5", domain_id: "school_quality", name: "CET & CGMS (State Exams)", name_gu: "CET અને CGMS (રાજ્ય પરીક્ષાઓ)", unit: "score", direction: "higher", data_source: "GSQAC Dashboard & Bot", availableInDataLake: false, frequency: "Yearly", displayStrategy: "snapshot_latest", context: true, lowestLevel: "school", roleVisibility: [...NON_TEACHER], metrics: [
+    { id: "cet", label: "CET", label_gu: "CET", unit: "%", direction: "higher", formula: "Participation in the CET (Class 5) exam — student attendance, inclusion in the state merit list, and average score.", formula_gu: "CET (ધોરણ 5) પરીક્ષામાં સહભાગિતા — વિદ્યાર્થી હાજરી, રાજ્ય મેરિટ યાદીમાં સમાવેશ અને સરેરાશ સ્કોર." },
+    { id: "cgms", label: "CGMS", label_gu: "CGMS", unit: "%", direction: "higher", formula: "Participation in the CGMS (Class 8) exam — student attendance, inclusion in the state merit list, and average score.", formula_gu: "CGMS (ધોરણ 8) પરીક્ષામાં સહભાગિતા — વિદ્યાર્થી હાજરી, રાજ્ય મેરિટ યાદીમાં સમાવેશ અને સરેરાશ સ્કોર." },
+  ] },
 ];
 
 const CATALOG: CatItem[] = RAW.map((o) => ({ availableInDataLake: true, pmShriApplicable: true, ...o }));

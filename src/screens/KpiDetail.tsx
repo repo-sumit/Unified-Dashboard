@@ -7,11 +7,14 @@ import { resolveMetricLabel } from "@/lib/format";
 import { buildTrend, trendTitleKey, getLastUpdatedLabel } from "@/lib/trend";
 import { GSQAC_DOMAINS, GSQAC_SUBDOMAINS } from "@/config/kpiCatalog";
 import { Card, SectionLabel, EmptyNA } from "@/components/ui/atoms";
-import { TrendChart } from "@/components/ui/TrendChart";
+import { TrendChart, MultiTrendChart } from "@/components/ui/TrendChart";
 import { FrequencyBadge } from "@/components/ui/DataBadges";
 import { Database } from "@/components/ui/Icon";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { BackLink } from "@/components/layout/PageHeader";
+
+/** distinct line colours for GSQAC multi-series trends (e.g. CET vs CGMS). */
+const GSQAC_LINE_COLORS = ["#2563EB", "#DB2777"];
 
 export default function KpiDetail() {
   const { kpiId } = useParams();
@@ -53,9 +56,14 @@ export default function KpiDetail() {
         </div>
       </div>
 
-      {/* TREND — chart title includes KPI/metric name so graphs are unambiguous */}
+      {/* TREND — chart title includes KPI/metric name so graphs are unambiguous.
+          GSQAC multi-metric (CET & CGMS) → one chart, one line per sub-metric. */}
       {isMulti ? (
-        metricRecs.map((mr) => <MetricTrendCard key={mr.kpi.id} rec={mr} level={entity.level} lang={lang} />)
+        isGsqac ? (
+          <GsqacMultiTrend recs={metricRecs} name={name} level={entity.level} lang={lang} />
+        ) : (
+          metricRecs.map((mr) => <MetricTrendCard key={mr.kpi.id} rec={mr} level={entity.level} lang={lang} />)
+        )
       ) : na ? (
         <EmptyNA hint={t("kpi.noData")} />
       ) : !kpi.noTrend && trend ? (
@@ -67,8 +75,8 @@ export default function KpiDetail() {
         </Card>
       ) : null}
 
-      {/* GSQAC SUB-DOMAIN BREAKDOWN — the report's domain → sub-domain → indicator structure */}
-      {isGsqac && <GsqacBreakdown kpiId={kpi.id} />}
+      {/* GSQAC SUB-DOMAIN BREAKDOWN — per-domain only (not on the overall GSQAC score page) */}
+      {isGsqac && kpi.id !== "sq_gsqac" && <GsqacBreakdown kpiId={kpi.id} />}
 
       {/* HOW IT'S CALCULATED */}
       {isMulti ? (
@@ -98,37 +106,57 @@ export default function KpiDetail() {
 }
 
 /**
- * GSQAC sub-domain breakdown — the report's domain → sub-domain → indicator
- * structure. For the overall GSQAC score, all 5 domains are shown (each as a
- * labelled group); for a single domain (sq_dN), only that domain's sub-domains.
- * Reference structure from the report card — not per-entity scores.
+ * GSQAC sub-domain breakdown for a single domain (sq_dN) — the report's
+ * sub-domain → indicator structure. Reference structure from the report card,
+ * not per-entity scores. Not rendered for the overall GSQAC score page.
  */
 function GsqacBreakdown({ kpiId }: { kpiId: string }) {
   const { t, tn } = useT();
-  const overall = kpiId === "sq_gsqac";
-  const domains = overall ? GSQAC_DOMAINS : GSQAC_DOMAINS.filter((d) => d.kpiId === kpiId);
-  if (!domains.length) return null;
+  const domain = GSQAC_DOMAINS.find((d) => d.kpiId === kpiId);
+  const subs = domain ? GSQAC_SUBDOMAINS[domain.key] ?? [] : [];
+  if (!subs.length) return null;
   return (
     <Card className="card-pad">
       <SectionLabel>{t("kpi.subdomains")}</SectionLabel>
-      <div className="mt-3 space-y-4">
-        {domains.map((d) => {
-          const subs = GSQAC_SUBDOMAINS[d.key] ?? [];
-          if (!subs.length) return null;
-          return (
-            <div key={d.key}>
-              {overall && <p className="mb-1.5 text-xs font-bold text-primary-600">{tn(d.name, d.name_gu)}</p>}
-              <ul className="space-y-2">
-                {subs.map((s) => (
-                  <li key={s.name} className="rounded-xl bg-neutral-50 px-3 py-2">
-                    <p className="text-sm font-semibold text-neutral-800">{tn(s.name, s.name_gu)}</p>
-                    <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">{s.indicators.join(" · ")}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
+      <ul className="mt-3 space-y-2">
+        {subs.map((s) => (
+          <li key={s.name} className="rounded-xl bg-neutral-50 px-3 py-2">
+            <p className="text-sm font-semibold text-neutral-800">{tn(s.name, s.name_gu)}</p>
+            <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">{s.indicators.join(" · ")}</p>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/**
+ * GSQAC multi-metric trend — all sub-metrics on ONE chart, one line each (e.g. CET
+ * & CGMS for the State-Exams domain). Title is "{cadence trend}: {domain name}".
+ */
+function GsqacMultiTrend({ recs, name, level, lang }: { recs: KpiRecord[]; name: string; level: Level; lang: Lang }) {
+  const { t } = useT();
+  const series = recs
+    .map((mr) => ({ rec: mr, trend: buildTrend(mr, lang) }))
+    .filter((s) => s.trend.points.length >= 2);
+  if (!series.length) return null;
+  const cadence = series[0].trend.cadence;
+  return (
+    <Card className="card-pad">
+      <SectionLabel>{t(trendTitleKey(cadence))}: {name}</SectionLabel>
+      <div className="mt-2">
+        <MultiTrendChart
+          series={series.map((s, i) => ({
+            key: s.rec.kpi.id,
+            label: resolveMetricLabel(s.rec.kpi.name, s.rec.kpi.name_gu, level, lang),
+            color: GSQAC_LINE_COLORS[i % GSQAC_LINE_COLORS.length],
+            points: s.trend.points,
+          }))}
+          unit={series[0].rec.kpi.unit}
+          cadence={cadence}
+          lang={lang}
+          height={200}
+        />
       </div>
     </Card>
   );

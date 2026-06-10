@@ -57,6 +57,7 @@ export const en = {
     vsLastCycle: "vs last cycle", inputsDriveOutput: "Improve the 3 inputs → School Quality rises",
     netOver30: "{delta} over {n} days",
     ahead: "ahead", behind: "behind", subDomains: "Sub-domains", indicators: "Indicators",
+    gradeScale: "GSQAC grade scale", gradeScaleHint: "Grade by % obtained — green (best) to red (lowest).",
   },
   domain: { kpisIn: "KPIs in {name}", achievedVsBench: "{value} vs {benchmark} benchmark", noKpis: "No KPIs configured." },
   kpi: {

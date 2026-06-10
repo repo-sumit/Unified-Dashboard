@@ -1,4 +1,4 @@
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { Unit } from "@/types";
 import type { Cadence } from "@/lib/trend";
 import { formatValue } from "@/lib/format";
@@ -59,6 +59,72 @@ export function TrendChart({
         />
         <Area type="monotone" dataKey="value" stroke={color} strokeWidth={2.5} fill="url(#tc-fill)" dot={isDaily ? false : { r: 3, fill: color }} activeDot={{ r: 5 }} isAnimationActive={false} />
       </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+export interface TrendSeries {
+  key: string;
+  label: string;
+  color: string;
+  points: { x: string; value: number }[];
+}
+
+/**
+ * Multi-series trend (KPI detail) — several cadence-aligned lines on ONE chart with
+ * a legend, sharing a single fitted Y-axis. Used where two metrics belong on the same
+ * graph (e.g. CET & CGMS on the State-Exams detail). All series must share x-labels.
+ */
+export function MultiTrendChart({
+  series, unit, cadence, lang = "en", height = 200,
+}: {
+  series: TrendSeries[];
+  unit: Unit;
+  cadence: Cadence;
+  lang?: Lang;
+  height?: number;
+}) {
+  const isDaily = cadence === "daily";
+  const base = series[0]?.points ?? [];
+  const data = base.map((p, i) => {
+    const row: Record<string, number | string> = { x: p.x };
+    series.forEach((s) => { const pt = s.points[i]; if (pt) row[s.key] = pt.value; });
+    return row;
+  });
+  const { domain, ticks } = niceAxis(series.flatMap((s) => s.points.map((p) => p.value)), unit);
+
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <LineChart data={data} margin={{ top: 8, right: 26, bottom: 0, left: -12 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#EEF1F6" vertical={false} />
+        <XAxis
+          dataKey="x"
+          tickLine={false}
+          axisLine={false}
+          tick={{ fontSize: 11, fill: "#828996" }}
+          interval={isDaily ? "preserveStartEnd" : 0}
+          minTickGap={isDaily ? 28 : 0}
+          padding={isDaily ? undefined : { right: 8 }}
+        />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tick={{ fontSize: 11, fill: "#828996" }}
+          width={44}
+          domain={domain}
+          ticks={ticks}
+          tickFormatter={(v: number) => trimNum(v)}
+        />
+        <Tooltip
+          formatter={(v: number, name: string) => [formatValue(v, unit, lang), name]}
+          labelFormatter={(l) => String(l)}
+          contentStyle={{ borderRadius: 12, border: "1px solid #E2E6EE", fontSize: 12, boxShadow: "0 8px 28px rgba(16,37,74,.12)" }}
+        />
+        <Legend verticalAlign="top" align="right" iconType="plainline" wrapperStyle={{ fontSize: 12, paddingBottom: 10 }} />
+        {series.map((s) => (
+          <Line key={s.key} type="monotone" dataKey={s.key} name={s.label} stroke={s.color} strokeWidth={2.5} dot={isDaily ? false : { r: 3, fill: s.color }} activeDot={{ r: 5 }} isAnimationActive={false} />
+        ))}
+      </LineChart>
     </ResponsiveContainer>
   );
 }

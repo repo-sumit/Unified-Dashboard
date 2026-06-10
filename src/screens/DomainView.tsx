@@ -3,6 +3,7 @@ import { useScope, useScorecard } from "@/hooks";
 import { useT } from "@/i18n";
 import { Card, StatusDot } from "@/components/ui/atoms";
 import { KpiCardAuto } from "@/components/ui/MultiMetricKpiCard";
+import { GsqacGradeLegend } from "@/components/ui/GsqacGradeLegend";
 import { ChevronRight } from "@/components/ui/Icon";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { BackLink } from "@/components/layout/PageHeader";
@@ -75,6 +76,9 @@ export default function DomainView() {
           </PageGrid>
         </PageSection>
       )}
+
+      {/* School Quality (GSQAC output) — grade-scale legend at the foot of the page */}
+      {ds.domain.kind === "output" && <GsqacGradeLegend />}
     </ScreenContainer>
   );
 }

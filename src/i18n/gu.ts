@@ -59,6 +59,7 @@ export const gu: Dict = {
     vsLastCycle: "ગયા ચક્ર સામે", inputsDriveOutput: "3 ઇનપુટ સુધારો → શાળા ગુણવત્તા વધે",
     netOver30: "{n} દિવસમાં {delta}",
     ahead: "આગળ", behind: "પાછળ", subDomains: "ઉપ-ડોમેન", indicators: "સૂચકો",
+    gradeScale: "GSQAC ગ્રેડ સ્કેલ", gradeScaleHint: "% પ્રાપ્તાંક પ્રમાણે ગ્રેડ — લીલો (શ્રેષ્ઠ) થી લાલ (સૌથી નીચો).",
   },
   domain: { kpisIn: "{name} માં KPIs", achievedVsBench: "{value} vs {benchmark} બેન્ચમાર્ક", noKpis: "કોઈ KPI રૂપરેખાંકિત નથી." },
   kpi: {
