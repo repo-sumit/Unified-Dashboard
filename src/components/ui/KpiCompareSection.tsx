@@ -81,6 +81,7 @@ export function KpiCompareSection({ kpi }: { kpi: KpiDef }) {
           bars={bars}
           unit={unit}
           lang={lang}
+          height={multi ? 100 : 78}
           lowerBetter={direction === "lower"}
           maxValue={maxValue}
           onOpen={(id) => setScope(id)}

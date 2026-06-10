@@ -13,14 +13,19 @@ import { BarChart3, ChevronRight } from "./Icon";
  */
 
 /**
- * Outer shell — compact card with a clickable summary region (drills to the KPI
- * detail) and an optional `compare` slot rendered as a sibling. The summary is a
- * <button>; the compare slot has its own buttons (metric chips, bars), so it must
- * live OUTSIDE the summary button — never nest interactive controls.
+ * Outer shell — content-aware card with a clickable summary region (drills to the
+ * KPI detail) and an optional `compare` slot rendered as a sibling. The summary is
+ * a <button>; the compare slot has its own buttons (metric chips, bars), so it
+ * must live OUTSIDE the summary button — never nest interactive controls.
+ *
+ * Height tiers by metric count (`metrics`): 1 → compact · 2 → medium · 3+ → tall.
+ * No `h-full` — paired with the grid's `items-start`, a single-metric card stays
+ * short instead of stretching to a neighbouring 2/3-metric card's height.
  */
-export function KpiCardShell({ onClick, children, compare }: { onClick?: () => void; children: ReactNode; compare?: ReactNode }) {
+export function KpiCardShell({ onClick, children, compare, metrics = 1 }: { onClick?: () => void; children: ReactNode; compare?: ReactNode; metrics?: number }) {
+  const minH = metrics >= 3 ? "min-h-[14rem]" : metrics === 2 ? "min-h-[12rem]" : "min-h-[9rem]";
   return (
-    <Card className="card-pad flex h-full min-h-[10rem] w-full flex-col transition-shadow hover:shadow-raised">
+    <Card className={cn("card-pad flex w-full flex-col transition-shadow hover:shadow-raised", minH)}>
       {onClick ? (
         <button onClick={onClick} className="group flex flex-1 flex-col text-left">{children}</button>
       ) : (

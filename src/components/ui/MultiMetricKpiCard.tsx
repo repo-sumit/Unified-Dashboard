@@ -34,7 +34,7 @@ export function MultiMetricKpiCard({
   const lastUpdated = getLastUpdatedLabel(kpi, new Date(), lang);
 
   return (
-    <KpiCardShell onClick={onClick} compare={<KpiCompareSection kpi={kpi} />}>
+    <KpiCardShell onClick={onClick} compare={<KpiCompareSection kpi={kpi} />} metrics={metrics.length || 1}>
       <KpiCardHeader title={name} frequency={kpi.frequency} context={lastUpdated} />
 
       <div className="mt-2 divide-y divide-line/60">

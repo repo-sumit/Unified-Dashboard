@@ -25,9 +25,10 @@ function abbrev(label: string): string {
  * Embedded comparison bars — the design's per-card chart. Compact vertical bars,
  * one per selected child unit, worst-first (lower-is-better metrics put the
  * highest/worst first), value label above, abbreviated unit label below, RAG
- * fill. Scrolls horizontally inside the card (the page never scrolls sideways);
- * a "scroll ›" hint shows when there are more than six bars. Tapping a bar drills
- * into that unit. Unit-consistent: values format in the chart's own `unit`.
+ * fill. Spacing is responsive to the bar count: a few bars spread evenly across
+ * the full chart width (no blank right side); many bars (9+) use a fixed gap and
+ * scroll horizontally inside the card (the page never scrolls sideways) with a
+ * "scroll ›" hint. Tapping a bar drills into that unit. Unit-consistent.
  */
 export function ChildComparisonBars({
   title, bars, unit = "%", lang = "en", height = 88, lowerBetter = false, maxValue, onOpen,
@@ -47,22 +48,29 @@ export function ChildComparisonBars({
     lowerBetter ? (b.value as number) - (a.value as number) : (a.value as number) - (b.value as number),
   );
   const top = maxValue ?? Math.max(...sorted.map((b) => b.value as number), 1);
-  const scrollable = sorted.length > 6;
+  // few bars → distribute across the card width; many (9+) → fixed gap + scroll
+  const count = sorted.length;
+  const shouldScroll = count > 8;
+  const justifyClass = count <= 1 ? "justify-center" : count <= 4 ? "justify-between" : "justify-around";
   const summary = sorted.map((b) => `${b.label} ${formatValue(b.value, unit, lang)}`).join(", ");
 
   return (
     <div className="mt-3">
-      {(title || scrollable) && (
+      {(title || shouldScroll) && (
         <div className="mb-2 flex items-center justify-between gap-2">
           {title ? <span className="section-title !mb-0">{title}</span> : <span />}
-          {scrollable && (
+          {shouldScroll && (
             <span className="inline-flex shrink-0 items-center gap-0.5 text-2xs font-semibold text-neutral-400">
               {t("common.scroll")}<ChevronRight size={11} />
             </span>
           )}
         </div>
       )}
-      <div className="flex items-end gap-2.5 overflow-x-auto pb-1.5" role="img" aria-label={summary}>
+      <div
+        className={cn("flex items-end overflow-x-auto pb-1.5", shouldScroll ? "gap-6" : cn(justifyClass, "gap-3"))}
+        role="img"
+        aria-label={summary}
+      >
         {sorted.map((b) => {
           const v = b.value as number;
           const h = Math.max(6, (v / top) * height);

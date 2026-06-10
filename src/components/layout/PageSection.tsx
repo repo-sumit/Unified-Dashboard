@@ -20,19 +20,18 @@ export function PageSection({
 }
 
 const COLS: Record<string, string> = {
-  // `sm:auto-rows-fr` makes every row track equal height from the 2-up breakpoint up,
-  // so KPI cards in the same row stretch to match (single/dual/triple-metric alike).
-  // Left off at the 1-col mobile breakpoint so phone cards keep their natural height.
-  kpi: "grid-cols-1 sm:grid-cols-2 sm:auto-rows-fr xl:grid-cols-3",
-  // domain insight cards carry embedded charts → a 2-column grid (2×2) on tablet+
-  // so each card stays wide and information-rich; full-width on mobile.
-  domain: "grid-cols-1 sm:grid-cols-2 sm:auto-rows-fr",
+  // No `auto-rows-fr`: rows are NOT forced to equal height, so a single-metric card
+  // stays compact next to a 2/3-metric card instead of stretching to match it.
+  kpi: "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3",
+  // domain insight cards carry embedded charts → a 2-column grid (2×2) on tablet+.
+  domain: "grid-cols-1 sm:grid-cols-2",
   two: "grid-cols-1 sm:grid-cols-2",
 };
 
-/** Consistent responsive card grid. `cols="kpi"` (1/2/3) is the indicator default. */
+/** Consistent responsive card grid. `cols="kpi"` (1/2/3) is the indicator default.
+ *  `items-start` lets each card take its natural (content-aware) height. */
 export function PageGrid({
   children, cols = "kpi", className,
 }: { children: ReactNode; cols?: "kpi" | "domain" | "two"; className?: string }) {
-  return <div className={cn("grid gap-3", COLS[cols], className)}>{children}</div>;
+  return <div className={cn("grid items-start gap-3", COLS[cols], className)}>{children}</div>;
 }

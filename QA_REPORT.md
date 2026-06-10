@@ -1,5 +1,55 @@
 # Unified Portal — QA Report
 
+## Metric-count-based KPI card heights (Pass 22)
+
+KPI cards are now content-aware: a single-metric card is compact instead of being stretched to a neighbouring 2/3-metric card's height (the School Quality KPI page — GSQAC score, Teaching and Learning, etc. — was the worst offender).
+
+- **Grid no longer forces equal row height.** `PageGrid` dropped `sm:auto-rows-fr` on the `kpi` and `domain` columns and added `items-start`, so each card takes its natural height (a short single-metric card sits next to a taller multi-metric card without stretching).
+- **Tiered card min-height by metric count.** `KpiCardShell` takes a `metrics` count and drops `h-full`; min-height tiers are 1 → `min-h-[9rem]` (compact) · 2 → `min-h-[12rem]` (medium) · 3+ → `min-h-[14rem]` (tall). `KpiCard` is always single; `MultiMetricKpiCard` passes its metric count. Verified heights (mobile, before Compare): single ≈ 187px vs 2-metric (CET & CGMS) ≈ 239px — clearly differentiated, no large blank middle.
+- **Compact compare chart on single-metric cards.** `KpiCompareSection` now sizes the embedded chart by card type — single-metric bar height 78px, multi-metric 100px — so a single card doesn't grow as tall as a multi-metric card once Compare is applied.
+- **Bar spacing unchanged** (Pass 21): 1–4 spread evenly, 5–8 balanced, 9+ scroll; only the chart strip scrolls, never the page (re-verified `scrollWidth === clientWidth` at 375 px).
+- Applies everywhere via the shared components (home domain cards, domain/sub-domain KPI listings, Attendance/Assessment/Administration/School Quality). Nothing else touched — KPI values/names/formulas, provider, Compare selection, chart units, hierarchy, export, language, source rules, and KPI detail pages are unchanged.
+
+**Files changed:** `src/components/layout/PageSection.tsx` (grid: no `auto-rows-fr`, `items-start`), `src/components/ui/kpiCardParts.tsx` (`KpiCardShell` tiered min-height + `metrics` prop), `src/components/ui/MultiMetricKpiCard.tsx` (passes metric count), `src/components/ui/KpiCompareSection.tsx` (chart height by metric count).
+
+**Build:** `npm run build` ✓ (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+**Manual checks (Playwright, 1440 px + 390 px):** School Quality single-metric cards compact (no empty space) and visibly shorter than the 2-metric CET & CGMS card; row cards no longer equal-height; Compare charts still appear after Apply with a shorter strip on single-metric cards; 5 bars spread evenly; no full-page horizontal scroll; mobile cards compact.
+
+---
+
+## Responsive bar spacing in comparison charts (Pass 21)
+
+Fixed the embedded comparison chart so bars adapt to the selected unit count instead of crowding on the left with empty space on the right. All cards share one component (`ChildComparisonBars`), so the fix lands everywhere at once (home domain cards + KPI/Indicator cards, single- and multi-metric).
+
+- **Count-aware layout** in `ChildComparisonBars`: `1` → centred; `2–4` → `justify-between` (spread across the full chart width); `5–8` → `justify-around` (balanced, even margins); `9+` → fixed `gap-6` + horizontal scroll with the existing "scroll ›" hint. Bars keep a fixed slim width (40px, `shrink-0`) so they never stretch into blocks; `justify-*` distributes the extra space, with `gap-3` as a minimum so tight rows stay legible.
+- **No page overflow:** the bar row is always `overflow-x-auto`, so a row that doesn't fit scrolls *inside the card* — the page never scrolls horizontally (verified `documentElement.scrollWidth === clientWidth` at 375 px).
+- Scroll threshold moved from 6 to 8 bars (the "scroll ›" hint now appears with the 9+ scroll tier).
+
+**Files changed:** `src/components/ui/ComparisonBars.tsx`.
+
+**Build:** `npm run build` ✓ (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+**Manual checks (Playwright):** 2 bars span the full width (not cramped left, no right gap); 5 bars distribute evenly; 10 bars (>8) use a fixed gap and scroll horizontally with a visible scroll track; no full-page horizontal scroll on mobile or desktop; re-applying a different Compare count re-flows correctly; behaviour identical on domain cards and KPI cards.
+
+---
+
+## Hide Compare button on KPI detail pages (Pass 20)
+
+Focused visibility fix: the top-bar **Compare** control (button + `Compare · N` chip + drawer trigger) is now hidden on KPI/Indicator detail routes (`/app/kpi/*`), where comparison doesn't apply. It still shows on the scorecard home and the domain KPI-listing pages.
+
+- `CompareControl` (in `AppShell.tsx`) now returns `null` when `useLocation().pathname.includes("/kpi/")` (in addition to the existing leaf-scope guard). No Compare button, no `Compare · 5` chip, and the drawer can't be triggered on detail pages.
+- **Compare state untouched.** Only the header control is hidden; `CompareProvider`/`CompareMount` are unchanged, so an applied comparison reappears intact when the user returns to a domain or the home page.
+- Nothing else touched: compare selector/charts, KPI detail charts/layout, hierarchy filters, Export, language toggle, All Schools (PM SHRI) filter, and logout all behave as before.
+
+**Files changed:** `src/components/layout/AppShell.tsx`.
+
+**Build:** `npm run build` ✓ (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
+
+**Manual checks:** `/app/kpi/sq_gsqac`, `/app/kpi/att_chronic`, `/app/kpi/asm_sat1` → no Compare button; `/app/domain/*` and the home scorecard → Compare button still present; Export / language / All Schools / logout unaffected.
+
+---
+
 ## Polish + behaviour pass — teacher SQ, Select-level, hierarchy back, Compare remove, inline values (Pass 19)
 
 Focused update on the existing design (no redesign). Eight targeted changes, all verified in-browser (Playwright) and `npm run build` clean.

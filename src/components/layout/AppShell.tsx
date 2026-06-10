@@ -100,11 +100,14 @@ export function AppShell() {
 }
 
 /** Compare action button — "Compare" → "Compare · N" once applied; opens the
- *  child-unit selector. Hidden at leaf scopes (nothing below to compare). */
+ *  child-unit selector. Hidden at leaf scopes (nothing below to compare) and on
+ *  KPI/Indicator detail pages (`/app/kpi/*`), where comparison doesn't apply —
+ *  the compare state itself is left untouched so it reappears on domain/home. */
 function CompareControl() {
   const { childLevel, applied, selectedIds, setOpen } = useCompare();
   const { t } = useT();
-  if (!childLevel) return null;
+  const isKpiDetail = useLocation().pathname.includes("/kpi/");
+  if (!childLevel || isKpiDetail) return null;
   const n = applied ? selectedIds.length : 0;
   return (
     <button
