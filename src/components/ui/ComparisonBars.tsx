@@ -77,8 +77,12 @@ export function ChildComparisonBars({
           )}
         </div>
       )}
+      {/* items-START so a 1-line vs 2-line unit label can never shift a bar's
+          baseline: the single-line value + fixed-height track sit above the label,
+          so every track's BOTTOM lands at the same offset. Labels hang below the
+          shared baseline (reserved 2-line height) and wrap without moving the bars. */}
       <div
-        className={cn("flex items-end overflow-x-auto pb-1.5", shouldScroll ? "gap-5" : cn(justifyClass, "gap-2"))}
+        className={cn("flex items-start overflow-x-auto pb-1.5", shouldScroll ? "gap-5" : cn(justifyClass, "gap-2"))}
         role="img"
         aria-label={summary}
       >
@@ -95,12 +99,14 @@ export function ChildComparisonBars({
               className="flex shrink-0 flex-col items-center gap-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
               style={{ width: ITEM_W, cursor: onOpen ? "pointer" : "default" }}
             >
-              <span className={cn("text-2xs font-bold tnum leading-none", c.text)}>{formatValue(v, unit, lang)}</span>
+              {/* value label — single line, fixed height */}
+              <span className={cn("h-3.5 text-2xs font-bold tnum leading-none", c.text)}>{formatValue(v, unit, lang)}</span>
+              {/* bar track — fixed height; fill bottom-aligned to the shared baseline */}
               <span className="flex w-full items-end justify-center" style={{ height }}>
                 <span className={cn("origin-bottom animate-bar-grow", c.bg)} style={{ width: BAR_W, height: h, borderRadius: "5px 5px 2px 2px" }} />
               </span>
-              {/* up to 2 lines, then ellipsis — "Narayan Sarovar" wraps instead of "Naray…" */}
-              <span className="line-clamp-2 block w-full break-words text-center text-2xs font-semibold leading-tight text-neutral-400" title={b.label}>
+              {/* unit label — below the baseline, up to 2 lines (reserved height), never moves the bar */}
+              <span className="line-clamp-2 block min-h-[2.4em] w-full break-words text-center text-2xs font-semibold leading-tight text-neutral-400" title={b.label}>
                 {abbrev(b.label)}
               </span>
             </button>

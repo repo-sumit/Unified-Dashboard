@@ -1,5 +1,23 @@
 # Unified Portal — QA Report
 
+## Comparison-bar baseline alignment fix (Pass 28)
+
+**Bug:** embedded comparison bars weren't sharing a bottom baseline — bars whose unit label wrapped to 2 lines (e.g. `Sabar Kantha`, `Narayan Sarovar`) sat lower/higher than 1-line neighbours.
+
+**Cause:** the bar strip used `flex items-end`, so each bar-item (a column of `[value][fixed track][label]`) was aligned by its *bottom = bottom of the label*. A 2-line label made that item taller, pushing its fixed-height track (and therefore the bar) up relative to 1-line items, so the baselines diverged.
+
+**Fix** (single shared component `ComparisonBars.tsx` → `ChildComparisonBars`, used by domain cards, KPI cards, and the GSQAC School·District·State comparison):
+- Strip is now `flex items-start`. Since the value label is single-line (fixed `h-3.5`) and the bar track is fixed-height, every track's BOTTOM lands at the same offset from the top → **all bar baselines align**, independent of label height.
+- The fill stays bottom-aligned inside its fixed track (`items-end` on the track).
+- The unit label sits below the baseline with a reserved 2-line height (`min-h-[2.4em]` + `line-clamp-2` + `break-words`), so it can wrap to two lines without moving the bar.
+- Unchanged: narrow 24px fill, responsive spacing (1–4 spread · 5–8 balanced · 9+ horizontal scroll on the strip only — page never scrolls), and unit formatting (count→count, %→%, visits→decimal, score→score).
+
+**Files changed:** `src/components/ui/ComparisonBars.tsx` (only — `KpiCompareSection.tsx` just passes data through; no change needed). No change to values/formulas/compare behavior/card layout/colors/routing.
+
+**Build:** `tsc --noEmit` ✓ (exit 0) · `vite build` ✓ (~21s).
+
+---
+
 ## Hierarchy arrow visibility + Compare empty-selection (Pass 27)
 
 Two focused fixes.
