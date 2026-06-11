@@ -10,9 +10,12 @@ import { ChevronLeft, ChevronRight, Search, X, CircleChevronLeft, CircleChevronR
 /**
  * Compact in-header navigator (latest design) — the center of the mobile header:
  *   ‹circle›   EntityName / Level   ›circle›
- * Left circled-arrow steps one level up (bounded by the user's home scope); the
- * centre label + right circled-arrow open the next-level picker. Drop-in for the
- * header on every page so scope is always one tap away. Same picker as the pill.
+ * Arrows are HIDDEN (not just disabled) when they can't act, to avoid confusion:
+ *  • Left (up) shows ONLY when the user has drilled BELOW their own/root level —
+ *    `trail` is clamped to home→current, so `trail.length > 1` ⟺ below root.
+ *  • Right (drill) shows ONLY when a real next child level exists AND has children
+ *    (`childLevel` + `children.length`). Section (or any childless scope) → no arrow.
+ * The centre label is tappable to open the picker only when drilling is possible.
  */
 export function HeaderNav({ className }: { className?: string }) {
   const { entity, trail, children, childLevel, setScope } = useScope();
@@ -21,43 +24,52 @@ export function HeaderNav({ className }: { className?: string }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   if (!entity) return null;
-  const parent = trail.length > 1 ? trail[trail.length - 2] : null;
-  const canDrill = !!childLevel && children.length > 0;
+  const parent = trail.length > 1 ? trail[trail.length - 2] : null; // null at the user's root level
+  const canNavigateUp = parent != null;
+  const canDrillDown = !!childLevel && children.length > 0;
   const levelLabel = t(`levels.${entity.level}`);
   const goTo = (id: string) => { setScope(id); navigate("/app"); };
 
   return (
     <div className={cn("flex min-w-0 items-center justify-center gap-1", className)}>
-      <button
-        type="button"
-        disabled={!parent}
-        onClick={() => parent && goTo(parent.id)}
-        aria-label={parent ? t("hierarchy.up", { level: t(`levels.${parent.level}`) }) : t("hierarchy.upTop")}
-        title={parent ? t("hierarchy.up", { level: t(`levels.${parent.level}`) }) : t("hierarchy.upTop")}
-        className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors", parent ? "text-neutral-500 hover:bg-neutral-100 active:bg-neutral-200" : "text-neutral-200")}
-      >
-        <CircleChevronLeft size={24} />
-      </button>
-      <button
-        type="button"
-        disabled={!canDrill}
-        onClick={() => canDrill && setPickerOpen(true)}
-        className={cn("flex min-w-0 flex-col items-center px-1 py-0.5 text-center", canDrill && "rounded-lg hover:bg-neutral-50")}
-        aria-label={canDrill ? t("hierarchy.change", { level: t(`levels.${childLevel!}`) }) : entityName(entity, tn)}
-      >
-        <span className="block max-w-[46vw] truncate text-sm font-extrabold leading-tight text-neutral-900 sm:max-w-[16rem]">{entityName(entity, tn)}</span>
-        <span className="block text-2xs font-medium leading-tight text-neutral-400">{levelLabel}</span>
-      </button>
-      <button
-        type="button"
-        disabled={!canDrill}
-        onClick={() => canDrill && setPickerOpen(true)}
-        aria-label={canDrill ? t("hierarchy.change", { level: t(`levels.${childLevel!}`) }) : t("hierarchy.noChild", { level: levelLabel })}
-        title={canDrill ? t("hierarchy.change", { level: t(`levels.${childLevel!}`) }) : t("hierarchy.noChild", { level: levelLabel })}
-        className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors", canDrill ? "text-neutral-500 hover:bg-neutral-100 active:bg-neutral-200" : "text-neutral-200")}
-      >
-        <CircleChevronRight size={24} />
-      </button>
+      {canNavigateUp && (
+        <button
+          type="button"
+          onClick={() => goTo(parent!.id)}
+          aria-label={t("hierarchy.up", { level: t(`levels.${parent!.level}`) })}
+          title={t("hierarchy.up", { level: t(`levels.${parent!.level}`) })}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-100 active:bg-neutral-200"
+        >
+          <CircleChevronLeft size={24} />
+        </button>
+      )}
+      {canDrillDown ? (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="flex min-w-0 flex-col items-center rounded-lg px-1 py-0.5 text-center hover:bg-neutral-50"
+          aria-label={t("hierarchy.change", { level: t(`levels.${childLevel!}`) })}
+        >
+          <span className="block max-w-[46vw] truncate text-sm font-extrabold leading-tight text-neutral-900 sm:max-w-[16rem]">{entityName(entity, tn)}</span>
+          <span className="block text-2xs font-medium leading-tight text-neutral-400">{levelLabel}</span>
+        </button>
+      ) : (
+        <div className="flex min-w-0 flex-col items-center px-1 py-0.5 text-center">
+          <span className="block max-w-[46vw] truncate text-sm font-extrabold leading-tight text-neutral-900 sm:max-w-[16rem]">{entityName(entity, tn)}</span>
+          <span className="block text-2xs font-medium leading-tight text-neutral-400">{levelLabel}</span>
+        </div>
+      )}
+      {canDrillDown && (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          aria-label={t("hierarchy.change", { level: t(`levels.${childLevel!}`) })}
+          title={t("hierarchy.change", { level: t(`levels.${childLevel!}`) })}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-100 active:bg-neutral-200"
+        >
+          <CircleChevronRight size={24} />
+        </button>
+      )}
       {pickerOpen && childLevel && (
         <ChildPicker
           levelLabel={t(`levels.${childLevel}`)}

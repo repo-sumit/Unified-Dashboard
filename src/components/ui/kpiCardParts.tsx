@@ -3,7 +3,7 @@ import type { Frequency } from "@/types";
 import { cn } from "@/lib/cn";
 import { Card } from "./atoms";
 import { FrequencyBadge } from "./DataBadges";
-import { BarChart3, ChevronRight } from "./Icon";
+import { ChevronRight } from "./Icon";
 
 /**
  * Shared KPI-card layout pieces — a strict row grammar (header · meta · metrics ·
@@ -90,16 +90,6 @@ export function KpiInlineRow({
           {delta}
         </span>
       )}
-    </div>
-  );
-}
-
-/** Dashed "Tap Compare to view …" affordance shown before a comparison is applied
- *  (keeps cards compact — no reserved empty chart space). */
-export function CompareHint({ text }: { text: string }) {
-  return (
-    <div className="flex items-center gap-1.5 rounded-lg border border-dashed border-line px-2.5 py-2 text-2xs font-semibold text-neutral-400">
-      <BarChart3 size={13} className="shrink-0 text-neutral-300" /> {text}
     </div>
   );
 }

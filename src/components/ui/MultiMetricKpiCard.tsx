@@ -3,7 +3,7 @@ import { deltaToneClass } from "@/lib/colors";
 import { formatValue, resolveMetricLabel } from "@/lib/format";
 import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { buildTrend, getLastUpdatedLabel } from "@/lib/trend";
-import { shouldShowCardDelta } from "@/lib/displayPolicy";
+import { shouldShowCardDelta, displayFrequency } from "@/lib/displayPolicy";
 import { useKpiMetrics } from "@/hooks";
 import { useT, type Lang } from "@/i18n";
 import { FrequencyDelta } from "./FrequencyDelta";
@@ -35,7 +35,7 @@ export function MultiMetricKpiCard({
 
   return (
     <KpiCardShell onClick={onClick} compare={<KpiCompareSection kpi={kpi} />} metrics={metrics.length || 1}>
-      <KpiCardHeader title={name} frequency={kpi.frequency} context={lastUpdated} />
+      <KpiCardHeader title={name} frequency={displayFrequency(kpi)} context={lastUpdated} />
 
       <div className="mt-2">
         {metrics.length ? (

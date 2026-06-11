@@ -64,7 +64,7 @@ export function KpiCompareSection({ kpi }: { kpi: KpiDef }) {
                 onClick={() => setMi(i)}
                 aria-pressed={i === mi}
                 className={cn(
-                  "inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition-colors",
+                  "inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full border px-4 text-xs font-semibold transition-colors",
                   i === mi ? "border-primary-500 bg-primary-50 text-primary-700" : "border-line bg-white text-neutral-600 hover:bg-neutral-50",
                 )}
               >

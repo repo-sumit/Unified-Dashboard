@@ -3,6 +3,7 @@ import type { DomainScore, KpiRecord, Level, Unit } from "@/types";
 import { accent, valueToneClass } from "@/lib/colors";
 import { peerAvg } from "@/lib/peer";
 import { getLastUpdatedLabel } from "@/lib/trend";
+import { displayFrequency } from "@/lib/displayPolicy";
 import { formatKpiCardTitlePhrase, formatValue } from "@/lib/format";
 import { useT, type Lang } from "@/i18n";
 import { Card } from "./atoms";
@@ -165,7 +166,8 @@ function OutputHead({
 /** "Daily · 10 Jun" / "Monthly · Jun 2026" meta line for an input hero. */
 function metaLine(heroRec: KpiRecord | null | undefined, lang: "en" | "gu", t: (k: string) => string): string {
   if (!heroRec) return "";
-  const freq = heroRec.kpi.frequency ? t(`ogm.freq.${heroRec.kpi.frequency}`) : "";
+  const df = displayFrequency(heroRec.kpi);
+  const freq = df ? t(`ogm.freq.${df}`) : "";
   const date = getLastUpdatedLabel(heroRec.kpi, new Date(), lang);
   return [freq, date].filter(Boolean).join(" · ");
 }

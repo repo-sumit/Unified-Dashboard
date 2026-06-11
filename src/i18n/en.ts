@@ -92,7 +92,6 @@ export const en = {
     sheetSubtitle: "Select units to show in the charts",
     selectedOf: "{n} of {total} selected",
     chartTitle: "{level} comparison",
-    hint: "Tap Compare to view {level}-wise chart",
     by: "Compare by",
     notTracked: "Not tracked at this level",
     remove: "Remove comparison",

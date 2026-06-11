@@ -92,7 +92,6 @@ export const gu: Dict = {
     sheetSubtitle: "ચાર્ટમાં બતાવવા એકમો પસંદ કરો",
     selectedOf: "{total} માંથી {n} પસંદ",
     chartTitle: "{level} સરખામણી",
-    hint: "{level}-વાર ચાર્ટ જોવા સરખામણી દબાવો",
     by: "આના દ્વારા સરખાવો",
     notTracked: "આ સ્તરે ટ્રેક થતું નથી",
     remove: "સરખામણી દૂર કરો",

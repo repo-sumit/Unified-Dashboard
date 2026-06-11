@@ -1,5 +1,74 @@
 # Unified Portal — QA Report
 
+## Hierarchy arrow visibility + Compare empty-selection (Pass 27)
+
+Two focused fixes.
+
+### 1. Hide non-actionable hierarchy arrows (header navigator)
+`HeaderNav` (in `HierarchyNavigator.tsx`) now **hides** the circled left/right arrows instead of rendering them disabled, using clean helpers:
+- `canNavigateUp = parent != null` — `parent` comes from `trail` (clamped home→current in `useScope`), so it is null exactly when the user is at their own/root level. **Left arrow shows only when drilled below root.** (State user on State, District user on District, Block/Cluster/School user on their home → no left arrow; District user on Block/Cluster/School → left arrow.)
+- `canDrillDown = !!childLevel && children.length > 0` — **Right arrow shows only when a real next child level exists and has children.** Section (no child level) and any childless scope (School/Grade with no child data) → no right arrow.
+- The centre label is tappable (opens the picker) only when `canDrillDown`; otherwise it's a static label. Arrows are hidden (not greyed), and `justify-center` keeps the centre title aligned whether 0, 1, or 2 arrows are present.
+
+### 2. Compare sheet — empty selection removes the comparison
+`CompareSheet.tsx` now has **distinct `Select all` and `Clear all` pills** (the old single toggle only offered "Clear all" when everything was selected, so a partial selection could never be emptied). `Clear all` sets the selection to `[]` without closing the sheet; `Select all` restores all child units. Primary button logic (explicit `removeMode`):
+- applied && selected == 0 → **"Remove comparison"** (enabled) → `onRemove` clears applied state, closes the sheet, hides all card charts; reopening starts with all child units preselected.
+- otherwise → **"Apply (n)"**, disabled when selected == 0 (so a never-applied empty selection stays disabled).
+
+**Files changed:** `src/components/layout/HierarchyNavigator.tsx` (HeaderNav arrow visibility), `src/components/compare/CompareSheet.tsx` (Select all / Clear all split + explicit primary-button logic). No provider/engine/state-architecture changes — the existing `trail`, `childLevel`, `children`, and `CompareContext.remove()` are reused.
+
+**Build:** `tsc --noEmit` ✓ (exit 0) · `vite build` ✓ (~14s).
+
+---
+
+## Major design pass — header, filters, compare, charts, GSQAC, retention (Pass 26)
+
+Large multi-area design implementation. **Design URL was unavailable** — `https://api.anthropic.com/v1/design/h/-ckHo6Stkgw7qbrOfl-9uw` returns HTTP 404 (verified via WebFetch and curl; body is literally "not found"), unlike the three earlier bundles. Implemented strictly from the exhaustive written brief (§1–20) plus the four provided SVG icons (`Docs/filter.svg`, `bar-compare.svg`, `right-side.svg`, `left side.svg`) and the prior same-family bundle for component patterns.
+
+### Mobile header redesign (§1,3,4)
+- New header on every page: **[logo] · centered entity-name + level with circled ‹/› arrows · [share] · [filter]**. Left arrow steps one hierarchy level up; the centre label / right arrow open the next-level picker (new `HeaderNav` in HierarchyNavigator, reusing the existing `ChildPicker`).
+- **Logout button removed entirely** from the dashboard (use `/login` to switch user). No large "Unified Portal" title on mobile (desktop keeps it), no role/designation in the header, no second action row.
+- Greeting now reads **"You are viewing <level> level"** with no designation/role.
+- 4 custom currentColor SVG icons added to the Icon module: `FunnelFilter`, `BarCompare`, `CircleChevronLeft/Right`, `Share`.
+
+### Filter / Share / Compare placement (§5,6,7)
+- **Filter sheet** (`FilterSheet`) consolidates **School Type** (officers only) + **Language** as large radio rows; bottom sheet on mobile / centred card on desktop. School-type and i18n logic unchanged — only the controls moved. The separate All-Schools and Language header pills are gone.
+- **Share icon** replaces the mobile Export button (navigates to the existing export route).
+- **Compare** is now a **mobile floating action** (bottom-right, bar-chart icon + selected-count badge) and a **desktop header button**; both hidden on `/app/kpi/*`.
+
+### Card cleanup (§8,12)
+- Removed the **"Tap Compare to view…" hint** everywhere (`KpiCompareSection` and `DomainInsightCard` now render nothing before Compare — cards stay compact, no reserved chart space). Charts still appear inside cards after Apply.
+- Card text rules unchanged from prior passes: single-metric compact suffix (`225 students absent`, `96.3%`, `1.7`), multi-metric inline rows (`86.7% Present`), N+1 right-aligned, no source / Parent avg / Rate / Latest / Count / Score.
+
+### Compare sheet + chips (§9,10)
+- **Clear all / Select all** is now a large pill button (≈40px), not tiny text. **Remove comparison** appears when an applied comparison is cleared (closes sheet, hides charts) — preserved.
+- **Compare-by chips** are larger (h-9 / ~36px, padded, clear selected state) and a long chip row scrolls horizontally; one selected metric's chart shows at a time.
+
+### Comparison chart fixes (§11)
+- Narrower bars (≈24px) inside a wider 54px cell; **2-line wrapping labels** (`Narayan Sarovar` instead of `Naray…`); responsive spacing (1–4 spread · 5–8 balanced · 9+ scroll); only the chart strip scrolls. Unit consistency preserved (count→count, %→%, visits→decimal, score→score, hours→hrs) — `KpiCompareSection` passes the metric/KPI unit through; added a `noSort` option so the GSQAC School·District·State comparison keeps its labelled order.
+
+### Student Retention / Re-enrolment (§15,16)
+- `ret_reenroll` ("Re-enrolment of Out-of-School Students") now displays **Daily · 1st Oct** on the KPI card and the detail page — never "Half-yearly" / "Jun 2026" / "11 Jun". `ret_dropout` shows **1st Oct** too. Implemented as a DISPLAY override (`displayFrequency` + a retention branch in `getLastUpdatedLabel`); KPI IDs/formulas/trend untouched.
+- `studentRetentionVisible()` gating helper (real rule: visible Oct 1 → academic-year end), wired into `DomainView`'s sub-domain list; a documented demo override keeps retention visible so the "Daily · 1st Oct" cards are showcased.
+
+### GSQAC / School Quality redesign (§13,14,17)
+- New self-contained demo dataset `config/gsqac.ts` (does NOT touch the provider/engine or the real `sq_*` KPIs): overall **68.1% · 680.7/1000**, 5 GSQAC areas with marks + sub-domains + indicator lists + School/District/State comparison — exact brief values.
+- The **School Quality** domain page now shows an overall GSQAC score card + **5 area score cards** (score % · official grade badge · sub-domain count), not operational KPI cards. New route **`/app/gsqac/:areaKey`** drills into an area: headline (score · grade · marks) + School·District·State comparison + **sub-domain score cards** that expand to their **indicator list** (scores, no trend). Official GSQAC grade bands (A5★…D) reused.
+
+**Files changed:** `components/ui/Icon.tsx`, `components/layout/AppShell.tsx`, `components/layout/HierarchyNavigator.tsx`, `components/layout/FilterSheet.tsx` (new), `screens/ScorecardHome.tsx`, `components/ui/KpiCompareSection.tsx`, `components/ui/DomainInsightCard.tsx`, `components/ui/KpiCard.tsx`, `components/compare/CompareSheet.tsx`, `components/ui/ComparisonBars.tsx`, `lib/displayPolicy.ts`, `lib/trend.ts`, `screens/KpiDetail.tsx`, `screens/DomainView.tsx`, `config/gsqac.ts` (new), `components/ui/GsqacCards.tsx` (new), `screens/GsqacAreaView.tsx` (new), `App.tsx`, `i18n/en.ts`, `i18n/gu.ts`.
+
+**Build:** `tsc --noEmit` ✓ (exit 0) · `vite build` ✓ (built in ~15s, 2442 modules).
+
+**Adversarial review:** a 6-agent code-review workflow ran 59 checks across the six areas (header 10/0 · charts 9/0 · GSQAC 10/0 · cards 6/1 · compare 12/3 · retention 6/2). Fixes applied from it: `displayFrequency` now also used in `MultiMetricKpiCard` + the domain-hero meta line (future-proofs the Daily·1st Oct override); Compare-by chips bumped to 40px; dead `CompareHint` component + unused `compare.hint` i18n string removed. Two suggestions were intentionally not taken: adding `childEntities` to the CompareContext effect deps (would reset the selection on every render — current `[currentId]` is correct since children are derived from the scope), and the raf-cleanup micro-race (pre-existing, focus on an unmounted node is a no-op).
+
+**Unavoidable deviations:**
+- Design file 404 → implemented from the written brief (which is more detailed than a mock) + provided SVGs + prior bundle.
+- Per "do not run Playwright", verification is by build + an adversarial code-review workflow, not browser screenshots.
+- GSQAC drilldown uses the brief's self-contained dummy dataset (overall 68.1%) so the home School-Quality card's real `sq_*` value and the GSQAC drilldown overall can differ — intended, as the brief specifies the dummy GSQAC figures for the drilldown.
+- Retention date-gating ships with a demo override (visible) so the "Daily · 1st Oct" cards are verifiable today (Jun 11); the real Oct-1 gate is implemented behind the helper.
+
+---
+
 ## Balanced two-column KPI grid (Pass 25)
 
 Fixed the uneven KPI-card layout on the domain / sub-domain listing pages. The old `PageGrid` (CSS grid, 1/2/3 columns, `items-start`) left awkward gaps and an uneven rhythm because cards of different metric counts (and the taller Compare-applied cards) flowed into fixed grid rows. Replaced it with a balanced two-column flex layout that distributes cards by estimated height.
