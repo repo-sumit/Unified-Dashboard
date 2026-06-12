@@ -38,8 +38,11 @@ export function KpiCard({
         ? deltaToneClass(trend.delta, kpi.direction)
         : "text-neutral-900";
   const lastUpdated = getLastUpdatedLabel(kpi, new Date(), lang) || null;
-  const hasPeer = !na && !!parentName && peerScore != null;
-  const peerStr = peerScore != null ? `${parentName} · ${formatValue(peerScore, kpi.unit, lang)}` : "";
+  // N+1 comparison vs the next level UP (e.g. "vs State", "vs District") — the level
+  // word, not the entity name (§11). parentName presence still gates it.
+  const parentLevel = level ? peerLevelOf(level) : null;
+  const hasPeer = !na && !!parentName && peerScore != null && !!parentLevel;
+  const peerStr = hasPeer ? `${t("common.vs")} ${t(`levels.${parentLevel}`)} · ${formatValue(peerScore, kpi.unit, lang)}` : "";
   // short suffix (count KPIs) or "" (percent/score/visits show the bare value) —
   // never the full title, which already sits in the header.
   const suffix = getSingleMetricValueSuffix(kpi.id, lang);

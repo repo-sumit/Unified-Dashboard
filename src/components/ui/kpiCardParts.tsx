@@ -1,9 +1,20 @@
 import type { ReactNode } from "react";
 import type { Frequency } from "@/types";
 import { cn } from "@/lib/cn";
+import { useT } from "@/i18n";
 import { Card } from "./atoms";
 import { FrequencyBadge } from "./DataBadges";
 import { ChevronRight } from "./Icon";
+
+/** Visible "Know more →" CTA — cards no longer rely on a chevron alone (§9). */
+export function KnowMore({ className }: { className?: string }) {
+  const { t } = useT();
+  return (
+    <span className={cn("mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary-600", className)}>
+      {t("common.knowMore")} <ChevronRight size={14} />
+    </span>
+  );
+}
 
 /**
  * Shared KPI-card layout pieces — a strict row grammar (header · meta · metrics ·
@@ -27,7 +38,10 @@ export function KpiCardShell({ onClick, children, compare, metrics = 1 }: { onCl
   return (
     <Card className={cn("card-pad flex w-full flex-col transition-shadow hover:shadow-raised", minH)}>
       {onClick ? (
-        <button onClick={onClick} className="group flex flex-1 flex-col text-left">{children}</button>
+        <button onClick={onClick} className="group flex flex-1 flex-col text-left">
+          {children}
+          <KnowMore className="mt-auto pt-2" />
+        </button>
       ) : (
         <div className="flex flex-1 flex-col">{children}</div>
       )}
@@ -85,8 +99,9 @@ export function KpiInlineRow({
         {label && <span className={cn("text-neutral-500", descriptor ? "text-[15px] font-medium" : "text-sm font-semibold")}>{label}</span>}
       </span>
       {(peerLabel || delta) && (
-        <span className={cn("flex shrink-0 items-baseline gap-2 whitespace-nowrap text-right", descriptor && "self-end")}>
-          {peerLabel && <span className="text-xs font-semibold text-neutral-500">{peerLabel}</span>}
+        <span className={cn("flex shrink-0 items-center gap-2 whitespace-nowrap text-right", descriptor && "self-end")}>
+          {/* N+1 comparison as a bolder, higher-contrast pill (§11) */}
+          {peerLabel && <span className="inline-flex items-center rounded-full bg-surface-sunken px-2 py-0.5 text-2xs font-bold tnum text-neutral-700">{peerLabel}</span>}
           {delta}
         </span>
       )}

@@ -146,7 +146,7 @@ export function formatKpiCardTitlePhrase(name: string, name_gu: string, unit: Un
  */
 const SINGLE_METRIC_SUFFIX: Record<string, { en: string; gu: string }> = {
   att_chronic: { en: "students absent", gu: "ગેરહાજર વિદ્યાર્થીઓ" },
-  ret_dropout: { en: "dropout students", gu: "ડ્રોપઆઉટ વિદ્યાર્થીઓ" },
+  ret_dropout: { en: "students untracked", gu: "વિદ્યાર્થીઓ અનટ્રેક" },
 };
 export function getSingleMetricValueSuffix(kpiId: string, lang: Lang): string {
   return SINGLE_METRIC_SUFFIX[kpiId]?.[lang] ?? "";

@@ -1,7 +1,7 @@
 import type { Dict } from "./en";
 
 export const gu: Dict = {
-  app: { name: "Unified Portal", tagline: "વિદ્યા સમીક્ષા કેન્દ્ર · ગુજરાત", interim: "વચગાળાનું લોગિન · SSO ટૂંક સમયમાં" },
+  app: { name: "Pocket VSK", tagline: "શિક્ષણ વિભાગ · ગુજરાત", interim: "વચગાળાનું લોગિન · SSO ટૂંક સમયમાં" },
   common: {
     na: "લાગુ નથી", back: "પાછળ", all: "બધા", of: "/", points: "પોઈન્ટ", week: "અઠવાડિયું", more: "વધુ",
     viewAll: "બધું જુઓ", search: "શોધો", schools: "શાળાઓ", you: "તમે", average: "સરેરાશ",
@@ -9,20 +9,20 @@ export const gu: Dict = {
     weightage: "વેઇટેજ", achieved: "પ્રાપ્ત", currentPeriod: "વર્તમાન સમયગાળો", grade: "ગ્રેડ", vs: "vs",
     loading: "લોડ થઈ રહ્યું છે…", notFound: "અહીં કંઈ નથી", close: "બંધ કરો", apply: "લાગુ કરો",
     liveData: "વાસ્તવિક ડેટા", score: "સ્કોર", notTracked: "આ સ્તરે ટ્રેક થતું નથી",
-    clear: "સાફ કરો", selectAll: "બધા પસંદ કરો", clearAll: "બધા સાફ કરો", noMatches: "કોઈ મેળ નથી", scroll: "સ્ક્રોલ", cancel: "રદ કરો",
+    clear: "સાફ કરો", selectAll: "બધા પસંદ કરો", clearAll: "બધા સાફ કરો", noMatches: "કોઈ મેળ નથી", scroll: "સ્ક્રોલ", cancel: "રદ કરો", knowMore: "વધુ જાણો",
     refineHint: "+{n} વધુ · ફિલ્ટર કરવા ટાઇપ કરો", sample: "નમૂનો",
     scoreAria: "{outOf} માંથી {n} સ્કોર, ગ્રેડ {grade}", noDataAria: "ડેટા નથી; આ સ્તરે ટ્રેક થતું નથી",
   },
   status: { green: "સારી સ્થિતિ", amber: "ધ્યાન જરૂરી", red: "જોખમમાં", na: "ટ્રેક થતું નથી" },
   roles: {
-    teacher: "શિક્ષક", principal: "આચાર્ય", crc: "ક્લસ્ટર (CRC)", brc: "બ્લોક (BRC/BEO)",
-    deo: "જિલ્લા (DEO)", state: "રાજ્ય", pick: "તમે કોણ છો?", pickHint: "ચાલુ રાખવા તમારી ભૂમિકા પસંદ કરો",
+    teacher: "શિક્ષક", principal: "આચાર્ય", crc: "ક્લસ્ટર અધિકારી", brc: "બ્લોક અધિકારી",
+    deo: "જિલ્લા અધિકારી", state: "રાજ્ય અધિકારી", pick: "તમે કોણ છો?", pickHint: "ચાલુ રાખવા તમારી ભૂમિકા પસંદ કરો",
   },
   levels: { state: "રાજ્ય", district: "જિલ્લો", block: "બ્લોક", cluster: "ક્લસ્ટર", school: "શાળા", grade: "ધોરણ", section: "વિભાગ" },
   login: {
-    welcome: "Unified Portal માં આપનું સ્વાગત છે",
+    welcome: "શિક્ષણ વિભાગ, ગુજરાતમાં આપનું સ્વાગત છે",
     subtitle: "તમારું પ્રદર્શન સ્કોરકાર્ડ જોવા સાઇન ઇન કરો",
-    userId: "યુઝર ID", userIdPh: "તમારું યુઝર ID દાખલ કરો",
+    userId: "શિક્ષક ID", userIdPh: "તમારું શિક્ષક ID દાખલ કરો",
     schoolId: "શાળા ID", schoolIdPh: "૧૧-અંકની શાળા ID દાખલ કરો",
     cluster: "ક્લસ્ટર ID", block: "બ્લોક ID", district: "જિલ્લા ID", state: "રાજ્ય ID",
     idPh: "તમારું ID દાખલ કરો (અમે ભૂમિકા શોધી લઈશું)", passcode: "PIN", passcodePh: "PIN દાખલ કરો",
@@ -106,6 +106,12 @@ export const gu: Dict = {
     school: "શાળા", district: "જિલ્લો", state: "રાજ્ય", comparison: "શાળા vs જિલ્લો vs રાજ્ય",
     framework: "5 GSQAC ક્ષેત્રોમાં 1000 ગુણમાંથી સ્કોર.",
   },
+  board: { pass: "પાસ", apiPending: "API બાકી", vsYear: "{year} સામે" },
+  parakh: {
+    title: "PARAKH જિલ્લા શ્રેણી", grade: "PARAKH ધોરણ", districtFocus: "જિલ્લા ફોકસ",
+    others: "{grade} માં {band} ની અન્ય જિલ્લાઓ",
+    placeholder: "ધોરણ 6 અને 9 નું વર્ગીકરણ સત્તાવાર યાદી બાકી હોવાથી સ્થિર પ્લેસહોલ્ડર છે.",
+  },
   atRisk: { label: "જોખમમાં", tooltip: "બહુવિધ શૈક્ષણિક અને વર્તણૂકીય માપદંડોના આધારે સર્વગ્રાહી રીતે ઓળખાયેલ." },
   teacher: {
     tpdJourney: "તમારી TPD યાત્રા", progress: "પ્રગતિ", target: "લક્ષ્ય", hrs: "કલાક", sevenDay: "૭-દિવસની સંલગ્નતા",
@@ -123,7 +129,7 @@ export const gu: Dict = {
     avgTraining: "સરેરાશ શાળા તાલીમ કલાક", chronicAbs: "છેલ્લા 7+ સળંગ દિવસથી ગેરહાજર વિદ્યાર્થીઓ", avgTrainTarget: "≥ ૫૦ કલાક", sevenDayWindow: "૭-દિવસ",
     attendanceGap: "હાજરી સબમિશન ગેપ", allSubmitted: "આજે બધા વર્ગોએ સબમિટ કર્યું. કંઈ બાકી નથી.",
     notSubmitted: "સબમિટ નથી", submitted: "સબમિટ થયું", downloadNames: "નામ ડાઉનલોડ કરો", classId: "વર્ગ", teacherName: "શિક્ષક",
-    dropout: "ડ્રોપઆઉટ ઘટાડો", fewerDropouts: "ગયા વર્ષ કરતાં {n} ઓછા ડ્રોપઆઉટ", statusMatrix: "સ્થિતિ ઝાંખી",
+    dropout: "અનટ્રેક વિદ્યાર્થી ઘટાડો", fewerDropouts: "ગયા વર્ષ કરતાં {n} ઓછા અનટ્રેક", statusMatrix: "સ્થિતિ ઝાંખી",
     schoolActions: "શાળાની સુધારણા ક્રિયાઓ", teacherActions: "શિક્ષકો માટે સુધારણા ક્રિયાઓ", flag: "ફ્લેગ",
   },
   common2: { school: "શાળા", state: "રાજ્ય", vsTarget: "લક્ષ્ય સામે", students: "વિદ્યાર્થીઓ" },

@@ -20,7 +20,7 @@ const WEIGHTAGE_PLACEHOLDER = true;
 const ADMIN_SUBS: SubDomainDef[] = [
   { id: "adm_visits", name: "School Observation", name_gu: "શાળા નિરીક્ષણ" },
   { id: "adm_classroom", name: "Classroom Observation", name_gu: "વર્ગખંડ નિરીક્ષણ" },
-  { id: "adm_retention", name: "Student Retention", name_gu: "વિદ્યાર્થી જાળવણી" },
+  { id: "adm_retention", name: "Untracked Students", name_gu: "અનટ્રેક કરેલા વિદ્યાર્થીઓ" },
   { id: "adm_cpd", name: "Continuous Professional Development", name_gu: "સતત વ્યાવસાયિક વિકાસ (CPD)" },
 ];
 

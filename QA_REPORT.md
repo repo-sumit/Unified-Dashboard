@@ -1,5 +1,54 @@
 # Unified Portal — QA Report
 
+## Pocket VSK rebrand + PARAKH / board / KPI changes — Claude Design (Pass 29)
+
+Implemented the latest Claude Design output (`-HL5VTkjAIpB3_W6_dwunw`, `ui_kits/vsk-dashboard/index.html`; downloaded via curl after WebFetch couldn't parse the gzip). The structural redesign (compact header, hierarchy arrows, filter sheet, share icon, floating Compare, Compare sheet + Remove-comparison, GSQAC drilldown, chart baseline/units) was already shipped in Passes 26–28 and is preserved. This pass adds the new product deltas.
+
+**Design URL implemented:** `https://api.anthropic.com/v1/design/h/-HL5VTkjAIpB3_W6_dwunw?open_file=ui_kits%2Fvsk-dashboard%2Findex.html`
+
+### Branding & login (§1)
+- App renamed **Pocket VSK** / **Education Department · Gujarat** (`i18n app.name/tagline`, en + gu).
+- Login: header welcome → **"Welcome to Education Department, Gujarat"**, ID field → **"Teacher ID"**. Demo mode shows **role labels, never real names** — the verify step greets by role and drops the Name row; the greeting on home greets by role label.
+
+### Role labels & greeting (§3)
+- Officer roles relabelled **Cluster Officer / Block Officer / District Officer / State Officer** (en + gu). Greeting reads **"Good <time>, <Role>"** + **"You are viewing <level> level"** (no designation, no real name).
+
+### N+1 comparison (§11)
+- N+1 now compares to the next level UP and is labelled by the **level word** ("vs State", "vs District") rather than the entity name (was "Kachchh · 94%"). Rendered as a **bolder, higher-contrast pill** on home domain cards (`N1Chip`) and KPI listing rows (`KpiInlineRow`). Uses `peerLevelOf(level)`.
+
+### Card CTA (§9)
+- Cards now show a visible **"Know more →"** CTA (`KnowMore` in `kpiCardParts`) on the home domain cards and every KPI listing card, instead of relying on a chevron alone.
+
+### Terminology (§17)
+- **Dropout → Untracked Students** everywhere: `ret_dropout` name + value suffix ("students untracked"), the `adm_retention` sub-domain name, and the principal-dashboard i18n strings. Re-enrolment (`ret_reenroll`) stays as a sibling KPI in the same sub-domain.
+
+### Administration KPI cleanup (§16)
+- Removed the WASH/infra KPIs (**Urinals & Toilets, Handwash, Drinking Water**) — defs + PUBLISHED anchors. Added four LMS digital-usage KPIs: **GSHALA + GSHALA Plus usage · Smartclass usage · Computer lab usage · PAL usage** (source label `LMS`, deterministic anchors). Visits / observations / lesson-plan / diaries / SMC / library / ICT retained.
+
+### Assessment result-first (§14)
+- The **latest SAT result (SAT2)** is now the Assessment hero; **"SAT reports downloaded in classrooms"** moved to the end of the domain (no longer the hero). The below-average sub-metric stays level-aware ("% below <level> average").
+
+### PARAKH district category (§19) — new
+- New self-contained `config/parakh.ts` (bands UDIT/UDAY/UNNAT/UDBHAV with stage + meaning + colours; exact Grade-3 district classification; deterministic static placeholders for Grade 6 & 9; board results). New `ParakhCard` (district home) + `ParakhScreen` (route `/app/parakh`) with a Grade 3/6/9 selector, band hero, four-band legend, and same-band district list. Factual only (no recommendations). Shown only when the scope is a **district**.
+
+### Board results (§18) — new
+- **Grade 10 (82.4% ↗) / Grade 12 (78.9% ↘)** result cards in the district-focus section — static, "API pending", no drilldown.
+
+**Files changed:** `i18n/en.ts`, `i18n/gu.ts`, `screens/Login.tsx`, `screens/ScorecardHome.tsx`, `components/ui/kpiCardParts.tsx` (KnowMore + N+1 pill), `components/ui/KpiCard.tsx`, `components/ui/MultiMetricKpiCard.tsx`, `components/ui/DomainInsightCard.tsx`, `config/kpiCatalog.ts` (admin cleanup, assessment reorder, untracked rename), `config/frameworks.ts`, `lib/format.ts`, `config/parakh.ts` (new), `components/ui/ParakhCards.tsx` (new), `screens/ParakhScreen.tsx` (new), `components/ui/Icon.tsx` (Layers), `App.tsx`.
+
+**Build:** `tsc --noEmit` ✓ (exit 0) · `vite build` ✓ (~12s).
+
+**Unavoidable deviations / deferred (documented):**
+- **Teacher/principal student-NAME lists (§12/§13)** — the design's chronic-absentee / below-avg / untracked name lists need new per-entity student mock data + role-branched list UI; the real provider has no student-name data. Deferred. Officers continue to see aggregate counts (already correct: "no individual student names above school level").
+- **Grade 5 / Grade 8 CET attempt/merit + CGMS extras (§15)** — grade-scoped extra cards; deferred (needs grade-context extras wiring).
+- **"No. of students below <level> avg." as a COUNT (§14)** — the real model carries this as a level-aware **% below <level> average** sub-metric; kept as %, not converted to a count.
+- **Top-level "Untracked Students" home domain card** — kept under Administration → Untracked Students (terminology updated) rather than promoted to a standalone home domain.
+- **Export/PDF desktop font-size bump (§5)** — export logic left untouched per "don't break export"; UI placement (Share icon) was already done in Pass 26.
+- **PM SHRI ~20% subset (§4)** — the filter already drives data via the provider's existing PM SHRI logic; the precise 20%-subset seed was not re-authored.
+- Per the brief, Playwright was **not** run; verification is by `tsc` + `vite build` + code reasoning.
+
+---
+
 ## Comparison-bar baseline alignment fix (Pass 28)
 
 **Bug:** embedded comparison bars weren't sharing a bottom baseline — bars whose unit label wrapped to 2 lines (e.g. `Sabar Kantha`, `Narayan Sarovar`) sat lower/higher than 1-line neighbours.

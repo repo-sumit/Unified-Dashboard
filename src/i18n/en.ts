@@ -1,5 +1,5 @@
 export const en = {
-  app: { name: "Unified Portal", tagline: "Vidya Samiksha Kendra · Gujarat", interim: "Interim login · SSO coming soon" },
+  app: { name: "Pocket VSK", tagline: "Education Department · Gujarat", interim: "Interim login · SSO coming soon" },
   common: {
     na: "NA", back: "Back", all: "All", of: "of", points: "pts", week: "Week", more: "more",
     viewAll: "View all", search: "Search", schools: "schools", you: "You", average: "Avg",
@@ -7,20 +7,20 @@ export const en = {
     weightage: "Weightage", achieved: "achieved", currentPeriod: "Current period", grade: "Grade", vs: "vs",
     loading: "Loading…", notFound: "Nothing here", close: "Close", apply: "Apply",
     liveData: "live data", score: "score", notTracked: "Not tracked at this level",
-    clear: "Clear", selectAll: "Select all", clearAll: "Clear all", noMatches: "No matches", scroll: "scroll", cancel: "Cancel",
+    clear: "Clear", selectAll: "Select all", clearAll: "Clear all", noMatches: "No matches", scroll: "scroll", cancel: "Cancel", knowMore: "Know more",
     refineHint: "+{n} more · type to filter", sample: "sample",
     scoreAria: "Score {n} of {outOf}, grade {grade}", noDataAria: "No data; not tracked at this level",
   },
   status: { green: "On track", amber: "Needs attention", red: "At risk", na: "Not tracked" },
   roles: {
-    teacher: "Teacher", principal: "Principal", crc: "Cluster (CRC)", brc: "Block (BRC/BEO)",
-    deo: "District (DEO)", state: "State", pick: "Who are you?", pickHint: "Choose your role to continue",
+    teacher: "Teacher", principal: "Principal", crc: "Cluster Officer", brc: "Block Officer",
+    deo: "District Officer", state: "State Officer", pick: "Who are you?", pickHint: "Choose your role to continue",
   },
   levels: { state: "State", district: "District", block: "Block", cluster: "Cluster", school: "School", grade: "Grade", section: "Section" },
   login: {
-    welcome: "Welcome to Unified Portal",
+    welcome: "Welcome to Education Department, Gujarat",
     subtitle: "Sign in to see your performance scorecard",
-    userId: "User ID", userIdPh: "Enter your User ID",
+    userId: "Teacher ID", userIdPh: "Enter your Teacher ID",
     schoolId: "School ID", schoolIdPh: "Enter 11-digit School ID",
     cluster: "Cluster ID", block: "Block ID", district: "District ID", state: "State ID",
     idPh: "Enter your ID (we detect your role)", passcode: "PIN", passcodePh: "Enter PIN",
@@ -107,6 +107,13 @@ export const en = {
     school: "School", district: "District", state: "State", comparison: "School vs District vs State",
     framework: "Scored out of 1000 marks across 5 GSQAC areas.",
   },
+  // §18/§19 — board results + PARAKH district category (district-only)
+  board: { pass: "pass", apiPending: "API pending", vsYear: "vs {year}" },
+  parakh: {
+    title: "PARAKH District Category", grade: "PARAKH Grade", districtFocus: "District focus",
+    others: "Other districts in {band} · {grade}",
+    placeholder: "Grade 6 & 9 classification shown is a static placeholder pending the official per-grade district list.",
+  },
   atRisk: { label: "At Risk", tooltip: "Identified holistically based on multiple academic and behavioural parameters." },
   teacher: {
     tpdJourney: "Your TPD Journey", progress: "Progress", target: "target", hrs: "hrs", sevenDay: "7-day engagement",
@@ -124,7 +131,7 @@ export const en = {
     avgTraining: "Avg school training hours", chronicAbs: "Students absent from past 7+ consecutive days", avgTrainTarget: "≥ 50h", sevenDayWindow: "7-day",
     attendanceGap: "Attendance submission gaps", allSubmitted: "All classes have submitted today. Nothing pending.",
     notSubmitted: "Not submitted", submitted: "Submitted", downloadNames: "Download Names", classId: "Class", teacherName: "Teacher",
-    dropout: "Drop-out reduction", fewerDropouts: "{n} fewer drop-outs than last year", statusMatrix: "Status overview",
+    dropout: "Untracked-student reduction", fewerDropouts: "{n} fewer untracked than last year", statusMatrix: "Status overview",
     schoolActions: "Improvement Actions of the School", teacherActions: "Improvement Actions for Teachers", flag: "Flag",
   },
   common2: { school: "School", state: "State", vsTarget: "vs target", students: "students" },

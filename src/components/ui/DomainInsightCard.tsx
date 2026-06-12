@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
 import type { DomainScore, KpiRecord, Level, Unit } from "@/types";
 import { accent, valueToneClass } from "@/lib/colors";
-import { peerAvg } from "@/lib/peer";
+import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { getLastUpdatedLabel } from "@/lib/trend";
 import { displayFrequency } from "@/lib/displayPolicy";
 import { formatKpiCardTitlePhrase, formatValue } from "@/lib/format";
@@ -11,20 +11,21 @@ import { Icon, ChevronRight } from "./Icon";
 import { RatingBadge } from "./RatingBadge";
 import { ValueDisplay } from "./ValueDisplay";
 import { FrequencyDelta } from "./FrequencyDelta";
+import { KnowMore } from "./kpiCardParts";
 import { ChildComparisonBars, type ChildBar } from "./ComparisonBars";
 
 /**
- * N+1 comparison as a boxed chip — "vs Nargadh · 62" — the prominent, self-contained
- * treatment from the design handoff (replaces the plain muted text line on home
- * domain cards). The entity name + value carry the meaning; "vs" is the only label.
+ * N+1 comparison as a prominent pill — "vs State · 62" (§11). Compares to the next
+ * level UP, labelled by the LEVEL word (not the entity name). Bolder + higher
+ * contrast than the old muted text line.
  */
-function N1Chip({ parentName, value, unit, lang }: { parentName?: string; value: number | null; unit: Unit; lang: Lang }) {
+function N1Chip({ label, value, unit, lang }: { label?: string | null; value: number | null; unit: Unit; lang: Lang }) {
   const { t } = useT();
-  if (!parentName || value == null) return null;
+  if (!label || value == null) return null;
   return (
-    <span className="mt-2.5 inline-flex w-fit items-center gap-2 rounded-lg bg-surface-sunken px-3 py-1.5">
-      <span className="text-2xs font-semibold text-neutral-400">{t("common.vs")} {parentName}</span>
-      <span className="text-sm font-extrabold tnum text-neutral-900">{formatValue(value, unit, lang)}</span>
+    <span className="mt-2.5 inline-flex w-fit items-center gap-2 rounded-full bg-surface-sunken px-3 py-1.5 ring-1 ring-line/60">
+      <span className="text-xs font-bold text-neutral-500">{t("common.vs")} {label}</span>
+      <span className="text-base font-extrabold tnum text-neutral-900">{formatValue(value, unit, lang)}</span>
     </span>
   );
 }
@@ -66,6 +67,9 @@ export function DomainInsightCard({
   const a = accent(ds.domain.accent);
   const isOutput = ds.domain.kind === "output";
   const hasData = bars.some((b) => b.value != null);
+  // N+1 compares to the next level UP, labelled by the level word ("vs State"), §11
+  const parentLevel = peerLevelOf(level);
+  const parentLabel = parentName && parentLevel ? t(`levels.${parentLevel}`) : null;
 
   return (
     <Card className="flex h-full flex-col">
@@ -87,8 +91,9 @@ export function DomainInsightCard({
         </div>
 
         {isOutput
-          ? <OutputHead percent={outputPercent ?? null} grade={ds.grade} status={ds.status} improvement={gsqacImprovement ?? null} parentName={parentName} parentPercent={parentPercent ?? null} lang={lang} />
-          : <InputHead heroRec={heroRec ?? null} level={level} parentName={parentName} lang={lang} />}
+          ? <OutputHead percent={outputPercent ?? null} grade={ds.grade} status={ds.status} improvement={gsqacImprovement ?? null} parentLabel={parentLabel} parentPercent={parentPercent ?? null} lang={lang} />
+          : <InputHead heroRec={heroRec ?? null} level={level} parentLabel={parentLabel} lang={lang} />}
+        <KnowMore />
       </button>
 
       {/* ── embedded comparison — only after Compare is applied (no hint before; card stays compact) ── */}
@@ -108,11 +113,11 @@ export function DomainInsightCard({
 /** input-domain headline = the domain's hero indicator, as one inline sentence:
  *  "208 students absent…" / "80.6% SAT reports…" / "1.7 No of CRC/URC Visits…". */
 function InputHead({
-  heroRec, level, parentName, lang,
+  heroRec, level, parentLabel, lang,
 }: {
   heroRec: KpiRecord | null;
   level: Level;
-  parentName?: string;
+  parentLabel?: string | null;
   lang: "en" | "gu";
 }) {
   if (!heroRec) return null;
@@ -130,20 +135,20 @@ function InputHead({
         <span className={cn("mr-1.5 align-baseline text-3xl font-extrabold tnum", valueTone)}>{formatValue(value, unit, lang)}</span>
         {phrase}
       </p>
-      <N1Chip parentName={parentName} value={peerScore} unit={unit} lang={lang} />
+      <N1Chip label={parentLabel} value={peerScore} unit={unit} lang={lang} />
     </>
   );
 }
 
 /** GSQAC (output) headline = score + official grade badge + allowed yearly delta. */
 function OutputHead({
-  percent, grade, status, improvement, parentName, parentPercent, lang,
+  percent, grade, status, improvement, parentLabel, parentPercent, lang,
 }: {
   percent: number | null;
   grade: string | null;
   status: KpiRecord["status"];
   improvement: number | null;
-  parentName?: string;
+  parentLabel?: string | null;
   parentPercent: number | null;
   lang: "en" | "gu";
 }) {
@@ -158,7 +163,7 @@ function OutputHead({
           <FrequencyDelta delta={improvement} unit="%" direction="higher" cadence="yearly" lang={lang} className="pb-1" />
         )}
       </div>
-      <N1Chip parentName={parentName} value={parentPercent} unit="%" lang={lang} />
+      <N1Chip label={parentLabel} value={parentPercent} unit="%" lang={lang} />
     </>
   );
 }

@@ -53,12 +53,14 @@ export function MultiMetricKpiCard({
 function MetricRow({
   rec, level, parentName, lang, divider,
 }: { rec: KpiRecord; level?: Level; parentName?: string; lang: Lang; divider?: boolean }) {
+  const { t } = useT();
   const kpi = rec.kpi;
   const na = rec.value == null;
   const showDelta = !na && shouldShowCardDelta(kpi);
   const trend = showDelta ? buildTrend(rec, lang) : null;
   const delta = trend?.delta ?? null;
-  const peer = level && peerLevelOf(level) ? peerAvg(kpi.id, level) : null;
+  const parentLevel = level ? peerLevelOf(level) : null;
+  const peer = parentLevel ? peerAvg(kpi.id, level!) : null;
   const tone = na ? "text-rag-naText" : delta ? deltaToneClass(delta, kpi.direction) : "text-neutral-900";
   const label = resolveMetricLabel(kpi.name, kpi.name_gu, level ?? "school", lang);
 
@@ -68,7 +70,7 @@ function MetricRow({
       label={label}
       value={na ? "—" : formatValue(rec.value, kpi.unit, lang)}
       valueTone={tone}
-      peerLabel={parentName && peer != null ? `${parentName} · ${formatValue(peer, kpi.unit, lang)}` : null}
+      peerLabel={parentName && peer != null && parentLevel ? `${t("common.vs")} ${t(`levels.${parentLevel}`)} · ${formatValue(peer, kpi.unit, lang)}` : null}
       delta={delta != null && delta !== 0 ? (
         <FrequencyDelta delta={delta} unit={kpi.unit} direction={kpi.direction} cadence={trend!.cadence} lang={lang} />
       ) : null}

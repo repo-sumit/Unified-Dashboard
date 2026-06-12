@@ -8,6 +8,8 @@ import { gradeFor } from "@/config/ratingBands";
 import { OUTPUT_DOMAIN_ID } from "@/config/frameworks";
 import { statusFromGrade } from "@/engine";
 import { DomainInsightCard } from "@/components/ui/DomainInsightCard";
+import { ParakhCard, BoardCard } from "@/components/ui/ParakhCards";
+import { BOARD_RESULTS } from "@/config/parakh";
 import type { ChildBar } from "@/components/ui/ComparisonBars";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { PageSection, PageGrid } from "@/components/layout/PageSection";
@@ -37,7 +39,8 @@ export default function ScorecardHome() {
   const levelLabel = t(`levels.${entity.level}`);
 
   const greeting = t(`greeting.${greetingKey()}`);
-  const displayName = user ? tn(user.name, user.name_gu) || t(`roles.${user.role}`) : "";
+  // demo mode: greet by role label, never a real person name (§3)
+  const displayName = user ? t(`roles.${user.role}`) : "";
 
   const statusOf = (v: number | null): RagStatus => (v == null ? "na" : statusFromGrade(gradeFor(v, fw.rating_bands).group));
   const selectedSet = new Set(selectedIds);
@@ -108,6 +111,16 @@ export default function ScorecardHome() {
           )}
         </PageGrid>
       </PageSection>
+
+      {/* District focus (§18/§19) — PARAKH category + board results, district scope only. */}
+      {entity.level === "district" && (
+        <PageSection title={t("parakh.districtFocus")}>
+          <PageGrid cols="domain">
+            <ParakhCard district={tn(entity.name, entity.name_gu)} onOpen={() => navigate("/app/parakh")} />
+            {BOARD_RESULTS.map((b) => <BoardCard key={b.id} board={b} />)}
+          </PageGrid>
+        </PageSection>
+      )}
     </ScreenContainer>
   );
 }

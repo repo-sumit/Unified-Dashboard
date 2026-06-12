@@ -24,7 +24,7 @@ const credType = (len: number): "tp" | "officer" | "none" =>
   len === 8 ? "tp" : len === 2 || len === 4 || len === 6 || len === 10 ? "officer" : "none";
 
 export default function Login() {
-  const { t, tn, lang } = useT();
+  const { t, tn } = useT();
   const login = useSession((s) => s.login);
   const navigate = useNavigate();
 
@@ -151,12 +151,12 @@ export default function Login() {
 
             {step === "verify" && pending && (
               <div className="animate-fade-in">
-                <h1 className="mt-4 text-center text-2xl font-extrabold text-neutral-900">{greet}, {tn(pending.name, pending.name_gu).split(" ")[0]}!</h1>
+                {/* demo mode: role label, never a real person name */}
+                <h1 className="mt-4 text-center text-2xl font-extrabold text-neutral-900">{greet}, {t(`roles.${pending.role}`)}!</h1>
                 <p className="mt-1 text-center text-sm text-neutral-500">{t("login.verifySub")}</p>
                 <dl className="mt-5 space-y-1 rounded-xl bg-neutral-50 p-4 text-sm">
-                  <Row label={t("login.name")} value={tn(pending.name, pending.name_gu)} />
                   <Row label={t("login.userId")} value={pending.login_id} />
-                  <Row label={t("login.designation")} value={lang === "gu" ? t(`roles.${pending.role}`) : pending.designation} />
+                  <Row label={t("login.designation")} value={t(`roles.${pending.role}`)} />
                   <Row label={t("login.Grade")} value={scopeEntity ? tn(scopeEntity.name, scopeEntity.name_gu) : t("common.na")} />
                 </dl>
                 <div className="mt-5 space-y-2.5">
