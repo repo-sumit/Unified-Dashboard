@@ -1,5 +1,41 @@
 # Pocket VSK — QA Report
 
+## CRC/URC visits on the Administration domain card — non-teachers only (Pass 41)
+
+Moved/extended the "No. of CRC/URC visits" metric so it sits with untracked students on the
+**Administration domain card**, for everyone who has Administration access (i.e. all roles except
+teachers).
+
+- **Officers** (CRCC/BRC/DEO/State) — who see the real Administration `DomainInsightCard` — now
+  get a second metric below a **divider**: the untracked-students hero, then a line, then
+  e.g. `1.7 No of CRCC/URC Visits per school`. The value is the **same scorecard record**
+  (`vis_CRCC_count`) the Administration → Visits detail uses (published school 1.4 → block 1.7 →
+  state 1.9), so the card and the drill-down agree. Implemented via a new optional `secondaryRec`
+  prop on `DomainInsightCard` (input domains only); `ScorecardHome` passes it only for
+  `domain.id === "administration"`.
+- **Principal** — whose Administration card is replaced by the dedicated `UntrackedHomeCard` —
+  keeps the CRC/URC visits row (`2 / 3 CRC/URC visits this month`) it gained in Pass 40.
+- **Teacher** — no Administration access — **no longer** shows CRC/URC visits. The row on
+  `UntrackedHomeCard` is now gated to `role === "principal"`, so the teacher card shows only the
+  untracked count + N+1 pill.
+
+### Files changed
+
+- `src/components/ui/DomainInsightCard.tsx` — optional `secondaryRec` → divider + second metric row.
+- `src/screens/ScorecardHome.tsx` — pass `secondaryRec` (`vis_CRCC_count`) for the Administration card.
+- `src/components/ui/UntrackedHomeCard.tsx` — gate the CRC/URC visits row to principal only.
+
+### Verification
+
+- `npx tsc --noEmit` ✓ clean · `npm run build` ✓ (`built in 10.51s`; only the pre-existing
+  >1.5 MB `entities` chunk-size warning).
+- `vis_CRCC_count` confirmed published at school→state, `lowestLevel: school`,
+  `roleVisibility: NON_TEACHER` — so the record is present (with a value) for officers at every
+  level, and never for teachers.
+- No changes to login/routing, header, filter/compare sheets, GSQAC, assessment ordering, or Parakh.
+
+---
+
 ## Untracked card cleanup + drop "vs" prefix + CRC/URC visits metric (Pass 40)
 
 Three focused homepage tweaks:

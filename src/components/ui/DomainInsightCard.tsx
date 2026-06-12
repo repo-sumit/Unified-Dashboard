@@ -5,6 +5,7 @@ import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { getLastUpdatedLabel } from "@/lib/trend";
 import { displayFrequency } from "@/lib/displayPolicy";
 import { formatKpiCardTitlePhrase, formatValue } from "@/lib/format";
+import { useKpiChildSeries } from "@/hooks";
 import { useT, type Lang } from "@/i18n";
 import { Card } from "./atoms";
 import { Icon } from "./Icon";
@@ -73,6 +74,7 @@ export function DomainInsightCard({
   comparable,
   comparing,
   bars,
+  compareChildren,
   chartTitle,
   onDrill,
   onOpenChild,
@@ -92,7 +94,12 @@ export function DomainInsightCard({
   /** embedded Compare chart (hidden until applied): */
   comparable: boolean;
   comparing: boolean;
-  bars: ChildBar[];
+  /** output (GSQAC) only — the domain score % per child unit. Input domains build
+   *  their bars from the hero KPI's own series instead (see `compareChildren`). */
+  bars?: ChildBar[];
+  /** input domains — selected child units; bars are computed from the hero KPI's
+   *  per-child values in the hero's OWN unit (count→count, %→%), not the domain %. */
+  compareChildren?: { id: string; label: string }[];
   chartTitle: string;
   onDrill: () => void;
   onOpenChild?: (id: string) => void;
@@ -100,7 +107,24 @@ export function DomainInsightCard({
   const { t, lang } = useT();
   const a = accent(ds.domain.accent);
   const isOutput = ds.domain.kind === "output";
-  const hasData = bars.some((b) => b.value != null);
+
+  // Embedded comparison data. The hero indicator's unit drives the bars: a count
+  // hero (e.g. "students absent") shows counts, a % hero shows percentages — never
+  // the domain SCORE percent. GSQAC (output) is itself a %, so it keeps the passed
+  // domain-percent `bars`.
+  const heroKpi = isOutput ? null : heroRec?.kpi ?? null;
+  const compareIds = comparable && comparing && heroKpi ? (compareChildren ?? []).map((c) => c.id) : [];
+  const heroSeries = useKpiChildSeries(heroKpi?.id, compareIds);
+  const labelById = new Map((compareChildren ?? []).map((c) => [c.id, c.label]));
+  const inputBars: ChildBar[] = heroSeries
+    .filter((s) => s.value != null)
+    .map((s) => ({ id: s.id, label: labelById.get(s.id) ?? s.id, value: s.value, status: "na" }));
+
+  const chartBars = isOutput ? bars ?? [] : inputBars;
+  const chartUnit: Unit = isOutput ? "%" : heroKpi?.unit ?? "%";
+  const chartMax = chartUnit === "%" || chartUnit === "score" ? 100 : chartUnit === "ratio" ? 3 : undefined;
+  const chartLowerBetter = !isOutput && heroKpi?.direction === "lower";
+  const hasData = chartBars.some((b) => b.value != null);
   // N+1 compares to the next level UP, labelled by the level word ("vs State"), §11
   const parentLevel = peerLevelOf(level);
   const parentLabel =
@@ -173,10 +197,11 @@ export function DomainInsightCard({
           {hasData ? (
             <ChildComparisonBars
               title={chartTitle}
-              bars={bars}
-              unit="%"
+              bars={chartBars}
+              unit={chartUnit}
               lang={lang}
-              maxValue={100}
+              maxValue={chartMax}
+              lowerBetter={chartLowerBetter}
               onOpen={onOpenChild}
             />
           ) : (

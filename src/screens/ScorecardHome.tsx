@@ -62,7 +62,9 @@ export default function ScorecardHome() {
   const statusOf = (v: number | null): RagStatus => (v == null ? "na" : statusFromGrade(gradeFor(v, fw.rating_bands).group));
   const selectedSet = new Set(selectedIds);
 
-  // the domain score across the SELECTED child units, lowest (worst) first
+  // GSQAC (output) compare bars = the domain SCORE % across selected children (the
+  // score IS a percent). Input domains don't use this — their bars come from the hero
+  // KPI's own series (in the hero's unit), computed inside DomainInsightCard.
   const childBars = (domainId: string): ChildBar[] =>
     childEntries
       .filter((en) => selectedSet.has(en.entity.id))
@@ -72,6 +74,12 @@ export default function ScorecardHome() {
       })
       .filter((b) => b.value != null)
       .sort((a, b) => (a.value as number) - (b.value as number));
+
+  // selected child units (id + label) handed to input-domain cards, which build their
+  // own hero-unit bars from these ids.
+  const compareChildren = childEntries
+    .filter((en) => selectedSet.has(en.entity.id))
+    .map((en) => ({ id: en.entity.id, label: tn(en.entity.name, en.entity.name_gu) }));
 
   const comparable = !!childLevel;
   const chartTitle = childLevel ? t("compare.chartTitle", { level: t(`levels.${childLevel}`) }) : "";
@@ -106,7 +114,7 @@ export default function ScorecardHome() {
                 parentName={parentName}
                 comparable={comparable}
                 comparing={applied}
-                bars={childBars(d.domain.id)}
+                compareChildren={compareChildren}
                 chartTitle={chartTitle}
                 onDrill={() => navigate(`/app/domain/${d.domain.id}`)}
                 onOpenChild={drillChild}
