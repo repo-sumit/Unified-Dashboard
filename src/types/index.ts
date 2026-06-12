@@ -1,5 +1,5 @@
 /**
- * Core domain types for the Unified Portal (Vidya Samiksha Kendra, Gujarat).
+ * Core domain types for the Pocket VSK (Vidya Samiksha Kendra, Gujarat).
  *
  * These mirror the Supabase tables (entities, app_users, domains,
  * kpi_definitions, kpi_values) so swapping MockProvider → SupabaseProvider
@@ -20,7 +20,14 @@ export const LEVELS = [
 ] as const;
 export type Level = (typeof LEVELS)[number];
 
-export const ROLES = ["teacher", "principal", "crc", "brc", "deo", "state"] as const;
+export const ROLES = [
+  "teacher",
+  "principal",
+  "crc",
+  "brc",
+  "deo",
+  "state",
+] as const;
 export type Role = (typeof ROLES)[number];
 
 /** entities table — the org tree that powers cascading + section-level. */
@@ -78,16 +85,41 @@ export interface AppUser {
 }
 
 // ── Framework configuration (swap GSQAC / SQAF / 6A by changing rows) ──
-export type Unit = "%" | "count" | "score" | "hours" | "days" | "ratio" | "grade";
+export type Unit =
+  | "%"
+  | "count"
+  | "score"
+  | "hours"
+  | "days"
+  | "ratio"
+  | "grade";
 export type Direction = "higher" | "lower";
 
 /** OGM 3.0 reporting cadence → drives the display strategy. */
-export type Frequency = "Daily" | "Weekly" | "Monthly" | "Twice a Year" | "Yearly" | "Half yearly" | "Latest";
+export type Frequency =
+  | "Daily"
+  | "Weekly"
+  | "Monthly"
+  | "Twice a Year"
+  | "Yearly"
+  | "Half yearly"
+  | "Latest";
 /** how an indicator is visualised (frequency-aware; never a fake daily trend for annual data). */
-export type DisplayStrategy = "trend_30d" | "delta_cycle" | "snapshot_latest" | "compliance" | "count_with_rate";
+export type DisplayStrategy =
+  | "trend_30d"
+  | "delta_cycle"
+  | "snapshot_latest"
+  | "compliance"
+  | "count_with_rate";
 
 /** How a KPI is represented at each level (from OGM 3.0 cascading map). */
-export type Representation = "avg" | "count" | "class" | "school" | "sum" | "NA";
+export type Representation =
+  | "avg"
+  | "count"
+  | "class"
+  | "school"
+  | "sum"
+  | "NA";
 export type LevelRepresentation = Record<Level, Representation>;
 
 export interface RatingBand {
@@ -315,7 +347,11 @@ export interface Scorecard {
   status: RagStatus;
   domainScores: DomainScore[];
   /** the level directly above (for "you vs parent average" bars). */
-  parent?: { entity: Entity; overallPercent: number | null; domainPercents: Record<string, number | null> };
+  parent?: {
+    entity: Entity;
+    overallPercent: number | null;
+    domainPercents: Record<string, number | null>;
+  };
   callouts: Callout[];
 }
 

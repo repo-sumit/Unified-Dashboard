@@ -35,7 +35,7 @@ export function MultiMetricKpiCard({
 
   return (
     <KpiCardShell onClick={onClick} compare={<KpiCompareSection kpi={kpi} />} metrics={metrics.length || 1}>
-      <KpiCardHeader title={name} frequency={displayFrequency(kpi)} context={lastUpdated} />
+      <KpiCardHeader title={name} frequency={displayFrequency(kpi)} context={lastUpdated} showKnowMore={!!onClick} />
 
       <div className="mt-2">
         {metrics.length ? (

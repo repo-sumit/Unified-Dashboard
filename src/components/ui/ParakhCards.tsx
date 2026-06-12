@@ -27,14 +27,15 @@ export function ParakhCard({ district, onOpen }: { district: string; onOpen: () 
   return (
     <Card className="card-pad" style={{ borderTop: `4px solid ${b.hex}` }}>
       <button onClick={onOpen} className="group flex w-full flex-col text-left">
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl" style={{ background: b.soft }}>
             <Layers size={20} style={{ color: b.text }} />
           </span>
-          <span className="min-w-0">
+          <span className="min-w-0 flex-1">
             <span className="block text-sm font-bold text-neutral-900">PARAKH District Category</span>
             <span className="block text-2xs font-medium text-neutral-400">Grade 3 · Static {PARAKH_META.year}</span>
           </span>
+          <KnowMore className="mt-0.5" />
         </div>
         <div className="mt-3.5 flex items-center gap-3">
           <span className="min-w-0 flex-1">
@@ -43,7 +44,6 @@ export function ParakhCard({ district, onOpen }: { district: string; onOpen: () 
           </span>
           <ParakhBadge band={band} size="lg" />
         </div>
-        <KnowMore />
       </button>
     </Card>
   );

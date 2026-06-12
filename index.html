@@ -3,11 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/cg.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
+    />
     <meta name="theme-color" content="#386AF6" />
     <meta
       name="description"
-      content="Unified Portal — one platform for school-performance KPIs across every level of the Gujarat education system."
+      content="Pocket VSK — one platform for school-performance KPIs across every level of the Gujarat education system."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,16 +18,50 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Mukta:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>Unified Portal · Vidya Samiksha Kendra</title>
+    <title>Pocket VSK · Education Dept. Gujarat</title>
   </head>
   <body>
     <div id="root">
       <!-- Boot shell: shown instantly while the data chunk loads, replaced when React mounts. -->
-      <div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#F6F7F9;font-family:system-ui,sans-serif">
-        <div style="width:34px;height:34px;border:3px solid #DCE3F2;border-top-color:#386AF6;border-radius:50%;animation:up-spin .7s linear infinite"></div>
-        <div style="font-size:13px;font-weight:600;color:#6B7280">Loading Unified Portal…</div>
+      <div
+        style="
+          position: fixed;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+          background: #f6f7f9;
+          font-family: system-ui, sans-serif;
+        "
+      >
+        <div
+          style="
+            width: 34px;
+            height: 34px;
+            border: 3px solid #dce3f2;
+            border-top-color: #386af6;
+            border-radius: 50%;
+            animation: up-spin 0.7s linear infinite;
+          "
+        ></div>
+        <div style="font-size: 13px; font-weight: 600; color: #6b7280">
+          Loading Pocket VSK…
+        </div>
       </div>
-      <style>@keyframes up-spin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){[style*="up-spin"]{animation:none}}</style>
+      <style>
+        @keyframes up-spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [style*="up-spin"] {
+            animation: none;
+          }
+        }
+      </style>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -7,7 +7,7 @@ import { displayFrequency } from "@/lib/displayPolicy";
 import { formatKpiCardTitlePhrase, formatValue } from "@/lib/format";
 import { useT, type Lang } from "@/i18n";
 import { Card } from "./atoms";
-import { Icon, ChevronRight } from "./Icon";
+import { Icon } from "./Icon";
 import { RatingBadge } from "./RatingBadge";
 import { ValueDisplay } from "./ValueDisplay";
 import { FrequencyDelta } from "./FrequencyDelta";
@@ -74,7 +74,7 @@ export function DomainInsightCard({
   return (
     <Card className="flex h-full flex-col">
       {/* ── head (drills into the domain) ── */}
-      <button onClick={onDrill} className="group/head card-pad flex w-full flex-col gap-2 pb-3 text-left">
+      <button onClick={onDrill} className="group card-pad flex w-full flex-col gap-2 pb-3 text-left">
         <div className="flex items-start justify-between gap-2">
           <span className="flex min-w-0 items-center gap-2.5">
             <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", a.bg)}>
@@ -87,13 +87,12 @@ export function DomainInsightCard({
               </span>
             </span>
           </span>
-          <ChevronRight size={16} className="mt-0.5 shrink-0 text-neutral-300 transition-transform group-hover/head:translate-x-0.5" />
+          <KnowMore className="mt-0.5" />
         </div>
 
         {isOutput
           ? <OutputHead percent={outputPercent ?? null} grade={ds.grade} status={ds.status} improvement={gsqacImprovement ?? null} parentLabel={parentLabel} parentPercent={parentPercent ?? null} lang={lang} />
           : <InputHead heroRec={heroRec ?? null} level={level} parentLabel={parentLabel} lang={lang} />}
-        <KnowMore />
       </button>
 
       {/* ── embedded comparison — only after Compare is applied (no hint before; card stays compact) ── */}

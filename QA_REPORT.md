@@ -1,4 +1,4 @@
-# Unified Portal — QA Report
+# Pocket VSK — QA Report
 
 ## Pocket VSK rebrand + PARAKH / board / KPI changes — Claude Design (Pass 29)
 
@@ -7,31 +7,40 @@ Implemented the latest Claude Design output (`-HL5VTkjAIpB3_W6_dwunw`, `ui_kits/
 **Design URL implemented:** `https://api.anthropic.com/v1/design/h/-HL5VTkjAIpB3_W6_dwunw?open_file=ui_kits%2Fvsk-dashboard%2Findex.html`
 
 ### Branding & login (§1)
+
 - App renamed **Pocket VSK** / **Education Department · Gujarat** (`i18n app.name/tagline`, en + gu).
 - Login: header welcome → **"Welcome to Education Department, Gujarat"**, ID field → **"Teacher ID"**. Demo mode shows **role labels, never real names** — the verify step greets by role and drops the Name row; the greeting on home greets by role label.
 
 ### Role labels & greeting (§3)
+
 - Officer roles relabelled **Cluster Officer / Block Officer / District Officer / State Officer** (en + gu). Greeting reads **"Good <time>, <Role>"** + **"You are viewing <level> level"** (no designation, no real name).
 
 ### N+1 comparison (§11)
+
 - N+1 now compares to the next level UP and is labelled by the **level word** ("vs State", "vs District") rather than the entity name (was "Kachchh · 94%"). Rendered as a **bolder, higher-contrast pill** on home domain cards (`N1Chip`) and KPI listing rows (`KpiInlineRow`). Uses `peerLevelOf(level)`.
 
 ### Card CTA (§9)
+
 - Cards now show a visible **"Know more →"** CTA (`KnowMore` in `kpiCardParts`) on the home domain cards and every KPI listing card, instead of relying on a chevron alone.
 
 ### Terminology (§17)
+
 - **Dropout → Untracked Students** everywhere: `ret_dropout` name + value suffix ("students untracked"), the `adm_retention` sub-domain name, and the principal-dashboard i18n strings. Re-enrolment (`ret_reenroll`) stays as a sibling KPI in the same sub-domain.
 
 ### Administration KPI cleanup (§16)
+
 - Removed the WASH/infra KPIs (**Urinals & Toilets, Handwash, Drinking Water**) — defs + PUBLISHED anchors. Added four LMS digital-usage KPIs: **GSHALA + GSHALA Plus usage · Smartclass usage · Computer lab usage · PAL usage** (source label `LMS`, deterministic anchors). Visits / observations / lesson-plan / diaries / SMC / library / ICT retained.
 
 ### Assessment result-first (§14)
+
 - The **latest SAT result (SAT2)** is now the Assessment hero; **"SAT reports downloaded in classrooms"** moved to the end of the domain (no longer the hero). The below-average sub-metric stays level-aware ("% below <level> average").
 
 ### PARAKH district category (§19) — new
+
 - New self-contained `config/parakh.ts` (bands UDIT/UDAY/UNNAT/UDBHAV with stage + meaning + colours; exact Grade-3 district classification; deterministic static placeholders for Grade 6 & 9; board results). New `ParakhCard` (district home) + `ParakhScreen` (route `/app/parakh`) with a Grade 3/6/9 selector, band hero, four-band legend, and same-band district list. Factual only (no recommendations). Shown only when the scope is a **district**.
 
 ### Board results (§18) — new
+
 - **Grade 10 (82.4% ↗) / Grade 12 (78.9% ↘)** result cards in the district-focus section — static, "API pending", no drilldown.
 
 **Files changed:** `i18n/en.ts`, `i18n/gu.ts`, `screens/Login.tsx`, `screens/ScorecardHome.tsx`, `components/ui/kpiCardParts.tsx` (KnowMore + N+1 pill), `components/ui/KpiCard.tsx`, `components/ui/MultiMetricKpiCard.tsx`, `components/ui/DomainInsightCard.tsx`, `config/kpiCatalog.ts` (admin cleanup, assessment reorder, untracked rename), `config/frameworks.ts`, `lib/format.ts`, `config/parakh.ts` (new), `components/ui/ParakhCards.tsx` (new), `screens/ParakhScreen.tsx` (new), `components/ui/Icon.tsx` (Layers), `App.tsx`.
@@ -39,6 +48,7 @@ Implemented the latest Claude Design output (`-HL5VTkjAIpB3_W6_dwunw`, `ui_kits/
 **Build:** `tsc --noEmit` ✓ (exit 0) · `vite build` ✓ (~12s).
 
 **Unavoidable deviations / deferred (documented):**
+
 - **Teacher/principal student-NAME lists (§12/§13)** — the design's chronic-absentee / below-avg / untracked name lists need new per-entity student mock data + role-branched list UI; the real provider has no student-name data. Deferred. Officers continue to see aggregate counts (already correct: "no individual student names above school level").
 - **Grade 5 / Grade 8 CET attempt/merit + CGMS extras (§15)** — grade-scoped extra cards; deferred (needs grade-context extras wiring).
 - **"No. of students below <level> avg." as a COUNT (§14)** — the real model carries this as a level-aware **% below <level> average** sub-metric; kept as %, not converted to a count.
@@ -53,9 +63,10 @@ Implemented the latest Claude Design output (`-HL5VTkjAIpB3_W6_dwunw`, `ui_kits/
 
 **Bug:** embedded comparison bars weren't sharing a bottom baseline — bars whose unit label wrapped to 2 lines (e.g. `Sabar Kantha`, `Narayan Sarovar`) sat lower/higher than 1-line neighbours.
 
-**Cause:** the bar strip used `flex items-end`, so each bar-item (a column of `[value][fixed track][label]`) was aligned by its *bottom = bottom of the label*. A 2-line label made that item taller, pushing its fixed-height track (and therefore the bar) up relative to 1-line items, so the baselines diverged.
+**Cause:** the bar strip used `flex items-end`, so each bar-item (a column of `[value][fixed track][label]`) was aligned by its _bottom = bottom of the label_. A 2-line label made that item taller, pushing its fixed-height track (and therefore the bar) up relative to 1-line items, so the baselines diverged.
 
 **Fix** (single shared component `ComparisonBars.tsx` → `ChildComparisonBars`, used by domain cards, KPI cards, and the GSQAC School·District·State comparison):
+
 - Strip is now `flex items-start`. Since the value label is single-line (fixed `h-3.5`) and the bar track is fixed-height, every track's BOTTOM lands at the same offset from the top → **all bar baselines align**, independent of label height.
 - The fill stays bottom-aligned inside its fixed track (`items-end` on the track).
 - The unit label sits below the baseline with a reserved 2-line height (`min-h-[2.4em]` + `line-clamp-2` + `break-words`), so it can wrap to two lines without moving the bar.
@@ -72,13 +83,17 @@ Implemented the latest Claude Design output (`-HL5VTkjAIpB3_W6_dwunw`, `ui_kits/
 Two focused fixes.
 
 ### 1. Hide non-actionable hierarchy arrows (header navigator)
+
 `HeaderNav` (in `HierarchyNavigator.tsx`) now **hides** the circled left/right arrows instead of rendering them disabled, using clean helpers:
+
 - `canNavigateUp = parent != null` — `parent` comes from `trail` (clamped home→current in `useScope`), so it is null exactly when the user is at their own/root level. **Left arrow shows only when drilled below root.** (State user on State, District user on District, Block/Cluster/School user on their home → no left arrow; District user on Block/Cluster/School → left arrow.)
 - `canDrillDown = !!childLevel && children.length > 0` — **Right arrow shows only when a real next child level exists and has children.** Section (no child level) and any childless scope (School/Grade with no child data) → no right arrow.
 - The centre label is tappable (opens the picker) only when `canDrillDown`; otherwise it's a static label. Arrows are hidden (not greyed), and `justify-center` keeps the centre title aligned whether 0, 1, or 2 arrows are present.
 
 ### 2. Compare sheet — empty selection removes the comparison
+
 `CompareSheet.tsx` now has **distinct `Select all` and `Clear all` pills** (the old single toggle only offered "Clear all" when everything was selected, so a partial selection could never be emptied). `Clear all` sets the selection to `[]` without closing the sheet; `Select all` restores all child units. Primary button logic (explicit `removeMode`):
+
 - applied && selected == 0 → **"Remove comparison"** (enabled) → `onRemove` clears applied state, closes the sheet, hides all card charts; reopening starts with all child units preselected.
 - otherwise → **"Apply (n)"**, disabled when selected == 0 (so a never-applied empty selection stays disabled).
 
@@ -93,32 +108,39 @@ Two focused fixes.
 Large multi-area design implementation. **Design URL was unavailable** — `https://api.anthropic.com/v1/design/h/-ckHo6Stkgw7qbrOfl-9uw` returns HTTP 404 (verified via WebFetch and curl; body is literally "not found"), unlike the three earlier bundles. Implemented strictly from the exhaustive written brief (§1–20) plus the four provided SVG icons (`Docs/filter.svg`, `bar-compare.svg`, `right-side.svg`, `left side.svg`) and the prior same-family bundle for component patterns.
 
 ### Mobile header redesign (§1,3,4)
+
 - New header on every page: **[logo] · centered entity-name + level with circled ‹/› arrows · [share] · [filter]**. Left arrow steps one hierarchy level up; the centre label / right arrow open the next-level picker (new `HeaderNav` in HierarchyNavigator, reusing the existing `ChildPicker`).
-- **Logout button removed entirely** from the dashboard (use `/login` to switch user). No large "Unified Portal" title on mobile (desktop keeps it), no role/designation in the header, no second action row.
+- **Logout button removed entirely** from the dashboard (use `/login` to switch user). No large "Pocket VSK" title on mobile (desktop keeps it), no role/designation in the header, no second action row.
 - Greeting now reads **"You are viewing <level> level"** with no designation/role.
 - 4 custom currentColor SVG icons added to the Icon module: `FunnelFilter`, `BarCompare`, `CircleChevronLeft/Right`, `Share`.
 
 ### Filter / Share / Compare placement (§5,6,7)
+
 - **Filter sheet** (`FilterSheet`) consolidates **School Type** (officers only) + **Language** as large radio rows; bottom sheet on mobile / centred card on desktop. School-type and i18n logic unchanged — only the controls moved. The separate All-Schools and Language header pills are gone.
 - **Share icon** replaces the mobile Export button (navigates to the existing export route).
 - **Compare** is now a **mobile floating action** (bottom-right, bar-chart icon + selected-count badge) and a **desktop header button**; both hidden on `/app/kpi/*`.
 
 ### Card cleanup (§8,12)
+
 - Removed the **"Tap Compare to view…" hint** everywhere (`KpiCompareSection` and `DomainInsightCard` now render nothing before Compare — cards stay compact, no reserved chart space). Charts still appear inside cards after Apply.
 - Card text rules unchanged from prior passes: single-metric compact suffix (`225 students absent`, `96.3%`, `1.7`), multi-metric inline rows (`86.7% Present`), N+1 right-aligned, no source / Parent avg / Rate / Latest / Count / Score.
 
 ### Compare sheet + chips (§9,10)
+
 - **Clear all / Select all** is now a large pill button (≈40px), not tiny text. **Remove comparison** appears when an applied comparison is cleared (closes sheet, hides charts) — preserved.
 - **Compare-by chips** are larger (h-9 / ~36px, padded, clear selected state) and a long chip row scrolls horizontally; one selected metric's chart shows at a time.
 
 ### Comparison chart fixes (§11)
+
 - Narrower bars (≈24px) inside a wider 54px cell; **2-line wrapping labels** (`Narayan Sarovar` instead of `Naray…`); responsive spacing (1–4 spread · 5–8 balanced · 9+ scroll); only the chart strip scrolls. Unit consistency preserved (count→count, %→%, visits→decimal, score→score, hours→hrs) — `KpiCompareSection` passes the metric/KPI unit through; added a `noSort` option so the GSQAC School·District·State comparison keeps its labelled order.
 
 ### Student Retention / Re-enrolment (§15,16)
+
 - `ret_reenroll` ("Re-enrolment of Out-of-School Students") now displays **Daily · 1st Oct** on the KPI card and the detail page — never "Half-yearly" / "Jun 2026" / "11 Jun". `ret_dropout` shows **1st Oct** too. Implemented as a DISPLAY override (`displayFrequency` + a retention branch in `getLastUpdatedLabel`); KPI IDs/formulas/trend untouched.
 - `studentRetentionVisible()` gating helper (real rule: visible Oct 1 → academic-year end), wired into `DomainView`'s sub-domain list; a documented demo override keeps retention visible so the "Daily · 1st Oct" cards are showcased.
 
 ### GSQAC / School Quality redesign (§13,14,17)
+
 - New self-contained demo dataset `config/gsqac.ts` (does NOT touch the provider/engine or the real `sq_*` KPIs): overall **68.1% · 680.7/1000**, 5 GSQAC areas with marks + sub-domains + indicator lists + School/District/State comparison — exact brief values.
 - The **School Quality** domain page now shows an overall GSQAC score card + **5 area score cards** (score % · official grade badge · sub-domain count), not operational KPI cards. New route **`/app/gsqac/:areaKey`** drills into an area: headline (score · grade · marks) + School·District·State comparison + **sub-domain score cards** that expand to their **indicator list** (scores, no trend). Official GSQAC grade bands (A5★…D) reused.
 
@@ -129,6 +151,7 @@ Large multi-area design implementation. **Design URL was unavailable** — `http
 **Adversarial review:** a 6-agent code-review workflow ran 59 checks across the six areas (header 10/0 · charts 9/0 · GSQAC 10/0 · cards 6/1 · compare 12/3 · retention 6/2). Fixes applied from it: `displayFrequency` now also used in `MultiMetricKpiCard` + the domain-hero meta line (future-proofs the Daily·1st Oct override); Compare-by chips bumped to 40px; dead `CompareHint` component + unused `compare.hint` i18n string removed. Two suggestions were intentionally not taken: adding `childEntities` to the CompareContext effect deps (would reset the selection on every render — current `[currentId]` is correct since children are derived from the scope), and the raf-cleanup micro-race (pre-existing, focus on an unmounted node is a no-op).
 
 **Unavoidable deviations:**
+
 - Design file 404 → implemented from the written brief (which is more detailed than a mock) + provided SVGs + prior bundle.
 - Per "do not run Playwright", verification is by build + an adversarial code-review workflow, not browser screenshots.
 - GSQAC drilldown uses the brief's self-contained dummy dataset (overall 68.1%) so the home School-Quality card's real `sq_*` value and the GSQAC drilldown overall can differ — intended, as the brief specifies the dummy GSQAC figures for the drilldown.
@@ -141,14 +164,16 @@ Large multi-area design implementation. **Design URL was unavailable** — `http
 Fixed the uneven KPI-card layout on the domain / sub-domain listing pages. The old `PageGrid` (CSS grid, 1/2/3 columns, `items-start`) left awkward gaps and an uneven rhythm because cards of different metric counts (and the taller Compare-applied cards) flowed into fixed grid rows. Replaced it with a balanced two-column flex layout that distributes cards by estimated height.
 
 ### Balanced grid implementation
+
 - New reusable `src/components/ui/BalancedKpiGrid.tsx`:
   - `getKpiCardLayoutWeight(kpi, compareApplied)` — height estimate: 1 metric = 1, 2 = 2, 3+ = 3; `+2` when Compare is applied (every card grows an embedded chart).
   - `splitIntoBalancedColumns(items, weightOf)` — greedy split: the first (hero) KPI is pinned top-left, then each remaining card drops into the **currently shorter** column.
   - `BalancedKpiGrid` — renders **one column on mobile** (`< md`, original logical order, natural scroll) and **two flex columns on desktop/tablet** (`>= md`, `flex flex-col gap-3` each, NOT grid rows).
-- Cards keep their natural, content-aware height — the grid only decides *which* column each card lands in. No `auto-rows-fr`, no `items-stretch`, no fixed large min-height. The existing per-tier `min-h` (compact/medium/tall by metric count) is unchanged.
+- Cards keep their natural, content-aware height — the grid only decides _which_ column each card lands in. No `auto-rows-fr`, no `items-stretch`, no fixed large min-height. The existing per-tier `min-h` (compact/medium/tall by metric count) is unchanged.
 
 ### Behaviour
-- **Desktop two-column balancing:** greedy by weight, hero pinned first. On Attendance this yields exactly the brief's example — Left: *Students absent* · *Student attendance* · *Schools & Class Sections*; Right: *Teacher attendance* · *MDM*. On School Quality (6 KPIs) it yields a clean 3/3 split with the 2-metric CET & CGMS card balancing the singles.
+
+- **Desktop two-column balancing:** greedy by weight, hero pinned first. On Attendance this yields exactly the brief's example — Left: _Students absent_ · _Student attendance_ · _Schools & Class Sections_; Right: _Teacher attendance_ · _MDM_. On School Quality (6 KPIs) it yields a clean 3/3 split with the 2-metric CET & CGMS card balancing the singles.
 - **Mobile one-column:** cards render in original KPI order, no reordering.
 - **Compare applied:** weights bump `+2`, charts render inside cards, columns re-balance; only the chart strip scrolls — the page never scrolls horizontally.
 
@@ -167,12 +192,14 @@ Implemented the latest Claude Design output (`3UB6HIFoWB84PJ66UfWzcg`, `ui_kits/
 **Design URL implemented:** `https://api.anthropic.com/v1/design/h/3UB6HIFoWB84PJ66UfWzcg?open_file=ui_kits%2Fvsk-dashboard%2Findex.html`
 
 ### 1. Single-KPI value row no longer repeats the title
+
 - The single-metric value row used to repeat the full card title (`936 students absent from past 7+ consecutive days` directly under the same title). New `getSingleMetricValueSuffix(kpiId, lang)` in `lib/format.ts` returns a short suffix instead — **never the full title**.
 - `att_chronic` → `students absent` (`4.7K students absent`); `ret_dropout` → `dropout students` (both count KPIs, where a bare number is ambiguous). All other single cards return `""` and show just the bare value — `100%`, `1.7`, `66.8` — under their title.
 - `KpiInlineRow` now drops the value's trailing margin and the empty label span when the suffix is empty, so bare-value cards read cleanly. Multi-metric rows (`88.2% Present`, `100% Submitted`) are untouched; N+1 stays right-aligned.
 - Home **domain** cards are unaffected (their header is the domain name, not the KPI title, so the full inline sentence there is not a repeat).
 
 ### 2. Homepage top section hidden on domain / KPI pages
+
 - The big "homepage top section" (hierarchy selector + PM SHRI/All Schools + Language + Export) now renders **only on the scorecard** (`/app`). Driven by a route check in `AppShell` (`isHome = pathname === "/app"`). The block is unmounted (not hidden), so no blank space is left behind.
 - Domain / sub-domain / KPI / export pages keep only the slim identity bar (logo · user · logout), so they start cleanly with their own content (`← Scorecard` / `KPIS IN ATTENDANCE`, or `← Back` / KPI title / trend chart).
 - **Compare stays reachable on domain & sub-domain pages** (new `DomainCompareBar` — a slim right-aligned Compare pill) so the in-card "Tap Compare" hint still has a control. It renders nothing on the scorecard (Compare is in the full block there), on KPI detail, on export, or at a leaf scope — no leftover bar. This reconciles "hide the homepage top section" with "Compare must work on domain pages / be hidden only on `/app/kpi/*`".
@@ -196,12 +223,14 @@ Implemented the latest Claude Design output (`boETLkYBGUSZ5TNRlsRrHg`, `ui_kits/
 **Design URL implemented:** `https://api.anthropic.com/v1/design/h/boETLkYBGUSZ5TNRlsRrHg?open_file=ui_kits%2Fvsk-dashboard%2Findex.html`
 
 ### 1. Inline KPI row grammar (single + multi cards now align)
+
 - Replaced the uppercase **label-above-value** pattern (the design's explicit "bad" case — `PRESENT` / `88.2%`) with one shared inline row: **`{value} {metric/descriptor}`** left, **N+1 peer comparison** right-aligned. New `KpiInlineRow` in `kpiCardParts.tsx` is used by both single- and multi-metric cards so they share one grammar and align across the grid.
 - **Single-metric cards** read as a sentence — `4.7K students absent from past 7+ consecutive days`, `100% Students consuming Mid-day Meal (MDM)`, `1.7 No of CRC/URC Visits per school` — value large/bold, descriptor smaller inline (via the existing `formatKpiCardTitlePhrase`, which lower-cases the leading word for count KPIs). N+1 pinned to the row end.
 - **Multi-metric cards** — `88.2% Present` / `100% Submitted`, `93.4% Schools` / `95.6% Class sections`, `87.7% CET` / `84.9% CGMS` — same inline grammar, thin divider between rows, delta only where policy allows.
 - No `Parent avg`, no source on cards; chart units still match KPI units (count→count bars, %→% bars, visits→decimal bars). Heights stay content-aware (Pass 22).
 
 ### 2. Top action-row priority: Compare > Export > All Schools > Language
+
 - **Compare** is now the prominent action at all times: filled light-blue (`bg-primary-50`) with a brand border (`border-primary-500`), bar-chart icon, brand text — clearly stronger than the muted **All Schools** filter (it was previously a plain white pill until applied). Still toggles `Compare` ↔ `Compare · N`.
 - **Export** stays solid blue and now sits in the same action group.
 - **All Schools** (PM SHRI filter) stays a muted-grey secondary pill; **Language** stays a compact `EN | ગુ` toggle.
@@ -242,7 +271,7 @@ KPI cards are now content-aware: a single-metric card is compact instead of bein
 Fixed the embedded comparison chart so bars adapt to the selected unit count instead of crowding on the left with empty space on the right. All cards share one component (`ChildComparisonBars`), so the fix lands everywhere at once (home domain cards + KPI/Indicator cards, single- and multi-metric).
 
 - **Count-aware layout** in `ChildComparisonBars`: `1` → centred; `2–4` → `justify-between` (spread across the full chart width); `5–8` → `justify-around` (balanced, even margins); `9+` → fixed `gap-6` + horizontal scroll with the existing "scroll ›" hint. Bars keep a fixed slim width (40px, `shrink-0`) so they never stretch into blocks; `justify-*` distributes the extra space, with `gap-3` as a minimum so tight rows stay legible.
-- **No page overflow:** the bar row is always `overflow-x-auto`, so a row that doesn't fit scrolls *inside the card* — the page never scrolls horizontally (verified `documentElement.scrollWidth === clientWidth` at 375 px).
+- **No page overflow:** the bar row is always `overflow-x-auto`, so a row that doesn't fit scrolls _inside the card_ — the page never scrolls horizontally (verified `documentElement.scrollWidth === clientWidth` at 375 px).
 - Scroll threshold moved from 6 to 8 bars (the "scroll ›" hint now appears with the 9+ scroll tier).
 
 **Files changed:** `src/components/ui/ComparisonBars.tsx`.
@@ -277,15 +306,17 @@ Focused update on the existing design (no redesign). Eight targeted changes, all
 2. **`Change <level>` → `Select <level>`.** `hierarchy.change` i18n now "Select {level}" (en) / "{level} પસંદ કરો" (gu) — drives the mobile drill chip and the desktop "Select Block/Cluster/School/…" button.
 3. **Far-left `<` hierarchy-back button.** The mobile navigator pill already had it; added a matching leading `<` icon button on the desktop navigator. It steps up one level (`setScope(parent)`), removing the rightmost selected layer one at a time, and is hidden at the top of the user's scope. Verified: Block → click `<` → back to District; button then hidden.
 4. **Compare "Remove comparison".** When a comparison is applied and the user clears all units, the primary button switches from a disabled "Apply" to an enabled **"Remove comparison"** (`compare.remove`). Clicking it closes the sheet, sets `applied=false`, hides all card charts, and re-preselects all children for the next open (`CompareContext.remove`). If no comparison was ever applied, "Apply" stays disabled at zero selection. Verified end-to-end.
-5. **Inline value + descriptor on all domain cards.** `formatKpiCardTitlePhrase` now returns a descriptor for every unit (count lower-cases the leading word; others keep it), so every home domain card reads as one line: "208 students absent from past 7+ consecutive days", "80.6% SAT reports downloaded in classrooms", "1.7 No of CRC/URC Visits per school". School Quality keeps "62.4%  B" with the "GSQAC Score" eyebrow.
-6. **N+1 moved to the right on KPI listing rows.** `KpiMetricRow` (multi-metric) and the single-metric `KpiCard` now place the value on the left and the N+1 comparison (+ any allowed delta) right-aligned — "85.2%  …  Kachchh · 94%" — instead of stranding the peer in the middle. No "Parent avg", no source, no card graphs until Compare is applied.
+5. **Inline value + descriptor on all domain cards.** `formatKpiCardTitlePhrase` now returns a descriptor for every unit (count lower-cases the leading word; others keep it), so every home domain card reads as one line: "208 students absent from past 7+ consecutive days", "80.6% SAT reports downloaded in classrooms", "1.7 No of CRC/URC Visits per school". School Quality keeps "62.4% B" with the "GSQAC Score" eyebrow.
+6. **N+1 moved to the right on KPI listing rows.** `KpiMetricRow` (multi-metric) and the single-metric `KpiCard` now place the value on the left and the N+1 comparison (+ any allowed delta) right-aligned — "85.2% … Kachchh · 94%" — instead of stranding the peer in the middle. No "Parent avg", no source, no card graphs until Compare is applied.
 7. **Compare hint stays adaptive** ("Tap Compare to view {district/block/cluster/…}-wise chart") and **charts remain inside cards only** (no standalone bottom chart; only the chart strip scrolls; the page does not). Unchanged from Pass 18, re-verified.
 8. **Visual language preserved** — white rounded cards, soft shadows, grey-blue page, blue actions, RAG status colours. No new design language.
 
 ### Files changed
+
 `screens/ScorecardHome.tsx` (hide NA School Quality; drop heroName), `components/ui/DomainInsightCard.tsx` (always-inline InputHead), `lib/format.ts` (`formatKpiCardTitlePhrase` returns all units), `components/layout/HierarchyNavigator.tsx` (desktop `<` back button), `components/ui/kpiCardParts.tsx` (`KpiMetricRow` N+1 right), `components/ui/KpiCard.tsx` (value left / N+1 right), `components/compare/CompareContext.tsx` (`remove`), `components/compare/CompareSheet.tsx` (Remove-comparison button), `components/layout/AppShell.tsx` (wire `applied`/`onRemove`), `i18n/en.ts` + `i18n/gu.ts` (`hierarchy.change`→Select, `compare.remove`).
 
 ### Build & verification
+
 `npm run typecheck` clean · `npm run build` ✓ (only the pre-existing entities-seed chunk-size warning). Playwright: Teacher/Section (SQ hidden, inline values), DEO desktop (Select Block, inline cards, no `<` at top), Block (`<` back works, "Select Cluster", cluster-wise hint), Compare apply → clear all → "Remove comparison" → charts gone + cards compact, KPI listing N+1 right-aligned. No console errors; no horizontal page overflow (mobile action row wraps).
 
 ---
@@ -297,7 +328,7 @@ Focused update on the existing design (no redesign). Eight targeted changes, all
 ### Behaviour (matches the design)
 
 - **Compare is an action, not a page.** New `Compare` button in the top action row (`Compare` → `Compare · N` once applied; reopens the selector). Hidden at leaf scopes (nothing below to compare). No route, no nav entry.
-- **Charts hidden by default.** Every domain card (home) and KPI card (domain/sub-domain pages) shows a compact dashed hint *"Tap Compare to view {level}-wise chart"* instead of a chart — no reserved empty space.
+- **Charts hidden by default.** Every domain card (home) and KPI card (domain/sub-domain pages) shows a compact dashed hint _"Tap Compare to view {level}-wise chart"_ instead of a chart — no reserved empty space.
 - **Selection UI** (`CompareSheet`): a **bottom sheet on mobile, right-side drawer on desktop** (one CSS-responsive component, portaled to `<body>` past the header's backdrop-blur). Title "Compare {Level}s" + "Select units to show in the charts", search, "N of M selected" + Select all / Clear all, **all child units preselected on open**, Cancel + Apply (Apply disabled with nothing selected).
 - **Level-specific + resets on scope change** (`CompareContext`): applying compares the selected n-1 units; changing scope (drill up/down) resets the selection and re-preselects the new scope's children, so a District's block selection never leaks into a Block's clusters.
 - **After Apply** each card reveals an embedded bar chart of the selected units only, worst-first, RAG-coloured, value labels, abbreviated unit labels, tap-a-bar to drill. Chart strips scroll horizontally inside the card (a "scroll ›" hint appears beyond six bars); **the page never scrolls horizontally** (verified at 375 px after fixing an action-row overflow by letting it wrap on mobile).
@@ -317,7 +348,7 @@ New: `components/compare/CompareContext.tsx` (provider + `useCompare`), `compone
 
 ### Deviations from the design
 
-- **App bar** keeps the real `logo-vsk.png` + "Unified Portal" wording (the prototype used a GraduationCap stand-in because the logo wasn't in its upload).
+- **App bar** keeps the real `logo-vsk.png` + "Pocket VSK" wording (the prototype used a GraduationCap stand-in because the logo wasn't in its upload).
 - **PM SHRI** stays a 3-option Select (All / PM SHRI / Non-PM SHRI), not the prototype's 2-state toggle (preserves existing product logic).
 - **KPI cards keep the N+1 peer chip** ("Kachchh · 94%") which the prototype omitted — it is existing product context and not disallowed by the design.
 - **Honest empty data:** where a selected level genuinely lacks a KPI's data (e.g. Administration at grade level), the card shows "Not tracked at this level" rather than fabricating bars (the prototype's data was illustrative).
@@ -326,7 +357,7 @@ New: `components/compare/CompareContext.tsx` (provider + `useCompare`), `compone
 
 ## Design-handoff alignment — Claude Design `vsk-dashboard` kit (Pass 17)
 
-**Source:** a Claude Design handoff bundle (`swiftchat-design-system`, fetched from the design URL) whose `ui_kits/vsk-dashboard/index.html` is a recreation of *this app's* home, iterated against the same brief. Read the bundle README, the chat transcript, and the kit source (`dashboard.jsx`, `app.jsx`, `data.js`) per the README's instructions, then aligned the production home to the design's specific visual decisions. Pass 16 already delivered the structure (navigator, embedded charts, greeting, action row); this pass adopts the remaining visual differences. The bundle's app bar used a GraduationCap stand-in (no logo in the upload) — kept our real `logo-vsk.png`; kept our 3-option PM SHRI Select over the design's 2-state toggle (more functional). The bundle's illustrative "Admin areas / GSQAC domains" data was mapped onto our **real** sub-domain / GSQAC-domain scores, never invented.
+**Source:** a Claude Design handoff bundle (`swiftchat-design-system`, fetched from the design URL) whose `ui_kits/vsk-dashboard/index.html` is a recreation of _this app's_ home, iterated against the same brief. Read the bundle README, the chat transcript, and the kit source (`dashboard.jsx`, `app.jsx`, `data.js`) per the README's instructions, then aligned the production home to the design's specific visual decisions. Pass 16 already delivered the structure (navigator, embedded charts, greeting, action row); this pass adopts the remaining visual differences. The bundle's app bar used a GraduationCap stand-in (no logo in the upload) — kept our real `logo-vsk.png`; kept our 3-option PM SHRI Select over the design's 2-state toggle (more functional). The bundle's illustrative "Admin areas / GSQAC domains" data was mapped onto our **real** sub-domain / GSQAC-domain scores, never invented.
 
 ### Aspects implemented
 
@@ -462,7 +493,7 @@ All four domain pages (`/domain/attendance`, `assessment`, `administration`, `sc
 ### 7. KPI detail pages
 
 - Source on detail only; trend charts kept; every chart titled (`AVG SCORE · YEARLY TREND`, `% BELOW DISTRICT AVERAGE · YEARLY TREND`, `30-day trend: …`).
-- `/kpi/att_chronic` "How it's calculated" is now exactly: *"Counts students who have been absent for 7 or more consecutive school days as of the selected date."* — the "Shown as an absolute count (summed up the hierarchy); the supporting rate = …" sentence is gone (also scrubbed from `ret_dropout` and `sq_gsqac` copy).
+- `/kpi/att_chronic` "How it's calculated" is now exactly: _"Counts students who have been absent for 7 or more consecutive school days as of the selected date."_ — the "Shown as an absolute count (summed up the hierarchy); the supporting rate = …" sentence is gone (also scrubbed from `ret_dropout` and `sq_gsqac` copy).
 - No comparison overlays in single-metric charts; the only multi-line chart is the intentional GSQAC sq_d5.
 
 ### 8. GSQAC
@@ -559,6 +590,7 @@ Three targeted GSQAC tweaks:
 **Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
 
 **Manual QA:**
+
 - [ ] `/kpi/sq_gsqac` shows no "Sub-domain breakdown" card (trend + formula only)
 - [ ] `/kpi/sq_d1`…`sq_d4` still show their sub-domain breakdown
 - [ ] School Quality page: "CET & CGMS (State Exams)" card shows two rows (CET, CGMS)
@@ -577,11 +609,11 @@ Three targeted GSQAC tweaks:
 
 Every sheet row whose Formula/Logic defines ≥2 formulas is now a single multi-metric indicator (`metrics: KpiMetricDef[]`), rendered as a `MultiMetricKpiCard` (one row per metric) and one trend chart per metric on the detail page.
 
-| Indicator | id | Metrics (unit, direction) |
-|---|---|---|
-| Teacher attendance | `att_teacher` | Present (%, ↑) · Submitted (%, ↑) |
-| Student attendance | `att_student` | Present (%, ↑) · Submitted (%, ↑) |
-| Schools and Class Sections Submitting Attendance | `att_report` | Schools (%, ↑) · Class sections (%, ↑) — already multi-metric; class-sections formula corrected to "… / Total Classrooms × 100" per sheet |
+| Indicator                                        | id            | Metrics (unit, direction)                                                                                                                 |
+| ------------------------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Teacher attendance                               | `att_teacher` | Present (%, ↑) · Submitted (%, ↑)                                                                                                         |
+| Student attendance                               | `att_student` | Present (%, ↑) · Submitted (%, ↑)                                                                                                         |
+| Schools and Class Sections Submitting Attendance | `att_report`  | Schools (%, ↑) · Class sections (%, ↑) — already multi-metric; class-sections formula corrected to "… / Total Classrooms × 100" per sheet |
 
 - New `METRIC_PUBLISHED` anchors: `att_teacher__present` (= parent), `att_teacher__submitted`, `att_student__present` (= parent), `att_student__submitted` (incl. `section` level). Each resolves its own value, N+1 peer, benchmark, trend and delta through the existing `metricKpiDef → getValueSeries → valueAt` machinery — no UI hardcoding.
 - Formula text per metric, cleaned per sheet (e.g. `Present: Teachers Present / Total Teachers × 100`, `Submitted: Teachers Submitted / Total Teachers × 100`).
@@ -592,19 +624,19 @@ Every sheet row whose Formula/Logic defines ≥2 formulas is now a single multi-
 
 All five already multi-metric; metrics confirmed to match the latest sheet:
 
-| Indicator | Metrics |
-|---|---|
-| SAT1 / SAT2 (`asm_sat1`/`asm_sat2`) | Avg score · Below `<hierarchy>` avg · Participation |
-| FLN-ORF (`asm_orf`) | CWPM score · Below `<hierarchy>` avg · Participation |
-| CET (`asm_cet`) | Result · Participation (Class-5 present / enrolled) |
-| CGMS (`asm_cgms`) | Result · Participation (Class-8 present / enrolled) |
+| Indicator                           | Metrics                                              |
+| ----------------------------------- | ---------------------------------------------------- |
+| SAT1 / SAT2 (`asm_sat1`/`asm_sat2`) | Avg score · Below `<hierarchy>` avg · Participation  |
+| FLN-ORF (`asm_orf`)                 | CWPM score · Below `<hierarchy>` avg · Participation |
+| CET (`asm_cet`)                     | Result · Participation (Class-5 present / enrolled)  |
+| CGMS (`asm_cgms`)                   | Result · Participation (Class-8 present / enrolled)  |
 
 ORF source kept as display alias "Oral Reading Fluency (ORF) Bot" (sheet: `ORFBot`); CET "Common Entrance Test (CET) Portal" (sheet: `CET Portal`); CGMS "CGMS Portal". No metric changes needed.
 
 ### 3. Administration multi-metric fix
 
-| Indicator | id | Metrics |
-|---|---|---|
+| Indicator                    | id          | Metrics                                                              |
+| ---------------------------- | ----------- | -------------------------------------------------------------------- |
 | Average CPD Time Per Teacher | `cpd_hours` | **Average CPD time** (hours, ↑) · **Teachers engaged in CPD** (%, ↑) |
 
 - Mixed-unit multi-metric: the hours metric renders `42.5 hrs`, the % metric `78.4%` via `formatValue(value, metric.unit)`.
@@ -620,13 +652,13 @@ ORF source kept as display alias "Oral Reading Fluency (ORF) Bot" (sheet: `ORFBo
 
 **5 domains** renamed to the report's wording (catalog `sq_d1…sq_d5` + `GSQAC_DOMAINS`):
 
-| key | Name (was → now) |
-|---|---|
-| D1 | Learning & Teaching → **Teaching and Learning** |
-| D2 | School Administration (unchanged) |
-| D3 | Co-curricular Activities → **Co-scholastic Activities** |
-| D4 | Resources & their Use → **Usage of Resources** |
-| D5 | Participation in Scholarships → **CET & CGMS (State Exams)** |
+| key | Name (was → now)                                             |
+| --- | ------------------------------------------------------------ |
+| D1  | Learning & Teaching → **Teaching and Learning**              |
+| D2  | School Administration (unchanged)                            |
+| D3  | Co-curricular Activities → **Co-scholastic Activities**      |
+| D4  | Resources & their Use → **Usage of Resources**               |
+| D5  | Participation in Scholarships → **CET & CGMS (State Exams)** |
 
 > D5 rename aligns the label with the seed data: `entity.meta.gsqac.domains.D5` ≈ 0.468 (= report's CET & CGMS domain 46%), confirming D5 was always the State-Exams domain, mislabelled.
 
@@ -635,15 +667,15 @@ ORF source kept as display alias "Oral Reading Fluency (ORF) Bot" (sheet: `ORFBo
 **Official grade bands** — `GSQAC_BANDS` replaced with the report footer's official scale:
 
 | Band | min ≥ | group |
-|---|---|---|
-| A5★ | 95 | A |
-| A4★ | 90 | A |
-| A3★ | 85 | A |
-| A2★ | 80 | A |
-| A1★ | 75 | A |
-| B | 50 | B |
-| C | 25 | C |
-| D | 0 | D |
+| ---- | ----- | ----- |
+| A5★  | 95    | A     |
+| A4★  | 90    | A     |
+| A3★  | 85    | A     |
+| A2★  | 80    | A     |
+| A1★  | 75    | A     |
+| B    | 50    | B     |
+| C    | 25    | C     |
+| D    | 0     | D     |
 
 `gradeGroupOf` keys off the first character, so all `A#★` → group A (green), B → amber, C → red, D → black; `RatingBadge`/colors/Export pick up the new labels automatically. 68.1% → B (matches the report).
 
@@ -759,11 +791,11 @@ Comprehensive cleanup pass covering: KPI name renames, removal of metric-type la
 
 ### 1. KPI renames
 
-| ID | Old name | New name |
-|---|---|---|
+| ID            | Old name                          | New name                                          |
+| ------------- | --------------------------------- | ------------------------------------------------- |
 | `att_chronic` | Students absent from past 7+ days | **Students absent from past 7+ consecutive days** |
-| `att_teacher` | Teachers present today | **Teacher attendance** |
-| `att_student` | Students present today | **Student attendance** |
+| `att_teacher` | Teachers present today            | **Teacher attendance**                            |
+| `att_student` | Students present today            | **Student attendance**                            |
 
 - `kpiCatalog.ts`: updated `name` and `name_gu` for all three.
 - `gu.ts`: updated `principal.chronicAbs` to include "સળંગ" (consecutive).
@@ -777,6 +809,7 @@ Removed `RATE / COUNT / SCORE / LATEST` labels that appeared above the headline 
 Also removed the inline "as on {date}" label from the card body — the date context now lives exclusively in the header frequency chip row (`Daily · 10 Jun`, `Monthly · Jun 2026`, etc.), which is the single authoritative period label.
 
 **File:** `src/components/ui/KpiCard.tsx`
+
 - Removed `headlineLabelKey()` function
 - Removed the `<span>` rendering the unit label
 - Removed `asOnLabel` variable; the header always receives `lastUpdated` as the context
@@ -787,6 +820,7 @@ Also removed the inline "as on {date}" label from the card body — the date con
 The "PARENT AVG" uppercase label that appeared above the parent entity comparison value has been removed. The peer value (e.g. "Kachchh · 91%") is self-explanatory — the entity name makes the context clear without a label.
 
 **Files affected:** `src/components/ui/KpiCard.tsx`
+
 - Changed footer from `<KpiContextTile label={t("kpi.parentAvgLabel")} ...>` to a plain `<span>` showing `peerStr` directly.
 - Source still shows with its "SOURCE" label (unchanged).
 - Multi-metric cards already had no "Parent avg" label (metric rows inline via `KpiMetricRow`).
@@ -798,6 +832,7 @@ The "PARENT AVG" uppercase label that appeared above the parent entity compariso
 The large `<Card>` that wrapped the entire header section (domain breadcrumb + h1 + frequency + value + cascade + delta) has been replaced with a compact borderless `<div>`. The page now starts with a plain header instead of a card-framed hero block.
 
 New layout:
+
 ```
 ← Back
 [Domain breadcrumb]
@@ -810,6 +845,7 @@ KPI title (h1)
 ```
 
 **File:** `src/screens/KpiDetail.tsx`
+
 - Removed `<Card className="card-pad">` wrapping the header block
 - Replaced with `<div className="pb-2">` — no border, no background
 - Value, N+1 comparison, and delta pill remain visible inline
@@ -817,14 +853,17 @@ KPI title (h1)
 ### 5. KPI detail graph titles include KPI name
 
 Single-metric charts now show the KPI name in the chart title:
+
 - Before: `"30-day trend"` / `"Monthly trend"` / `"Yearly trend"`
 - After: `"30-day trend: Teacher attendance"` / `"Monthly trend: No of CRC/URC Visits per school"`
 
 Multi-metric charts resolve the metric label and show cadence:
+
 - `"Below block avg · Recent cycles"` (was `"Below hierarchy avg · Recent cycles"`)
 - `"Avg score · Recent cycles"`
 
 **File:** `src/screens/KpiDetail.tsx`
+
 - Single-metric: `<SectionLabel>{t(trendTitleKey(trend.cadence))}: {name}</SectionLabel>`
 - Multi-metric `MetricTrendCard`: now receives `level: Level` prop, uses `resolveMetricLabel` for the title
 
@@ -833,6 +872,7 @@ Multi-metric charts resolve the metric label and show cadence:
 The literal word "hierarchy" no longer appears in the UI. A new helper `resolveMetricLabel(name, name_gu, level, lang)` replaces "hierarchy" with the current scope level.
 
 Examples at different levels:
+
 - State view → **Below state avg**
 - District view → **Below district avg**
 - Block view → **Below block avg**
@@ -840,10 +880,12 @@ Examples at different levels:
 - School view → **Below school avg**
 
 **File:** `src/lib/format.ts`
+
 - Added `resolveMetricLabel(name, name_gu, level, lang)` with `LEVEL_NAME_EN` and `LEVEL_NAME_GU` maps.
 - Gujarati: replaces "સ્તર" (generic "level") with the specific level name (e.g. "બ્લોક", "ક્લસ્ટર").
 
 **Usage sites updated:**
+
 - `src/components/ui/MultiMetricKpiCard.tsx` — `MetricRow` label
 - `src/screens/KpiDetail.tsx` — `MetricSummary` label, `MetricTrendCard` title, formula `<dt>` labels
 
@@ -851,18 +893,20 @@ Examples at different levels:
 
 `att_report` ("Schools and Class Sections Submitting Attendance") is now a multi-metric indicator matching its name. Two metrics:
 
-| Metric id | Label | Formula |
-|---|---|---|
-| `schools` | Schools | Schools That Filled Attendance / Total Schools × 100 |
+| Metric id       | Label          | Formula                                                            |
+| --------------- | -------------- | ------------------------------------------------------------------ |
+| `schools`       | Schools        | Schools That Filled Attendance / Total Schools × 100               |
 | `classSections` | Class sections | Class Sections That Filled Attendance / Total Class Sections × 100 |
 
 **File:** `src/config/kpiCatalog.ts`
+
 - Added `metrics: [...]` to the `att_report` RAW entry
 - Added `METRIC_PUBLISHED` anchors: `att_report__schools` (= parent anchor) and `att_report__classSections`
 
 > **Assumption / Needs Verification:** The class sections formula is inferred from the KPI name. Verify against `GJ _ Unified App KPIs(11).xlsx` before considering production-ready.
 
 Other Attendance/Admin indicators audited for multi-metric:
+
 - `vis_crc_count`: ratio/count — single metric (count of visits per school), no secondary metric in formula. Kept single.
 - `ret_dropout`: count — absolute count only, kept single.
 - `ret_reenroll`: % — single metric, kept single.
@@ -1024,33 +1068,40 @@ Multi-metric cards (SAT1/SAT2/ORF) were taller than dual-metric (CET/CGMS) and s
 **Sheet version used:** `Docs/GJ _ Unified App KPIs.xlsx` (the re-uploaded `GJ _ Unified App KPIs(10).xlsx`, Sheet1, 28 indicators across Attendance / Assessment / Administration / School Quality). Re-parsed columns: `Indicator`, `Data Source`, `Formula/Logic`, `Delta`, `Visible to School (HM)/Teacher`, **`Show Last Updated on UI`**.
 
 ### 1 · School Quality eyebrow → `GSQAC Score`
+
 [GsqacSummaryCard.tsx](app/src/components/ui/GsqacSummaryCard.tsx): the homepage School Quality card eyebrow changed from `OUTPUT · ANNUAL` to **`GSQAC Score`** (new i18n key `scorecard.gsqacScore`, en + gu). The header now reads **School Quality / GSQAC Score**. GSQAC score, grade, N+1, D1–D5, grade colours and routing are untouched.
 
 ### 2 · `SAT reports downloaded in classrooms` → `as on <date>` (no delta)
+
 The sheet's Delta column is blank for this row, so it now shows **`as on 9 Jun`** (variable working date, never hardcoded) instead of `↘ 0.2 today`. Driven by a config flag `suppressDelta` on `asm_remediation` (not an ID check in the UI). Applied to: homepage Assessment domain card ([DomainSummaryCard.tsx](app/src/components/ui/DomainSummaryCard.tsx)), Assessment domain page card ([KpiCard.tsx](app/src/components/ui/KpiCard.tsx)), KPI detail header ([KpiDetail.tsx](app/src/screens/KpiDetail.tsx) — delta pill hidden, "As on 9 Jun" kept), and the Export indicator/summary delta cells ([Export.tsx](app/src/screens/Export.tsx)). Value + N+1 are preserved; value tone goes neutral (no hidden-delta colouring).
 
 ### 3 · `Show Last Updated on UI` column drives the date/month/year label
+
 New shared helper [`getLastUpdatedLabel(kpi, date, lang)`](app/src/lib/trend.ts) maps cadence → label: **Daily → `9 Jun`** (working date) · **Monthly → `Jun 2026`** · **SAT1/SAT2 (scheduleNote) → `Sep 2025` / `Mar 2026`** · **Twice/Half-yearly → cycle month + year** · **Yearly/Annual → `2026`** · else → `Latest available`. The sheet flag `showLastUpdatedOnUi` (column H = Yes) gates whether the chip shows. Wired into `KpiCard`, `MultiMetricKpiCard`, and `KpiDetail` headers. No `Latest: 1 Jun` is shown anywhere (`kpi.latestOn` is unused).
 
 ### 4–7 · Multi-metric indicator cards (SAT1 / SAT2 + ORF / CET / CGMS)
+
 Indicators whose Formula/Logic carries 2–3 metrics now render as a single **[MultiMetricKpiCard](app/src/components/ui/MultiMetricKpiCard.tsx)** instead of separate top-level cards:
+
 - **Schema** ([types/index.ts](app/src/types/index.ts)): `KpiMetricDef { id, label, label_gu, unit, direction, formula }` + `KpiDef.metrics?`. Config-driven — `SAT1/SAT2` → `Avg score · Below hierarchy avg · Participation`; `ORF` → `CWPM score · Below hierarchy avg · Participation`; `CET/CGMS` → `Result · Participation`. Re-audited from the sheet (not hardcoded to SAT only).
 - **Data** ([kpiCatalog.ts](app/src/config/kpiCatalog.ts) `METRIC_PUBLISHED`, [mockProvider.ts](app/src/data/provider/mockProvider.ts)): each sub-metric has its own per-level anchor under `<parentId>__<metricId>` and flows through the **existing** value/benchmark/trend/PM-Shri machinery. No values hardcoded in UI components (§9/§12). [score.ts `metricKpiDef`](app/src/engine/score.ts) synthesises a single-value KpiDef per metric; [engine `getKpiMetricRecords`](app/src/engine/index.ts) + [`useKpiMetrics`](app/src/hooks/index.ts) expose them.
 - **Card layout**: title → `Yearly · Sep 2025` chip → a primary metric row (label · big value · N+1 · delta · one sparkline) → the secondary metrics in a compact 2-up grid (small type, own N+1, direction-aware delta, tiny micro-sparkline). Each metric shows **value + N+1 + delta + compact trend**; calm palette (status hue for the primary spark, muted slate for the micro-sparks) to avoid clutter/colour overload.
 - **Lower-is-better** (§8): `Below hierarchy avg` uses `direction: "lower"`, so a fall reads **green** and a rise **red** (shared `deltaToneClass`). `Students absent 7+ days`, `Identified Dropout Students` keep their existing lower-is-better logic.
 
 ### 8–10 · KPI detail for multi-metric indicators
+
 [KpiDetail.tsx](app/src/screens/KpiDetail.tsx): for SAT1/SAT2/ORF/CET/CGMS the page shows a **compact 3-up metric summary** at top, then **one trend chart per metric** (never a single chart that hides the others), then a clean **`How it's calculated`** breakdown listing each metric's plain-language formula (Avg % score / Below hierarchy avg / Participation). Frequency, source and last-updated stay visible. Single-metric detail pages are unchanged.
 
 ### KPI / domain name reconciliation (per the latest sheet)
+
 - `att_chronic` → **Students absent from past 7+ days** · `att_report` → **Schools and Class Sections Submitting Attendance** · `vis_ict` → **Schools using ICT Labs (%)** · `vis_library` → **Schools using Library (%)**.
-- GSQAC D1–D5 display names aligned to the canonical GSQAC model + sheet: **Learning & Teaching · School Administration · Co-curricular Activities · Resources & their Use · Participation in Scholarships** (catalog `sq_d*` + `GSQAC_DOMAINS`, en + gu). GSQAC scores, grade bands, D1–D5 *values* and colours unchanged.
+- GSQAC D1–D5 display names aligned to the canonical GSQAC model + sheet: **Learning & Teaching · School Administration · Co-curricular Activities · Resources & their Use · Participation in Scholarships** (catalog `sq_d*` + `GSQAC_DOMAINS`, en + gu). GSQAC scores, grade bands, D1–D5 _values_ and colours unchanged.
 
 **Files changed:** `types/index.ts`, `config/kpiCatalog.ts`, `lib/trend.ts`, `engine/score.ts`, `engine/index.ts`, `hooks/index.ts`, `components/ui/MultiMetricKpiCard.tsx` (new), `components/ui/KpiCard.tsx`, `components/ui/DomainSummaryCard.tsx`, `components/ui/GsqacSummaryCard.tsx`, `screens/KpiDetail.tsx`, `screens/DomainView.tsx`, `screens/Export.tsx`, `i18n/en.ts`, `i18n/gu.ts`, `QA_REPORT.md`.
 
 **Build:** `npm run build` passes (`tsc --noEmit` clean; only the pre-existing entities-seed chunk-size warning).
 
-**Assumptions:** (a) `Show Last Updated on UI` (Yes/No) gates *whether* to show the label; the cadence/`scheduleNote` decides the *format*. (b) SAT/ORF/CET/CGMS sub-metric demo numbers are deterministic anchors (avg = parent value; below-hierarchy ~20–34%; participation ~84–95%) since the live data lake isn't wired — kept config-driven so swapping in real values is a data change. (c) `metrics` was applied to every Assessment indicator that clearly carries multiple formulas, not only SAT1/SAT2 (§6). No changes to access control, routing, PM-Shri, login, Compare selection, Export structure (only labels/date-context), GSQAC score/grade/D1–D5 logic, provider architecture, or the homepage top-indicator split.
+**Assumptions:** (a) `Show Last Updated on UI` (Yes/No) gates _whether_ to show the label; the cadence/`scheduleNote` decides the _format_. (b) SAT/ORF/CET/CGMS sub-metric demo numbers are deterministic anchors (avg = parent value; below-hierarchy ~20–34%; participation ~84–95%) since the live data lake isn't wired — kept config-driven so swapping in real values is a data change. (c) `metrics` was applied to every Assessment indicator that clearly carries multiple formulas, not only SAT1/SAT2 (§6). No changes to access control, routing, PM-Shri, login, Compare selection, Export structure (only labels/date-context), GSQAC score/grade/D1–D5 logic, provider architecture, or the homepage top-indicator split.
 
 ---
 
@@ -1095,7 +1146,7 @@ Replaced the trend-point "Latest: 1 Jun" date on Daily indicators with **today's
 [Export.tsx](app/src/screens/Export.tsx) reworked into a cleaner government report card; nothing else (KPI/provider/other screens) touched.
 
 - **Week → date.** Removed all `Week {n}` copy. Page subtitle and the report-card header now read **"Generated on 9 Jun 2026"** via new [`formatDate(new Date(), lang)`](app/src/lib/format.ts) (localised digits + short month, gu-aware). `CURRENT_PERIOD`/`periodNo` no longer used. `export.generatedOn` → "Generated on".
-- **Header** realigned: real logo chip vertically centred with a bold entity title, muted `Level · Unified Portal · 4A` line, and the generated-date line; a small school-filter chip (All Schools / PM SHRI) on the right; divider below.
+- **Header** realigned: real logo chip vertically centred with a bold entity title, muted `Level · Pocket VSK · 4A` line, and the generated-date line; a small school-filter chip (All Schools / PM SHRI) on the right; divider below.
 - **Domain summary** is now **four compact cards** (one per domain) with a domain-accent left border + tinted icon chip: domain name · homepage-indicator label · big value · `{Level} avg {x}` · right-aligned **`FrequencyDelta`** (frequency-correct, direction-aware colour). Replaces the plain summary table.
 - **Indicator sections** get a tinted **accent section band** (domain colour + icon + a `{score} · {grade}` chip on the right). Columns: Indicator (+ inline freq) · Value · `{Level} avg` · Δ · Source. Numeric columns are `whitespace-nowrap` (no awkward wrapping); the Δ column renders the shared `FrequencyDelta` (icon + colour, lower-is-better KPIs flip green/red); source is light/compact and may wrap.
 - **D1–D5** rendered as clean labelled cards (`D1 Teaching & Learning … 71%` + thin bar); the noisy **"GSQAC: x / y schools measured"** coverage line is **removed**.
@@ -1109,6 +1160,7 @@ Replaced the trend-point "Latest: 1 Jun" date on Daily indicators with **today's
 ## Dynamic login flow (no tabs; ID length decides the surface)
 
 [Login.tsx](app/src/screens/Login.tsx) rebuilt: removed the Teacher/Principal | Officer tab toggle. The user enters **one User ID** first; the digit count reveals the right second field:
+
 - **8 digits → Teacher / Principal** → 11-digit **School ID** field (helper "Teacher / Principal login requires your 11-digit School ID.").
 - **2 / 4 / 6 / 10 digits → Officer** → 4-digit **PIN** field (helper "Officer login requires a 4-digit PIN.").
 - **1 / 3 / 5 / 7 / 9 digits** → no second field; after blur a subtle helper "Enter a valid 2, 4, 6, 8, or 10 digit ID."
@@ -1132,6 +1184,7 @@ A small muted pill ("Teacher / Principal" or "Officer login") appears once the I
 ## Homepage School Quality card → domain-card delta style
 
 [GsqacSummaryCard](app/src/components/ui/GsqacSummaryCard.tsx) (homepage School Quality / GSQAC card) now matches the regular domain cards:
+
 - **Removed the coverage line** ("GSQAC: x / y schools measured") — the `coverage` prop was dropped from the component and the `gsqacCoverage` derivation removed from [ScorecardHome](app/src/screens/ScorecardHome.tsx). (The coverage data/helper is untouched and still used in the Export GSQAC detail section.)
 - **Replaced "vs last cycle: +1.4%"** with the shared right-side **`FrequencyDelta`** on the score row — same icon/size/weight/colour as Attendance/Assessment/Administration cards. GSQAC is annual, so it reads **"↗ 1.4 this year"** (cadence `yearly`); positive = green, negative = red.
 - Score, official grade badge, and the N+1 line (`{parent} · {score}`, hidden at State) are unchanged. GSQAC score/grade/colour/D1–D5/detail-page/route logic untouched.
@@ -1144,9 +1197,10 @@ Final homepage card: title · OUTPUT · ANNUAL · score · grade badge · N+1 ·
 
 ## 3A re-audit vs latest sheet (`GJ _ Unified App KPIs(8).xlsx`) — GSQAC untouched
 
-Re-parsed the latest sheet (re-uploaded over `GJ _ Unified App KPIs.xlsx`, modified today). It added a **Delta** column and shifted columns; only **Attendance / Assessment / Administration** were updated. **School Quality / GSQAC (sq_*, D1–D5, grade colours, GsqacSummaryCard) was not touched.**
+Re-parsed the latest sheet (re-uploaded over `GJ _ Unified App KPIs.xlsx`, modified today). It added a **Delta** column and shifted columns; only **Attendance / Assessment / Administration** were updated. **School Quality / GSQAC (sq\_\*, D1–D5, grade colours, GsqacSummaryCard) was not touched.**
 
 **Names + data sources + frequency (catalog [kpiCatalog.ts](app/src/config/kpiCatalog.ts), all per sheet):**
+
 - Attendance (src "Attendance bot", Daily): Students absent from past 7+ consecutive days (HP) · Teachers present today · Students present today · Students consuming Mid-day Meal (MDM) · Schools submitting Attendance.
 - Assessment: SAT reports downloaded in classrooms (HP, src "Gyan Prabhav bot", **now Daily**) · Semester Assessment Test 1 (SAT1) · SAT2 (src "Xamta bot", **Yearly**) · **FLN - Oral Reading Fluency** (src "Oral Reading Fluency (ORF) Bot", Monthly) · **Common Entrance Test (CET)** (Yearly) · **Chief Minister Gyan Sadhna Merit Scholarship (CGMS)** (Yearly). The old ORF/CET/CGMS participation+improvement pairs were **collapsed to one each** (ids `asm_orf`/`asm_cet`/`asm_cgms`); `asm_below` ("Students below avg") and `Assessment result %` are **removed** (not in sheet).
 - Administration (sub-domains now School Observation · **Classroom Observation** (new) · Student Retention · CPD): renamed all to sheet wording — No of CRC/URC Visits per school (HP), School observations completed by CRC/URC, ICT Lab Usage in Schools, Library/Urinals & Toilets/Handwash/Drinking Water/SMC, Schools Visited for Classroom Observation, Classrooms following monthly lesson plans, Classrooms with Completed Teacher Diaries, **Identified Dropout Students**, Re-enrolment of Out-of-School Students, **Average CPD Time Per Teacher**, Teachers Achieving the 50-Hour CPD Target. Sources updated to SMA / CTS + EWS / PLC.
@@ -1221,7 +1275,7 @@ Per the latest `GJ _ Unified App KPIs.xlsx` (Assessment focus area), "Assessment
 1. **Rename** — `att_chronic` → **"Students absent from past 7+ consecutive days"** (en + gu) in [kpiCatalog.ts](app/src/config/kpiCatalog.ts); same id/direction (lower-is-better). Flows everywhere via `kpi.name`; the dead `principal.chronicAbs` legacy string updated too. No old variants remain (grep-clean).
 2. **Absolute-count semantics** — the value is already anchored to the published per-level **count** (`PUBLISHED.att_chronic` = section 4 → school 18 → cluster 62 → block 215 → district 790 → state 4100), shown via `formatValue(count)` — never a percentage or per-school average.
 3. **N+1 = absolute parent count** — KPI-detail N+1 now uses `peerAvg(att_chronic, level)` (the published parent-level count, e.g. cluster scope → "Lakhapat · 215"), matching the cards. Compare (`cmpVal`) now **exempts `att_chronic`** from the `schoolsImplied` per-school normalization (deliberate exception); all other count KPIs unchanged.
-4. **"How it's calculated"** — updated to absolute-count prose: *"Counts unique students absent for 7 or more consecutive school days as of the selected/latest date. ."* Description no longer mentions "rate"/"average per school".
+4. **"How it's calculated"** — updated to absolute-count prose: _"Counts unique students absent for 7 or more consecutive school days as of the selected/latest date. ."_ Description no longer mentions "rate"/"average per school".
 5. **Hierarchy comparison bar chart removed from ALL KPI detail pages** — deleted the "How {KPI} compares up the hierarchy" `ComparisonBars` card + the "Shown as average per school" subtitle from [KpiDetail.tsx](app/src/screens/KpiDetail.tsx) (cascade is still read only for the parent N+1 name). N+1 remains in the summary card + KPI cards only. `ComparisonBars` itself is untouched and still used by the Compare screen.
 6. **Trend charts kept** — the frequency-aware time-trend chart (30-day / monthly / half-yearly / yearly) is unchanged.
 
@@ -1268,23 +1322,26 @@ Catalog flags now: **4 `hero` + 2 `topIndicator`** (Teacher% completing 50 hours
 ## Latest KPI sheet re-audit (now has explicit "Home Page Indicator" column)
 
 Re-parsed the **latest** `GJ _ Unified App KPIs.xlsx` from scratch (treated as source of truth). New structure vs the version the prior pass saw:
-- New columns: **Focus Area** (col A) = app *domain*; **Home Page Indicator for any hierarchy** (col B) = the explicit homepage/hero indicator per focus area; **Domain** (col C) = app *sub-domain*.
+
+- New columns: **Focus Area** (col A) = app _domain_; **Home Page Indicator for any hierarchy** (col B) = the explicit homepage/hero indicator per focus area; **Domain** (col C) = app _sub-domain_.
 - The "Home Page Indicator" cells are green-filled and list exactly one per focus area.
 
 **Home Page Indicator column (authoritative homepage + hero mapping):**
 Attendance → Students absent from 7+ days · Assessment → SAT reports downloaded in classrooms · Administration → No of CRC/URC Visits per school · School Quality → GSQAC score.
 
-**Reconciliation result — the previous pass's 4-hero mapping is confirmed correct by the new explicit column.** (The green fills in the *Indicator* column on Reduction-in-dropout / Re-enrolment / Teacher%-50h are NOT in the Home-Page-Indicator column, so they stay non-hero per the column's authority.)
+**Reconciliation result — the previous pass's 4-hero mapping is confirmed correct by the new explicit column.** (The green fills in the _Indicator_ column on Reduction-in-dropout / Re-enrolment / Teacher%-50h are NOT in the Home-Page-Indicator column, so they stay non-hero per the column's authority.)
 
 **Mismatches found & fixed:**
+
 - `att_teacher` name **"Teacher attendance %" → "Teacher Attendance"** (sheet drops the %); `name_gu` "શિક્ષક હાજરી %" → "શિક્ષક હાજરી".
 - `att_student` name **"Student attendance %" → "Student Attendance"**; `name_gu` → "વિદ્યાર્થી હાજરી".
-- Administration sub-domain labels aligned to the sheet's *Domain* column: `adm_visits` **"Visits & Observations" → "School Observation"** (gu "શાળા નિરીક્ષણ"); `adm_retention` **"Retention" → "Student Retention"** (gu "વિદ્યાર્થી જાળવણી"). (`adm_cpd` kept the correctly-spelled "Continuous Professional Development".)
+- Administration sub-domain labels aligned to the sheet's _Domain_ column: `adm_visits` **"Visits & Observations" → "School Observation"** (gu "શાળા નિરીક્ષણ"); `adm_retention` **"Retention" → "Student Retention"** (gu "વિદ્યાર્થી જાળવણી"). (`adm_cpd` kept the correctly-spelled "Continuous Professional Development".)
 
 **Already correct (verified against the latest sheet, no change):**
+
 - Hero/homepage indicators (4, one per domain) — `hero: true` only on att_chronic, asm_remediation, vis_crc_count, sq_gsqac; homepage domain-card value = that hero indicator (config-driven via `kpi.hero`, no hardcoded domain→id map).
 - All other indicator display names (Students absent from 7+ days, SAT reports downloaded in classrooms, Assessment result %, Students below <hierarchy> avg, ORF/CET/CGMS participation+improvement, all School-Observation indicators, Reduction in dropout %, Re-enrolment of OoSC…, CPD hours, Teacher% completing 50 hours, GSQAC score).
-- GSQAC D1–D5 labels (Teaching & Learning · School Management · Co-curricular activities · Use of Resources · Exam Participation) — match the sheet's School-Quality *Domain* rows; en + gu.
+- GSQAC D1–D5 labels (Teaching & Learning · School Management · Co-curricular activities · Use of Resources · Exam Participation) — match the sheet's School-Quality _Domain_ rows; en + gu.
 - Teacher visibility — every row's "Visible to teacher" matches current `roleVisibility` (Teacher Attendance, CET/CGMS, all School-Observation rows, GSQAC = hidden; rest visible). No change.
 - Frequency (Daily / Twice-a-Year / Yearly / Monthly / Half-yearly), direction (Students-absent = lower-is-better; rest higher), domain mapping, PM-Shri applicability — all consistent.
 
@@ -1292,15 +1349,16 @@ Attendance → Students absent from 7+ days · Assessment → SAT reports downlo
 
 **Export / Compare** read names from the catalog, so the two renamed attendance indicators flow through automatically; export's domain summary still headlines each focus area's home-page indicator.
 
-**Files changed:** `kpiCatalog.ts` (att_teacher/att_student names), `frameworks.ts` (adm_visits/adm_retention sub-domain labels), `QA_REPORT.md`. **Build:** `npm run build` passes clean. **KPI sheet:** latest `GJ _ Unified App KPIs.xlsx` (with Focus Area + Home Page Indicator columns). **Remaining assumptions:** CRC/URC Visits is the Administration home-page indicator (no sub-domain in the sheet) but is kept inside the School-Observation sub-domain for the drill-down so it isn't an orphan; "Continous Professional Development (CPD)" kept as the correctly-spelled "Continuous Professional Development".
+**Files changed:** `kpiCatalog.ts` (att*teacher/att_student names), `frameworks.ts` (adm_visits/adm_retention sub-domain labels), `QA_REPORT.md`. **Build:** `npm run build` passes clean. **KPI sheet:** latest `GJ * Unified App KPIs.xlsx` (with Focus Area + Home Page Indicator columns). **Remaining assumptions:** CRC/URC Visits is the Administration home-page indicator (no sub-domain in the sheet) but is kept inside the School-Observation sub-domain for the drill-down so it isn't an orphan; "Continous Professional Development (CPD)" kept as the correctly-spelled "Continuous Professional Development".
 
 ---
 
 ## KPI sheet re-alignment · homepage hero = sheet's Home-Page indicator (one per domain)
 
-Re-parsed `GJ _ Unified App KPIs.xlsx` (now source of truth). The sheet has no "Home Page Indicator" column — the note *"Green coloured are Hero KPIs"* marks heroes by green Indicator-cell fill. Per the task this is narrowed to exactly one homepage/hero indicator per domain (the green cells also flag dropout/re-enrolment/Teacher%-50h, which the task explicitly demotes to normal).
+Re-parsed `GJ _ Unified App KPIs.xlsx` (now source of truth). The sheet has no "Home Page Indicator" column — the note _"Green coloured are Hero KPIs"_ marks heroes by green Indicator-cell fill. Per the task this is narrowed to exactly one homepage/hero indicator per domain (the green cells also flag dropout/re-enrolment/Teacher%-50h, which the task explicitly demotes to normal).
 
 **Hero indicators are now exactly four** (config-driven via `kpi.hero`, never a hardcoded list — [kpiCatalog.ts](app/src/config/kpiCatalog.ts) `HERO_KPIS = VSK_KPIS.filter(k => k.hero)`):
+
 - Attendance → **Students absent from 7+ days** (`att_chronic`)
 - Assessment → **SAT reports downloaded in classrooms** (`asm_remediation`)
 - Administration → **No of CRC/URC Visits per school** (`vis_crc_count`)
@@ -1320,7 +1378,7 @@ Re-parsed `GJ _ Unified App KPIs.xlsx` (now source of truth). The sheet has no "
 
 **Build** — `npm run build` (tsc + vite) passes clean. Playwright not run (per instructions).
 
-**Manual checks (code-level):** 4 `hero: true` in catalog (one per domain); homepage domain cards driven by hero record; hero strip shows the 4; `Teacher% completing 50 hours` not a hero, still present in Administration; renamed labels match sheet; Export uses hero-indicator summary; Compare/Export pull names from the catalog. **Known risks:** count-hero N+1 shows the parent's raw count (naturally larger); domain-card value is now an indicator (not the aggregate %) by design — the aggregate still drives the domain *page* header and Export detail.
+**Manual checks (code-level):** 4 `hero: true` in catalog (one per domain); homepage domain cards driven by hero record; hero strip shows the 4; `Teacher% completing 50 hours` not a hero, still present in Administration; renamed labels match sheet; Export uses hero-indicator summary; Compare/Export pull names from the catalog. **Known risks:** count-hero N+1 shows the parent's raw count (naturally larger); domain-card value is now an indicator (not the aggregate %) by design — the aggregate still drives the domain _page_ header and Export detail.
 
 ---
 
@@ -1336,7 +1394,7 @@ Five focused product/UI fixes, all composing the existing shared components (no 
 
 **4. Export reframed.** Removed the Input-Composite ring, grade hero, weightage/contribution columns and the "Input composite" total row. Domain summary is now **Domain · Value · {parent} avg (N+1) · Δ** across the 4A inputs + School Quality (output shows score · grade · vs-last-cycle). Header shows entity · level · framework · period · PM-Shri (if active). GSQAC D1–D5 bars kept under a dedicated "School Quality · D1–D5" detail section. Tables use the shared `ResponsiveDataTable`.
 
-**5. Compare selection fixed.** [CascadeComparison](app/src/screens/CascadeComparison.tsx): **Unit 1 is fixed to the user's own scope** (primary chip); Units 2–4 start empty with `Select a unit` placeholders. Selecting a unit **removes it from the other dropdowns** (no duplicates); a `Clear` row frees it again. Comparison bars render **only for selected units**; with just Unit 1 an empty state shows *"Select another unit to compare KPIs."* Access rules unchanged (pool = same-level peers + one-level-below subtree only; comparison units non-navigable).
+**5. Compare selection fixed.** [CascadeComparison](app/src/screens/CascadeComparison.tsx): **Unit 1 is fixed to the user's own scope** (primary chip); Units 2–4 start empty with `Select a unit` placeholders. Selecting a unit **removes it from the other dropdowns** (no duplicates); a `Clear` row frees it again. Comparison bars render **only for selected units**; with just Unit 1 an empty state shows _"Select another unit to compare KPIs."_ Access rules unchanged (pool = same-level peers + one-level-below subtree only; comparison units non-navigable).
 
 **Files touched** — components: `DomainSummaryCard`, `GsqacSummaryCard`; screens: `ScorecardHome`, `DomainView`, `Export`, `CascadeComparison`; i18n: `en.ts` + `gu.ts` (`compare.selectAnother`). `RatingRing` is now unused (left in place, tree-shaken).
 
@@ -1353,15 +1411,18 @@ Five focused product/UI fixes, all composing the existing shared components (no 
 Centralised the visual language so a change in one shared component now propagates across every view (the previous problem: each screen grew its own card/header/table markup).
 
 **New shared primitives**
+
 - Layout: [ScreenContainer](app/src/components/layout/ScreenContainer.tsx) (one page wrapper + entry animation), [PageHeader + BackLink](app/src/components/layout/PageHeader.tsx), [PageSection + PageGrid](app/src/components/layout/PageSection.tsx).
 - Metric grammar: [ValueDisplay](app/src/components/ui/ValueDisplay.tsx) (the one big-number treatment + colour discipline), [FrequencyDelta](app/src/components/ui/FrequencyDelta.tsx) (the one direction-aware, frequency-worded delta — inline + pill variants), [NPlusOneLine](app/src/components/ui/NPlusOneLine.tsx) (the one "{parent} · {score}" line), [EmptyState](app/src/components/ui/EmptyState.tsx).
 - Composite cards: [DomainSummaryCard](app/src/components/ui/DomainSummaryCard.tsx), [GsqacSummaryCard](app/src/components/ui/GsqacSummaryCard.tsx) (distinctive pink output surface + D1–D5 + grade badge, annual — no daily trend), [ResponsiveDataTable](app/src/components/ui/ResponsiveDataTable.tsx) (one table grammar).
 
 **Screens refactored to compose, not redefine**
+
 - [ScorecardHome](app/src/screens/ScorecardHome.tsx): domain cards → `DomainSummaryCard`; School Quality → `GsqacSummaryCard`; header → `PageHeader`; sections → `PageSection/PageGrid`. (Overall-score hero kept as the one allowed bespoke surface.)
 - [DomainView](app/src/screens/DomainView.tsx), [SubDomainView](app/src/screens/SubDomainView.tsx), [KpiDetail](app/src/screens/KpiDetail.tsx), [CascadeComparison](app/src/screens/CascadeComparison.tsx), [Leaderboard](app/src/screens/Leaderboard.tsx), [Export](app/src/screens/Export.tsx): all now use `ScreenContainer` + `BackLink`/`PageHeader` + `PageSection`; `KpiCard` (domain/sub-domain) and `KpiDetail` value/delta/N+1 go through the shared atoms; Export's two tables → `ResponsiveDataTable`.
 
 **Consistency outcomes**
+
 - **One metric card family** — `KpiCard`, `DomainSummaryCard`, hero tiles and the KPI-detail header all compose `ValueDisplay` + `FrequencyDelta` + `NPlusOneLine`; a change to any atom reflects on home, domain, sub-domain and detail at once.
 - **N+1 grammar** is a single component everywhere (`{parent} · {score}`, no "ahead/behind %"); hidden at State. Removed the dead `DomainBar` (the last "−X% behind" pattern).
 - **Direction-aware delta** everywhere (`FrequencyDelta`): a decline of a lower-is-better metric (chronic absentees ↘) is green; with frequency-correct wording (this week / month / cycle / time / year). Annual/half/twice-yearly KPIs keep their non-daily trend; GSQAC stays annual (no fake daily line).
@@ -1370,12 +1431,14 @@ Centralised the visual language so a change in one shared component now propagat
 - Docs: [README](app/README.md) reframed from the stale "5A / 29 KPIs" to the current **4A Input–Output** model; `package-lock.json` already in sync (no changes on `npm install`).
 
 **Verification** — `npm run build` clean (tsc + vite). QA scripts all green against the production build:
+
 - `roles-smoke` **6/6** (teacher · principal · crc · brc · deo · state — each scoped correctly, 0 errors)
 - `verify` **21/21** · `verify-access` **20/20** (tamper→clamp, compare scoped to same/one-below, peers non-navigable, PM-Shri rules intact)
 - `qa-sweep` **0 problems** — no horizontal overflow, no console errors across roles × screens × {320, 375, 768, 1440} × {EN, ગુ}.
 - Visual pass (desktop + 320 ગુ): Scorecard, Domain, KPI detail, Leaderboard, Export read as one family. Screenshots at repo root: `ds-kpidetail-desktop.png`, `ds-domain-desktop.png`, `ds-leaderboard-desktop.png`, `ds-export-desktop.png`, `ds-home-320-gu.png`.
 
 **Known risks / TODOs**
+
 - For **count** KPIs the N+1 shows the parent's raw count (e.g. chronic absentees "Kachchh · 790"), which is naturally larger because the parent aggregates more schools — faithful to "that KPI's score at the parent level" but worth a product decision (suppress for counts, or show a rate) — needs Sumit's call.
 - `MetricCard` was intentionally **not** collapsed into a single monolith: `KpiCard` (vertical) and the `HeroKpiStrip` tile (horizontal, full-name) are deliberately different layouts that now share the same atoms — propagation is achieved without a risky rewrite.
 - Access control remains **client-side only** (`isInScope`); production still needs server-side RLS (unchanged by this pass).
@@ -1448,7 +1511,8 @@ Single source of truth added in [lib/colors.ts](app/src/lib/colors.ts): `valueTo
 
 **2. School Quality card no longer an amber outlier** ([ScorecardHome.tsx](app/src/screens/ScorecardHome.tsx)). All four domain values now use one treatment (`valueToneClass`): good → green, watch (amber) → **neutral**, at-risk → red. So Attendance/Assessment/Administration stay green and **School Quality's "67%" is neutral** (verified `rgb(14,14,14)`), not amber — while the **GSQAC grade badge "B" keeps its official colour** (verified `rgb(176,126,0)`).
 
-**3. Value/delta colouring fixed app-wide — red only for *bad*** (direction-aware):
+**3. Value/delta colouring fixed app-wide — red only for _bad_** (direction-aware):
+
 - **Reduction in dropout % "+16.2%"** now renders **green** (verified `rgb(21,128,61)`) — higher-is-better, so a positive change is good, not red. Fixed on the hero card and the indicator detail.
 - **Chronic absentees** (lower-is-better): a decrease "−117" renders **green** (verified) — down is good; its value/dot are green when healthy.
 - **Re-enrolment / remediation / assessment** (higher-is-better): up = green, down = red.
@@ -1462,13 +1526,13 @@ Single source of truth added in [lib/colors.ts](app/src/lib/colors.ts): `valueTo
 
 Every indicator now carries a **frequency-appropriate trend graph** (on the cards and the detail) plus a **delta tag whose wording is derived from `frequency`** — never a weekly axis or a "Δ this week" tag for non-daily data. All driven from one engine ([lib/trend.ts](app/src/lib/trend.ts)), so cadence + tag are config, not per-card.
 
-| Frequency | Graph x-axis (verified) | Delta tag (verified) |
-|---|---|---|
-| **Daily** (Student attendance, Chronic absentees) | last 30 days — daily line (3 May…1 Jun) | **Δ this week** |
-| **Monthly** (CRC/URC visits, School observation, Data-Driven Remediation) | Jan…Jun (months); CRC plotted on a 0–2 axis | **Δ this month** |
-| **Twice a Year** (Assessment result/SAT, Students-below) | SAT1'23 · SAT2'23 · SAT1'24 · SAT2'24 · SAT1'25 · SAT2'25 | **Δ this cycle** |
-| **Half yearly** (Reduction in dropout, Re-enrolment) | Sept'23 · Mar'24 · Sept'24 · Mar'25 · Sept'25 · Mar'26 | **Δ this time** |
-| **Yearly** (GSQAC, CET, CGMS, ORF, CPD) | 2021 · 2022 · 2023 · 2024 · 2025 (+ GSQAC grade) | **Δ this year** |
+| Frequency                                                                 | Graph x-axis (verified)                                   | Delta tag (verified) |
+| ------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------- |
+| **Daily** (Student attendance, Chronic absentees)                         | last 30 days — daily line (3 May…1 Jun)                   | **Δ this week**      |
+| **Monthly** (CRC/URC visits, School observation, Data-Driven Remediation) | Jan…Jun (months); CRC plotted on a 0–2 axis               | **Δ this month**     |
+| **Twice a Year** (Assessment result/SAT, Students-below)                  | SAT1'23 · SAT2'23 · SAT1'24 · SAT2'24 · SAT1'25 · SAT2'25 | **Δ this cycle**     |
+| **Half yearly** (Reduction in dropout, Re-enrolment)                      | Sept'23 · Mar'24 · Sept'24 · Mar'25 · Sept'25 · Mar'26    | **Δ this time**      |
+| **Yearly** (GSQAC, CET, CGMS, ORF, CPD)                                   | 2021 · 2022 · 2023 · 2024 · 2025 (+ GSQAC grade)          | **Δ this year**      |
 
 - **History** is believable dummy data (gently trends, can dip), deterministic (seeded by kpi + entity), and **pinned to the real current value** at the latest point, so the headline number and the graph agree. The delta = current minus one tag-period back (≈7 days for daily, 1 point otherwise).
 - **Clarification applied:** annual / half-yearly indicators **now get a graph** (with yearly / half-year x-points) — consistent with the earlier "no fake weekly line for annual data" rule; GSQAC also keeps its **snapshot + grade**.
@@ -1485,6 +1549,7 @@ Every indicator now carries a **frequency-appropriate trend graph** (on the card
 Goal: every page readable in ~6 seconds, low cognitive load, consistent system. Verified with the production build + Playwright at **desktop · 375 · 320, EN + ગુ**. Screenshots: `audit-home-desktop.png`, `audit-home-375.png`, `audit-home-320.png`, `audit-home-375-gu.png`, `audit-kpi-monthly-desktop.png` (repo root).
 
 **B — Charts (were wrong, now correct)** ([TrendChart.tsx](app/src/components/ui/TrendChart.tsx)) — the chart type, x-axis period and data now agree, driven by Frequency:
+
 - **Monthly** indicators plot **month buckets with month x-labels (Nov…Jun)** — the previous "MONTHLY TREND" that showed `W16–W23` is fixed (verified: x = Nov,Dec,Jan,Feb,Mar,Apr,May,Jun).
 - **Daily** → a **30-day daily line** (8 anchors densified to 30 daily points with a tiny deterministic wobble) labelled by date (3 May…1 Jun).
 - **Annual / half / twice-a-year** are **not** line-charted — the Indicator Detail shows a snapshot + cycle delta (GSQAC = score + grade + vs-last-cycle, never a trend line).
@@ -1502,24 +1567,25 @@ Goal: every page readable in ~6 seconds, low cognitive load, consistent system. 
 
 ## OGM 3.0 — Officer Command Center (Pass 1 of phased build)
 
-Decision-first, government-officer-first upgrade built **exactly** on `Docs/OGM 3.0 - Indicators.csv` (definitive). Per the agreed scope: **Pass 1 = OGM-3.0 catalog + schema + frequency-aware cards + N+1 comparison + official GSQAC colours + data-lake/freshness states + Officer Command Center (page 1)**. Pass 2 (Domain drill-down, Indicator Detail page, School Profile drawer) is deferred. Confirmed defaults applied: *My decision-critical heroes*, *Phased — foundation first*, *Park all indicators not in OGM 3.0*. The engine stayed config-driven, so most of this was config + a thin component layer.
+Decision-first, government-officer-first upgrade built **exactly** on `Docs/OGM 3.0 - Indicators.csv` (definitive). Per the agreed scope: **Pass 1 = OGM-3.0 catalog + schema + frequency-aware cards + N+1 comparison + official GSQAC colours + data-lake/freshness states + Officer Command Center (page 1)**. Pass 2 (Domain drill-down, Indicator Detail page, School Profile drawer) is deferred. Confirmed defaults applied: _My decision-critical heroes_, _Phased — foundation first_, _Park all indicators not in OGM 3.0_. The engine stayed config-driven, so most of this was config + a thin component layer.
 
 ### What changed (Pass 1)
 
-| Area | Change |
-|---|---|
-| **Indicator catalog** ([kpiCatalog.ts](app/src/config/kpiCatalog.ts)) | Rebuilt to the OGM 3.0 set exactly: Attendance (5) · Assessment (12, incl. ORF/CET/CGMS participation+improvement, NAS, merit, classroom prep) · Administration → **CPD / Visits & Observations / Retention** · School Quality (GSQAC + 5 domains + vs-cycle). Each indicator carries `formula`, `data_source`, `frequency`, `availableInDataLake`, `displayStrategy`, `hero`, `pmShriApplicable`, `roleVisibility`, `lowestLevel`, `dataLagNote`. Everything **not** in OGM 3.0 is parked. |
-| **Schema** ([types/index.ts](app/src/types/index.ts)) | `KpiDef` extended with the OGM 3.0 metadata (mapped onto the existing shape, minimum churn); added `Frequency` / `DisplayStrategy` types; `Unit` gained `ratio`/`grade`. |
-| **Sub-domains** ([frameworks.ts](app/src/config/frameworks.ts)) | Administration's 7 → **3** (CPD · Visits & Observations · Retention), per the sheet. |
-| **Frequency-aware display** ([HeroKpiStrip.tsx](app/src/components/ui/HeroKpiStrip.tsx)) | Daily → 30-day **sparkline**; Twice-a-year / Half-yearly → **vs-last-cycle delta**; Monthly → **compliance %**; Yearly → **snapshot + GSQAC grade**; counts → **count + rate**; CRC visits → **x / 2** ratio. Never a fabricated daily trend for annual data. |
-| **N+1 comparison** ([lib/peer.ts](app/src/lib/peer.ts)) | Each level vs its **next level up** (School↔Cluster, Cluster↔Block …) shown as a signed gap ("State 73 · −5.3 behind"), not a rank, and not for raw counts. Replaces the static state baseline. State has no N+1 (correctly hidden). |
-| **Official GSQAC colours** ([lib/colors.ts](app/src/lib/colors.ts)) | Grade colours = GSQAC guidelines: **A green `#1B7F4B`, B yellow `#E0A400`, C red `#D33A2C`, D black `#2B2B2B`** (text darkened for AA where needed; verified computed: B = `rgb(176,126,0)` on `rgba(224,164,0,.14)`). Operational status (On Track / Watch / …) kept separate. |
-| **Data-state badges** ([DataBadges.tsx](app/src/components/ui/DataBadges.tsx)) | `FrequencyBadge` · `FreshnessBadge` (cadence-appropriate) · `SourceBadge`. (A "Demo data — not in data lake yet" badge was built then removed at the user's request.) |
-| **GSQAC domains** ([mockProvider.ts](app/src/data/provider/mockProvider.ts)) | `sq_d1..d5` now sourced from **real** `entity.meta.gsqac.domains`; output domain score pinned to `sq_gsqac` (D1–D5 are context, not re-averaged). |
-| **Officer Command Center** ([ScorecardHome.tsx](app/src/screens/ScorecardHome.tsx)) | Composite ring + "what changed" + biggest-opportunity callout, **Hero KPI strip** (6 decision-critical indicators, frequency-aware + N+1), 4A domain cards, School Quality (real GSQAC, D1–D5), and a **risk-first "Where to focus first" table** (units below you, worst composite first; reuses the child leaderboard, performant). |
-| **Mock realism** ([mockProvider.ts](app/src/data/provider/mockProvider.ts)) | `ratio`/`hours` get proportional spread; **context-delta %s (YoY / dropout) kept tight (~±2.4) and allowed to dip negative** — a real decline becomes a "needs attention" signal instead of being swamped by ±9 jitter. |
+| Area                                                                                     | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Indicator catalog** ([kpiCatalog.ts](app/src/config/kpiCatalog.ts))                    | Rebuilt to the OGM 3.0 set exactly: Attendance (5) · Assessment (12, incl. ORF/CET/CGMS participation+improvement, NAS, merit, classroom prep) · Administration → **CPD / Visits & Observations / Retention** · School Quality (GSQAC + 5 domains + vs-cycle). Each indicator carries `formula`, `data_source`, `frequency`, `availableInDataLake`, `displayStrategy`, `hero`, `pmShriApplicable`, `roleVisibility`, `lowestLevel`, `dataLagNote`. Everything **not** in OGM 3.0 is parked. |
+| **Schema** ([types/index.ts](app/src/types/index.ts))                                    | `KpiDef` extended with the OGM 3.0 metadata (mapped onto the existing shape, minimum churn); added `Frequency` / `DisplayStrategy` types; `Unit` gained `ratio`/`grade`.                                                                                                                                                                                                                                                                                                                    |
+| **Sub-domains** ([frameworks.ts](app/src/config/frameworks.ts))                          | Administration's 7 → **3** (CPD · Visits & Observations · Retention), per the sheet.                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Frequency-aware display** ([HeroKpiStrip.tsx](app/src/components/ui/HeroKpiStrip.tsx)) | Daily → 30-day **sparkline**; Twice-a-year / Half-yearly → **vs-last-cycle delta**; Monthly → **compliance %**; Yearly → **snapshot + GSQAC grade**; counts → **count + rate**; CRC visits → **x / 2** ratio. Never a fabricated daily trend for annual data.                                                                                                                                                                                                                               |
+| **N+1 comparison** ([lib/peer.ts](app/src/lib/peer.ts))                                  | Each level vs its **next level up** (School↔Cluster, Cluster↔Block …) shown as a signed gap ("State 73 · −5.3 behind"), not a rank, and not for raw counts. Replaces the static state baseline. State has no N+1 (correctly hidden).                                                                                                                                                                                                                                                        |
+| **Official GSQAC colours** ([lib/colors.ts](app/src/lib/colors.ts))                      | Grade colours = GSQAC guidelines: **A green `#1B7F4B`, B yellow `#E0A400`, C red `#D33A2C`, D black `#2B2B2B`** (text darkened for AA where needed; verified computed: B = `rgb(176,126,0)` on `rgba(224,164,0,.14)`). Operational status (On Track / Watch / …) kept separate.                                                                                                                                                                                                             |
+| **Data-state badges** ([DataBadges.tsx](app/src/components/ui/DataBadges.tsx))           | `FrequencyBadge` · `FreshnessBadge` (cadence-appropriate) · `SourceBadge`. (A "Demo data — not in data lake yet" badge was built then removed at the user's request.)                                                                                                                                                                                                                                                                                                                       |
+| **GSQAC domains** ([mockProvider.ts](app/src/data/provider/mockProvider.ts))             | `sq_d1..d5` now sourced from **real** `entity.meta.gsqac.domains`; output domain score pinned to `sq_gsqac` (D1–D5 are context, not re-averaged).                                                                                                                                                                                                                                                                                                                                           |
+| **Officer Command Center** ([ScorecardHome.tsx](app/src/screens/ScorecardHome.tsx))      | Composite ring + "what changed" + biggest-opportunity callout, **Hero KPI strip** (6 decision-critical indicators, frequency-aware + N+1), 4A domain cards, School Quality (real GSQAC, D1–D5), and a **risk-first "Where to focus first" table** (units below you, worst composite first; reuses the child leaderboard, performant).                                                                                                                                                       |
+| **Mock realism** ([mockProvider.ts](app/src/data/provider/mockProvider.ts))              | `ratio`/`hours` get proportional spread; **context-delta %s (YoY / dropout) kept tight (~±2.4) and allowed to dip negative** — a real decline becomes a "needs attention" signal instead of being swamped by ±9 jitter.                                                                                                                                                                                                                                                                     |
 
 ### Verification (production build · preview 4174)
+
 - `tsc --noEmit` clean · `npm run build` clean (main 31 KB gz; seed lazy chunk 408 KB gz).
 - **Functional `verify.mjs` 21/21**, **access/dropdown `verify-access.mjs` 20/20**, **all-roles `roles-smoke.mjs` 6/6** — **0 console/page errors**.
 - Playwright MCP: State Command Center (hero strip, 4A cards, real GSQAC D1–D5 B-grade, risk table), drill State → District (N+1 peer bands appear: "State 92% · −0.1% behind", "State 73 · −5.3 behind"), frequency-aware tiles (Daily sparkline, YoY/half-yearly deltas, monthly %, yearly GSQAC grade), official GSQAC B colour verified by computed style.
@@ -1529,14 +1595,14 @@ Decision-first, government-officer-first upgrade built **exactly** on `Docs/OGM 
 
 Follow-up addressing the #1–#5 checklist + the official hero list:
 
-| Item | Change |
-|---|---|
-| **Hero set (#2)** | `kpi.hero` now flags **exactly the official 7** (config-driven; asserted `HERO_KPIS` = the set): Chronic absentees · Data-Driven Remediation % · Teachers completing 50 hrs % · CRC/URC visits · Reduction in dropout % · Re-enrolment of OoSC · GSQAC score. Strip reframed **"What to act on — intervention levers, not headline numbers"**, ordered most-at-risk first, all 7 frequency-aware, demo/data-lake badges carried (5 of 7 are DL=No). |
-| **"What needs attention?" (#1)** | New **computed** insight strip ([insights.ts](app/src/lib/insights.ts) + [AttentionStrip.tsx](app/src/components/ui/AttentionStrip.tsx)) — biggest N+1 gap, weakest input domain, biggest decline vs cycle, chronic absentees + rate, GSQAC coverage gap — ranked by severity, distinct from the hero strip and risk table. Nothing hardcoded. |
-| **PM-Shri (#3)** | Confirmed top-bar, Cluster+ only (hidden Teacher/Principal); now also reachable on mobile. |
-| **Coverage honesty (#4)** | GSQAC "real / measured" school counts via `getScopeStats` ([mockProvider](app/src/data/provider/mockProvider.ts)) — chip on the School Quality card + a coverage insight, so missing data ≠ low performance. |
-| **Composite-risk sort (#5)** | Formula made transparent: info tooltip ("30% Attendance + 30% Assessment + 40% Administration, lowest first") + each row shows its 4A breakdown as accent dots ([SchoolRiskTable](app/src/components/ui/SchoolRiskTable.tsx); `LeaderboardEntry.domainPercents`). |
-| **State N+1 (minor)** | Falls back to vs-previous-period, gated to Daily/Weekly/Monthly so annual KPIs never show a fabricated weekly delta. |
+| Item                             | Change                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hero set (#2)**                | `kpi.hero` now flags **exactly the official 7** (config-driven; asserted `HERO_KPIS` = the set): Chronic absentees · Data-Driven Remediation % · Teachers completing 50 hrs % · CRC/URC visits · Reduction in dropout % · Re-enrolment of OoSC · GSQAC score. Strip reframed **"What to act on — intervention levers, not headline numbers"**, ordered most-at-risk first, all 7 frequency-aware, demo/data-lake badges carried (5 of 7 are DL=No). |
+| **"What needs attention?" (#1)** | New **computed** insight strip ([insights.ts](app/src/lib/insights.ts) + [AttentionStrip.tsx](app/src/components/ui/AttentionStrip.tsx)) — biggest N+1 gap, weakest input domain, biggest decline vs cycle, chronic absentees + rate, GSQAC coverage gap — ranked by severity, distinct from the hero strip and risk table. Nothing hardcoded.                                                                                                      |
+| **PM-Shri (#3)**                 | Confirmed top-bar, Cluster+ only (hidden Teacher/Principal); now also reachable on mobile.                                                                                                                                                                                                                                                                                                                                                          |
+| **Coverage honesty (#4)**        | GSQAC "real / measured" school counts via `getScopeStats` ([mockProvider](app/src/data/provider/mockProvider.ts)) — chip on the School Quality card + a coverage insight, so missing data ≠ low performance.                                                                                                                                                                                                                                        |
+| **Composite-risk sort (#5)**     | Formula made transparent: info tooltip ("30% Attendance + 30% Assessment + 40% Administration, lowest first") + each row shows its 4A breakdown as accent dots ([SchoolRiskTable](app/src/components/ui/SchoolRiskTable.tsx); `LeaderboardEntry.domainPercents`).                                                                                                                                                                                   |
+| **State N+1 (minor)**            | Falls back to vs-previous-period, gated to Daily/Weekly/Monthly so annual KPIs never show a fabricated weekly delta.                                                                                                                                                                                                                                                                                                                                |
 
 **Adversarial review (3 parallel lenses — correctness · taste · a11y/i18n).** No blockers. Fixed: em dashes in rendered copy removed (both locales + `dataLagNote`, per the impeccable law); GSQAC excluded from the N+1 peer band and the peer-gap insight (its real value has no real next-level-up baseline in the mock — the grade is the signal); GSQAC status dot now derives from its grade band (can't disagree with the badge); risk-formula info is a focusable button + coverage line has an accessible label; info-severity insights use neutral grey so only red/amber carry urgency. Documented: chronic rate is illustrative (count and enrolment are independently sourced in the mock).
 
@@ -1546,22 +1612,23 @@ Follow-up addressing the #1–#5 checklist + the official hero list:
 
 Definitive list switched to the **Excel sheet** (parsed via openpyxl: 35 rows = 30 indicators + 5 GSQAC-domain rows). The catalog is now reconciled to it **exactly** — `merit-list`, `NAS`, `classroom-prep`, `avg-CPD-hours` and a standalone `GSQAC-improvement` KPI were parked (not in the sheet); the **Compare screen renders all 35** and Export lists all of them.
 
-| # | Change |
-|---|---|
+| #                                                                                                                            | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Two-axis visibility** ([applicability.ts](app/src/config/applicability.ts), [kpiCatalog.ts](app/src/config/kpiCatalog.ts)) | Config-driven, no hardcoded id lists. **`lowestLevel`** = level applicability: school-and-above (teacher attendance, MDM, reporting, ALL Administration, GSQAC) are hidden at grade/section; classroom (student attendance, chronic, ALL assessment) go to section. **`roleVisibility`** = sheet column J: the 20 "No" rows exclude the teacher persona (officers/principal keep them). Verified live: at Section 1-A a teacher sees Student attendance + Chronic + assessment, while **Teacher attendance / MDM / Administration / GSQAC / CET / CGMS are gone** (the screenshot bug is fixed). |
-| **A1 Demo badge removed** | The "not in data lake" badge no longer renders anywhere; every indicator shows (demo values where no live feed). `availableInDataLake` flag retained in config. |
-| **A2 Sections removed** | Screen + route + nav item deleted. Nav is **Scorecard · Compare · Leaderboard · Export** (desktop + mobile). |
-| **A3 / A4** | Biggest-opportunity card already gone; **"vs benchmark" copy removed everywhere** (KpiCard, Leaderboard, KpiDetail, and engine [story.ts](app/src/engine/story.ts)) in favour of N+1 "vs {level} avg" language. |
-| **B Frequency-aware trend** ([KpiDetail.tsx](app/src/screens/KpiDetail.tsx)) | Daily → 30-day line; Monthly → monthly; **Twice/Yearly/Half-yearly → cycle-over-cycle (no weekly line)**; GSQAC → snapshot + grade + vs-last-cycle. Verified: GSQAC detail shows "Cycle over cycle" + "Annual snapshot", **no weekly trend**. |
-| **C Cross-level = upward only** ([engine/index.ts](app/src/engine/index.ts) `getKpiCascade`) | Own level + ancestors up to State (never descendants); **hidden entirely for a State user**. Verified. |
-| **D Hero → detail** ([ScorecardHome.tsx](app/src/screens/ScorecardHome.tsx)) | Key-indicator (and insight) cards open the indicator's detail page directly. |
-| **E Compare = 4 single-selects** ([CascadeComparison.tsx](app/src/screens/CascadeComparison.tsx)) | Exactly four single-select slots; options scoped to the user's **own level (peers) or one level below** (e.g. Block → Blocks or Clusters; never District/State). Access-control test updated + passing. |
-| **G Data-Driven Remediation reframed** | Now **"GP report-card downloads %"** — Gyan Prabhav generates a report card at every level; the metric is downloads ÷ total at that level × 100. |
-| **I Export comprehensive** ([Export.tsx](app/src/screens/Export.tsx)) | 4A summary + per-domain tables of **every applicable indicator** (★ heroes highlighted) with value · N+1 · Δ-by-frequency · source · grade, scoped to level. Verified: 7 hero rows highlighted, all indicators present. |
+| **A1 Demo badge removed**                                                                                                    | The "not in data lake" badge no longer renders anywhere; every indicator shows (demo values where no live feed). `availableInDataLake` flag retained in config.                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **A2 Sections removed**                                                                                                      | Screen + route + nav item deleted. Nav is **Scorecard · Compare · Leaderboard · Export** (desktop + mobile).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **A3 / A4**                                                                                                                  | Biggest-opportunity card already gone; **"vs benchmark" copy removed everywhere** (KpiCard, Leaderboard, KpiDetail, and engine [story.ts](app/src/engine/story.ts)) in favour of N+1 "vs {level} avg" language.                                                                                                                                                                                                                                                                                                                                                                                  |
+| **B Frequency-aware trend** ([KpiDetail.tsx](app/src/screens/KpiDetail.tsx))                                                 | Daily → 30-day line; Monthly → monthly; **Twice/Yearly/Half-yearly → cycle-over-cycle (no weekly line)**; GSQAC → snapshot + grade + vs-last-cycle. Verified: GSQAC detail shows "Cycle over cycle" + "Annual snapshot", **no weekly trend**.                                                                                                                                                                                                                                                                                                                                                    |
+| **C Cross-level = upward only** ([engine/index.ts](app/src/engine/index.ts) `getKpiCascade`)                                 | Own level + ancestors up to State (never descendants); **hidden entirely for a State user**. Verified.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **D Hero → detail** ([ScorecardHome.tsx](app/src/screens/ScorecardHome.tsx))                                                 | Key-indicator (and insight) cards open the indicator's detail page directly.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **E Compare = 4 single-selects** ([CascadeComparison.tsx](app/src/screens/CascadeComparison.tsx))                            | Exactly four single-select slots; options scoped to the user's **own level (peers) or one level below** (e.g. Block → Blocks or Clusters; never District/State). Access-control test updated + passing.                                                                                                                                                                                                                                                                                                                                                                                          |
+| **G Data-Driven Remediation reframed**                                                                                       | Now **"GP report-card downloads %"** — Gyan Prabhav generates a report card at every level; the metric is downloads ÷ total at that level × 100.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **I Export comprehensive** ([Export.tsx](app/src/screens/Export.tsx))                                                        | 4A summary + per-domain tables of **every applicable indicator** (★ heroes highlighted) with value · N+1 · Δ-by-frequency · source · grade, scoped to level. Verified: 7 hero rows highlighted, all indicators present.                                                                                                                                                                                                                                                                                                                                                                          |
 
 **Re-verified (production build):** `tsc` + build clean; **roles 6/6 · access 20/20 · functional 21/21 · 0 console errors**; teacher-at-section applicability fixed; Compare offers Block-peers + Cluster-one-below (no District/State); 0 horizontal overflow at 320 px; EN + ગુજરાતી (i18n parity type-enforced); no "demo data" / "benchmark" copy anywhere.
 
 ### Deferred to Pass 2 (by agreement)
+
 Domain Drill-down (metric-first + geography-first), Indicator Detail page (full formula/source/cascade/data-lineage), School Profile drawer. PM-Shri filter UI exists from the prior round (Cluster+); per-indicator PM-Shri denominator application and the 3-band "students below hierarchy avg" distribution are Pass-2 refinements. Several Visits & Retention indicators are `DL=No` (demo) pending data-lake availability — flagged in-UI.
 
 ---
@@ -1576,50 +1643,52 @@ Structural migration from the 5A model to the **4A Input-Output** model (per `Mi
 
 ## What changed
 
-| Area | Change |
-|---|---|
-| **Framework** ([frameworks.ts](app/src/config/frameworks.ts)) | 5 domains → **4**: Attendance (input 30%), Assessment (input 30%), Administration (input 40%), **School Quality** (output). Administration gets **7 sub-domains**. Renamed "Unified Portal · 4A". `kind: input/output` + `INPUT_DOMAIN_IDS`/`OUTPUT_DOMAIN_ID`. |
-| **Catalog** ([kpiCatalog.ts](app/src/config/kpiCatalog.ts)) | Rebuilt from §2 (~50 indicators) with `unit` (type), `direction`, `data_source`, `sub_domain`, sample numbers, "—"=NA markers, and `// TODO` notes on the CSV-flagged ambiguous metrics. Added `context` flag + per-KPI `rag`. `GSQAC_DOMAINS` (D1-D5). |
-| **Scoring** ([score.ts](app/src/engine/score.ts)) | Headline = **Input Composite** (30/30/40 over the 3 inputs, output excluded). **School Quality shown as-is** (the GSQAC `score`, not averaged). **Sub-domain rollups** (domain = mean of sub-domains = mean of indicators). lower-is-better inverted; **count + delta indicators are CONTEXT** (shown, not folded into the %). |
-| **School Quality** ([attachGsqac.mjs](app/scripts/attachGsqac.mjs), [mockProvider.ts](app/src/data/provider/mockProvider.ts)) | **Real GSQAC** joined by UDISE: **775/1000 schools real**, 225 synth from the real distribution, rolled up enrolment-weighted to cluster→state. Provider sources `sq_*` from `meta.gsqac` — **annual/flat** (no WoW); "vs last cycle" is a flagged synth delta. |
-| **Home** ([ScorecardHome.tsx](app/src/screens/ScorecardHome.tsx)) | **4A homepage for every role**: composite ring + 3 input cards (score, RAG, WoW, vs-parent peer gap) + **School Quality output card** (GSQAC + grade + D1-D5 + vs last cycle). Removed the score-breakdown table and bespoke `PrincipalView`/`TeacherView` ("rangoli" + duplication). |
-| **Drill (3-click)** ([DomainView.tsx](app/src/screens/DomainView.tsx), [SubDomainView.tsx](app/src/screens/SubDomainView.tsx)) | Administration → **sub-domain cards** → indicators (3 taps); Attendance/Assessment → indicators (2 taps); School Quality → GSQAC D1-D5 breakdown. New `domain/:domainId/:subId` route. **Geography drill** = the "Explore below" children + breadcrumb (both journeys). |
-| **Peer comparison** ([ui/Leaderboard.tsx](app/src/components/ui/Leaderboard.tsx)) | **Performance bands (A+/A/B) + "± vs benchmark"** (the peer-group/next-level-up average), **no integer ranks/medals/rank-movement**. Read-only for out-of-subtree peers. Input cards show the vs-parent-average gap. |
-| **Compliance boxes** | Folded into Administration indicators — **PTR survives as `vis_ptr`**; the standalone class-capacity/enrolment boxes are gone (not KPIs in the new catalog). |
-| **i18n** | All new domain/sub-domain/indicator labels carry `name_gu`; new UI strings (Input composite, School Quality, vs last cycle, sub-domains, ahead/behind, peer comparison) added to en + gu. |
+| Area                                                                                                                           | Change                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Framework** ([frameworks.ts](app/src/config/frameworks.ts))                                                                  | 5 domains → **4**: Attendance (input 30%), Assessment (input 30%), Administration (input 40%), **School Quality** (output). Administration gets **7 sub-domains**. Renamed "Pocket VSK · 4A". `kind: input/output` + `INPUT_DOMAIN_IDS`/`OUTPUT_DOMAIN_ID`.                                                                    |
+| **Catalog** ([kpiCatalog.ts](app/src/config/kpiCatalog.ts))                                                                    | Rebuilt from §2 (~50 indicators) with `unit` (type), `direction`, `data_source`, `sub_domain`, sample numbers, "—"=NA markers, and `// TODO` notes on the CSV-flagged ambiguous metrics. Added `context` flag + per-KPI `rag`. `GSQAC_DOMAINS` (D1-D5).                                                                        |
+| **Scoring** ([score.ts](app/src/engine/score.ts))                                                                              | Headline = **Input Composite** (30/30/40 over the 3 inputs, output excluded). **School Quality shown as-is** (the GSQAC `score`, not averaged). **Sub-domain rollups** (domain = mean of sub-domains = mean of indicators). lower-is-better inverted; **count + delta indicators are CONTEXT** (shown, not folded into the %). |
+| **School Quality** ([attachGsqac.mjs](app/scripts/attachGsqac.mjs), [mockProvider.ts](app/src/data/provider/mockProvider.ts))  | **Real GSQAC** joined by UDISE: **775/1000 schools real**, 225 synth from the real distribution, rolled up enrolment-weighted to cluster→state. Provider sources `sq_*` from `meta.gsqac` — **annual/flat** (no WoW); "vs last cycle" is a flagged synth delta.                                                                |
+| **Home** ([ScorecardHome.tsx](app/src/screens/ScorecardHome.tsx))                                                              | **4A homepage for every role**: composite ring + 3 input cards (score, RAG, WoW, vs-parent peer gap) + **School Quality output card** (GSQAC + grade + D1-D5 + vs last cycle). Removed the score-breakdown table and bespoke `PrincipalView`/`TeacherView` ("rangoli" + duplication).                                          |
+| **Drill (3-click)** ([DomainView.tsx](app/src/screens/DomainView.tsx), [SubDomainView.tsx](app/src/screens/SubDomainView.tsx)) | Administration → **sub-domain cards** → indicators (3 taps); Attendance/Assessment → indicators (2 taps); School Quality → GSQAC D1-D5 breakdown. New `domain/:domainId/:subId` route. **Geography drill** = the "Explore below" children + breadcrumb (both journeys).                                                        |
+| **Peer comparison** ([ui/Leaderboard.tsx](app/src/components/ui/Leaderboard.tsx))                                              | **Performance bands (A+/A/B) + "± vs benchmark"** (the peer-group/next-level-up average), **no integer ranks/medals/rank-movement**. Read-only for out-of-subtree peers. Input cards show the vs-parent-average gap.                                                                                                           |
+| **Compliance boxes**                                                                                                           | Folded into Administration indicators — **PTR survives as `vis_ptr`**; the standalone class-capacity/enrolment boxes are gone (not KPIs in the new catalog).                                                                                                                                                                   |
+| **i18n**                                                                                                                       | All new domain/sub-domain/indicator labels carry `name_gu`; new UI strings (Input composite, School Quality, vs last cycle, sub-domains, ahead/behind, peer comparison) added to en + gu.                                                                                                                                      |
 
 ---
 
 ## Verification (production build)
 
-| Check | Result |
-|---|---|
-| `tsc --noEmit` · `npm run build` | clean / passes (main chunk 30 KB gz; 21k-entity+GSQAC seed lazy-loaded ~408 KB gz) |
-| Responsive sweep (roles × screens × {320,375,768,1440} × {en,gu}) | **0 overflow, 0 console errors** |
-| Functional (`verify.mjs`) | **21/21** (login validation 10-digit ID / 11-digit UDISE / 4-digit PIN, screens load, no console errors) |
-| Access control + dropdowns (`verify-access.mjs`) | **20/20** |
-| All-6-roles login + scope (`roles-smoke.mjs`) | **6/6** |
-| Playwright MCP visual | 4A home (desktop + iPhone SE), 3-click drill (Administration → Retention → indicators), geography drill (district cards), School Quality real GSQAC D1-D5, peer-bands leaderboard, 0 console errors |
+| Check                                                             | Result                                                                                                                                                                                              |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tsc --noEmit` · `npm run build`                                  | clean / passes (main chunk 30 KB gz; 21k-entity+GSQAC seed lazy-loaded ~408 KB gz)                                                                                                                  |
+| Responsive sweep (roles × screens × {320,375,768,1440} × {en,gu}) | **0 overflow, 0 console errors**                                                                                                                                                                    |
+| Functional (`verify.mjs`)                                         | **21/21** (login validation 10-digit ID / 11-digit UDISE / 4-digit PIN, screens load, no console errors)                                                                                            |
+| Access control + dropdowns (`verify-access.mjs`)                  | **20/20**                                                                                                                                                                                           |
+| All-6-roles login + scope (`roles-smoke.mjs`)                     | **6/6**                                                                                                                                                                                             |
+| Playwright MCP visual                                             | 4A home (desktop + iPhone SE), 3-click drill (Administration → Retention → indicators), geography drill (district cards), School Quality real GSQAC D1-D5, peer-bands leaderboard, 0 console errors |
 
 **Scoring sanity (State):** composite **91 (A++)** = 0.3·94 + 0.3·87 + 0.4·90 ✓; Administration **89%** = mean of its 7 sub-domains ✓; School Quality **67% (B)** = real rolled-up GSQAC (Scholarships D5 = 47%, matching the CSV's low D5) ✓.
 
 ### §5 carry-forward — re-verified, no regressions
+
 - **Access control:** Block/Principal cannot reach an ancestor/peer via Compare, breadcrumb, leaderboard, or hand-edited `localStorage` (clamped to home; `isInScope` guard intact). Peer comparison read-only/non-navigable. Production-RLS comments retained.
 - **Login:** 10-digit ID + 11-digit UDISE (teacher/principal) / ID + 4-digit PIN (officers), role by seed lookup, time-based greeting — all pass.
 - **"—" = hidden** (no NA clutter); role-appropriate sets; PM SHRI hidden for Teacher/Principal; **Select All** in dropdowns; custom on-brand dropdowns with search + a11y; responsive 320–1440; bilingual; real registry retained.
 
 ### Bugs found & fixed during this round
-| Issue | Fix |
-|---|---|
-| Input-card WoW trend distorted by count deltas (chronic absentees / merit list) | domain trend averages only scored %/score indicators |
-| "Reduction in dropout 16%" rendered **red** and dragged the score (delta scored as 16/100) | delta indicators (dropout, student improvement, ORF/FLN) marked `context` + sensible per-KPI RAG → green, not folded into the score |
-| (Prior round) grade band 77→A+, behind-benchmark green, iPhone SE overflow, 1000-node dropdown, dead code | all still fixed (bands A+ ≥85, gap-aware RAG, `grid-cols-1` reflow, Select cap, config-driven compliance) |
+
+| Issue                                                                                                     | Fix                                                                                                                                 |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Input-card WoW trend distorted by count deltas (chronic absentees / merit list)                           | domain trend averages only scored %/score indicators                                                                                |
+| "Reduction in dropout 16%" rendered **red** and dragged the score (delta scored as 16/100)                | delta indicators (dropout, student improvement, ORF/FLN) marked `context` + sensible per-KPI RAG → green, not folded into the score |
+| (Prior round) grade band 77→A+, behind-benchmark green, iPhone SE overflow, 1000-node dropdown, dead code | all still fixed (bands A+ ≥85, gap-aware RAG, `grid-cols-1` reflow, Select cap, config-driven compliance)                           |
 
 ---
 
 ## Deferred / couldn't implement (and why)
 
-- **Open metric definitions (pending Chaitanya / State)** — built with sample numbers + a `// TODO` label, logic deferred: *Performance of PM SHRI schools* (metric?), *Grant & expenditure* (what metric?), *Scheme delivery vs Payment completion* (flagged "very similar"), *ICT/Library usage* (may not apply to all schools), *Attendance reporting compliance* and *Reports downloaded* (exact definition). These render with real labels + data sources but their definitions are not final.
+- **Open metric definitions (pending Chaitanya / State)** — built with sample numbers + a `// TODO` label, logic deferred: _Performance of PM SHRI schools_ (metric?), _Grant & expenditure_ (what metric?), _Scheme delivery vs Payment completion_ (flagged "very similar"), _ICT/Library usage_ (may not apply to all schools), _Attendance reporting compliance_ and _Reports downloaded_ (exact definition). These render with real labels + data sources but their definitions are not final.
 - **"Improvement vs last cycle"** — synthesized per-entity delta, flagged `// TODO: real prior-cycle data`, because `gsqac 2024-25.csv` is a single round (no prior cycle).
 - **GSQAC coverage** — 775/1000 schools are real; 225 are synthesized from the real distribution (marked `synth`) to keep every level populated, per your decision. A re-seed to GSQAC-only schools would make it ~100% real but churn the registry/demo logins.
 - **Per-KPI aggregation definitions** (Devpal) — the app rolls each indicator section→…→state by anchoring to the published per-level numbers (cascade-consistent); the exact production aggregation per indicator is pending.

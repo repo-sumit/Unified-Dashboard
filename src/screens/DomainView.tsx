@@ -9,7 +9,7 @@ import { KpiCardAuto } from "@/components/ui/MultiMetricKpiCard";
 import { BalancedKpiGrid, getKpiCardLayoutWeight } from "@/components/ui/BalancedKpiGrid";
 import { GsqacGradeLegend } from "@/components/ui/GsqacGradeLegend";
 import { GsqacOverallCard, GsqacAreaCard } from "@/components/ui/GsqacCards";
-import { ChevronRight } from "@/components/ui/Icon";
+import { KnowMore } from "@/components/ui/kpiCardParts";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { BackLink } from "@/components/layout/PageHeader";
 import { PageSection, PageGrid } from "@/components/layout/PageSection";
@@ -78,7 +78,7 @@ export default function DomainView() {
                   <span className="block truncate text-sm font-semibold text-neutral-900">{tn(ss.sub.name, ss.sub.name_gu)}</span>
                   <span className="text-2xs text-neutral-400">{ss.records.length} {t("scorecard.indicators")}</span>
                 </span>
-                <ChevronRight size={16} className="shrink-0 text-neutral-300 transition-transform group-hover:translate-x-0.5" />
+                <KnowMore />
               </button>
             ))}
           </PageGrid>

@@ -1,9 +1,18 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { dataProvider } from "@/data/provider";
 import { useSession } from "@/store/session";
 import { useT } from "@/i18n";
-import { CompareProvider, useCompare } from "@/components/compare/CompareContext";
+import {
+  CompareProvider,
+  useCompare,
+} from "@/components/compare/CompareContext";
 import { CompareSheet } from "@/components/compare/CompareSheet";
 import { HeaderNav } from "./HierarchyNavigator";
 import { FilterSheet } from "./FilterSheet";
@@ -12,7 +21,7 @@ import { Share, FunnelFilter, BarCompare } from "../ui/Icon";
 /**
  * App shell (latest design) — one clean header on every page:
  *   [logo]   ‹ entity · level ›   [share] [filter]
- * No logout, no large "Unified Portal" mobile title, no role/designation, no
+ * No logout, no large "Pocket VSK" mobile title, no role/designation, no
  * second action row. School-type + Language live in the Filter sheet; Export is
  * the Share icon; Compare is a desktop header button and a mobile floating action
  * (bottom-right). Compare is hidden on KPI detail pages.
@@ -28,12 +37,17 @@ export function AppShell() {
   // ACCESS CONTROL: repair a tampered/stale persisted scope that points outside
   // the user's subtree (client-side guard only; production enforces server-side).
   useEffect(() => {
-    if (user && scopeId && !dataProvider.isInScope(user.entity_id, scopeId)) resetScope();
+    if (user && scopeId && !dataProvider.isInScope(user.entity_id, scopeId))
+      resetScope();
   }, [user, scopeId, resetScope]);
 
   if (!user) return <Navigate to="/login" replace />;
 
-  const isOfficer = user.role === "crc" || user.role === "brc" || user.role === "deo" || user.role === "state";
+  const isOfficer =
+    user.role === "crc" ||
+    user.role === "brc" ||
+    user.role === "deo" ||
+    user.role === "state";
 
   return (
     <CompareProvider>
@@ -41,11 +55,23 @@ export function AppShell() {
         <header className="sticky top-0 z-30 border-b border-line/70 bg-white/90 backdrop-blur no-print">
           <div className="mx-auto flex max-w-content items-center gap-1.5 px-3 py-2 sm:gap-2 sm:px-4">
             {/* left — logo (product name on desktop only) */}
-            <Link to="/app" className="flex shrink-0 items-center gap-2" aria-label={t("app.name")}>
-              <img src="/logo-vsk.png" alt="" className="h-9 w-9 object-contain" />
+            <Link
+              to="/app"
+              className="flex shrink-0 items-center gap-2"
+              aria-label={t("app.name")}
+            >
+              <img
+                src="/logo-vsk.png"
+                alt=""
+                className="h-9 w-9 object-contain"
+              />
               <span className="hidden leading-none lg:block">
-                <span className="block text-base font-extrabold tracking-tight text-neutral-900">{t("app.name")}</span>
-                <span className="block text-2xs font-medium text-neutral-400">{t("app.tagline")}</span>
+                <span className="block text-base font-extrabold tracking-tight text-neutral-900">
+                  {t("app.name")}
+                </span>
+                <span className="block text-2xs font-medium text-neutral-400">
+                  {t("app.tagline")}
+                </span>
               </span>
             </Link>
 
@@ -55,10 +81,16 @@ export function AppShell() {
             {/* right — desktop Compare, Share (export), Filter */}
             <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
               <CompareHeaderButton />
-              <IconButton label={t("nav.share")} onClick={() => navigate("/app/export")}>
+              <IconButton
+                label={t("nav.share")}
+                onClick={() => navigate("/app/export")}
+              >
                 <Share size={18} />
               </IconButton>
-              <IconButton label={t("nav.filter")} onClick={() => setFilterOpen(true)}>
+              <IconButton
+                label={t("nav.filter")}
+                onClick={() => setFilterOpen(true)}
+              >
                 <FunnelFilter size={18} />
               </IconButton>
             </div>
@@ -70,7 +102,11 @@ export function AppShell() {
         </main>
 
         <FloatingCompare />
-        <FilterSheet open={filterOpen} isOfficer={isOfficer} onClose={() => setFilterOpen(false)} />
+        <FilterSheet
+          open={filterOpen}
+          isOfficer={isOfficer}
+          onClose={() => setFilterOpen(false)}
+        />
         <CompareMount />
       </div>
     </CompareProvider>
@@ -78,7 +114,15 @@ export function AppShell() {
 }
 
 /** A 36px round header icon button. */
-function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+function IconButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
     <button
       type="button"
@@ -139,7 +183,16 @@ function FloatingCompare() {
 
 /** Renders the Compare selection sheet/drawer, driven by the shared compare state. */
 function CompareMount() {
-  const { open, childLevel, childEntities, selectedIds, applied, apply, remove, setOpen } = useCompare();
+  const {
+    open,
+    childLevel,
+    childEntities,
+    selectedIds,
+    applied,
+    apply,
+    remove,
+    setOpen,
+  } = useCompare();
   if (!childLevel) return null;
   return (
     <CompareSheet

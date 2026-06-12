@@ -6,12 +6,18 @@ import { Card } from "./atoms";
 import { FrequencyBadge } from "./DataBadges";
 import { ChevronRight } from "./Icon";
 
-/** Visible "Know more →" CTA — cards no longer rely on a chevron alone (§9). */
+/**
+ * Top-right "Know more ›" CTA — the single navigation affordance on a clickable
+ * card (§9). It replaces the old right-side chevron (never shown alongside one)
+ * and sits where that chevron used to be. Blue, medium-weight, compact, with a
+ * small trailing arrow. Always rendered inside the card's own button, so the whole
+ * card is the tap target (well above the 36–44px minimum).
+ */
 export function KnowMore({ className }: { className?: string }) {
   const { t } = useT();
   return (
-    <span className={cn("mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary-600", className)}>
-      {t("common.knowMore")} <ChevronRight size={14} />
+    <span className={cn("inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-semibold text-primary-600", className)}>
+      {t("common.knowMore")} <ChevronRight size={14} className="transition-transform group-hover:translate-x-0.5" />
     </span>
   );
 }
@@ -40,7 +46,6 @@ export function KpiCardShell({ onClick, children, compare, metrics = 1 }: { onCl
       {onClick ? (
         <button onClick={onClick} className="group flex flex-1 flex-col text-left">
           {children}
-          <KnowMore className="mt-auto pt-2" />
         </button>
       ) : (
         <div className="flex flex-1 flex-col">{children}</div>
@@ -51,11 +56,13 @@ export function KpiCardShell({ onClick, children, compare, metrics = 1 }: { onCl
 }
 
 /**
- * Header (title + chevron) and the meta row (frequency · last-updated) in one block.
+ * Header (title + top-right "Know more" CTA) and the meta row (frequency ·
+ * last-updated) in one block. The "Know more" sits where the old chevron was — the
+ * card's single navigation affordance — and only shows when the card is clickable.
  * The meta period label already encodes any schedule month (e.g. "Sep 2025"), so the
  * raw `scheduleNote` is never appended again — that was the "Sep 2025 September" dup.
  */
-export function KpiCardHeader({ title, frequency, context }: { title: string; frequency?: Frequency; context?: string | null }) {
+export function KpiCardHeader({ title, frequency, context, showKnowMore = false }: { title: string; frequency?: Frequency; context?: string | null; showKnowMore?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-2">
       <div className="min-w-0">
@@ -65,7 +72,7 @@ export function KpiCardHeader({ title, frequency, context }: { title: string; fr
           {context && <span className="text-2xs font-medium text-neutral-400">· {context}</span>}
         </span>
       </div>
-      <ChevronRight size={16} className="mt-0.5 shrink-0 text-neutral-300 transition-transform group-hover:translate-x-0.5" />
+      {showKnowMore && <KnowMore className="mt-0.5" />}
     </div>
   );
 }

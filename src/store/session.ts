@@ -43,7 +43,9 @@ export const useSession = create<SessionState>()(
       setScope: (entityId) => {
         const home = get().user?.entity_id;
         if (!home) return;
-        set({ scopeId: dataProvider.isInScope(home, entityId) ? entityId : home });
+        set({
+          scopeId: dataProvider.isInScope(home, entityId) ? entityId : home,
+        });
       },
       resetScope: () => set({ scopeId: get().user?.entity_id ?? null }),
       setLang: (lang) => set({ lang }),
@@ -52,8 +54,14 @@ export const useSession = create<SessionState>()(
       setPmShri: (pmShri) => set({ pmShri }),
     }),
     {
-      name: "unified-portal-session",
-      partialize: (s) => ({ user: s.user, scopeId: s.scopeId, frameworkId: s.frameworkId, lang: s.lang, pmShri: s.pmShri }),
+      name: "Pocket VSK-session",
+      partialize: (s) => ({
+        user: s.user,
+        scopeId: s.scopeId,
+        frameworkId: s.frameworkId,
+        lang: s.lang,
+        pmShri: s.pmShri,
+      }),
     },
   ),
 );

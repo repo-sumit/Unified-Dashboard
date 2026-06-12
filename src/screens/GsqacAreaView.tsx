@@ -16,8 +16,9 @@ import { PageSection } from "@/components/layout/PageSection";
 /**
  * GSQAC area drilldown (§14) — School Quality area → sub-domain score cards →
  * tap a sub-domain to reveal its indicator list (scores, no trend). Header shows
- * the area score, grade and marks, plus a School·District·State comparison. All
- * values are the deterministic GSQAC demo dataset (config/gsqac).
+ * the area score, grade and marks (the school headline), plus a District·State
+ * reference comparison — the school is the headline, so it isn't repeated as a
+ * bar. All values are the deterministic GSQAC demo dataset (config/gsqac).
  */
 export default function GsqacAreaView() {
   const { areaKey } = useParams();
@@ -36,8 +37,9 @@ export default function GsqacAreaView() {
 
   const c = rag(gsqacStatus(area.percent));
   const grade = gsqacGrade(area.percent);
+  // School (current entity) is already the headline above, so the comparison chart
+  // shows only the reference bars (District · State) — no redundant "School" bar (§14).
   const cmpBars: ChildBar[] = [
-    { id: "school", label: t("gsqac.school"), value: area.compare.school, status: gsqacStatus(area.compare.school) },
     { id: "district", label: t("gsqac.district"), value: area.compare.district, status: gsqacStatus(area.compare.district) },
     { id: "state", label: t("gsqac.state"), value: area.compare.state, status: gsqacStatus(area.compare.state) },
   ];

@@ -49,7 +49,7 @@ export function KpiCard({
 
   return (
     <KpiCardShell onClick={onClick} compare={<KpiCompareSection kpi={kpi} />}>
-      <KpiCardHeader title={name} frequency={displayFrequency(kpi)} context={lastUpdated} />
+      <KpiCardHeader title={name} frequency={displayFrequency(kpi)} context={lastUpdated} showKnowMore={!!onClick} />
 
       {/* inline value (+ short suffix) · N+1 comparison (+ allowed delta) right-aligned */}
       <div className="mt-2">

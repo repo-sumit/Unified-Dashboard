@@ -1,4 +1,4 @@
-# Unified Portal — Vidya Samiksha Kendra (Gujarat)
+# Pocket VSK — Vidya Samiksha Kendra (Gujarat)
 
 One platform for school-performance KPIs across every level of the Gujarat education system. **Insight-first** design: lead with the one or two things that matter, glanceable in 3 seconds, uncluttered. Audience spans from the Principal Secretary down to every teacher.
 
@@ -29,7 +29,7 @@ Config-driven and KPI-agnostic — the entire dashboard renders from `frameworks
 
 ## Product Overview
 
-The Unified Portal is a **school-performance intelligence dashboard** built for Gujarat's Vidya Samiksha Kendra (VSK). It aggregates data from six systems (UDISE+, DIKSHA, GSQAC, SAT/ORF, NMMS, PM SHRI) into a single view, enabling every stakeholder — from teachers to State officers — to monitor their KPIs without navigating multiple portals.
+The Pocket VSK is a **school-performance intelligence dashboard** built for Gujarat's Vidya Samiksha Kendra (VSK). It aggregates data from six systems (UDISE+, DIKSHA, GSQAC, SAT/ORF, NMMS, PM SHRI) into a single view, enabling every stakeholder — from teachers to State officers — to monitor their KPIs without navigating multiple portals.
 
 The product solves three problems:
 
@@ -84,9 +84,9 @@ The product solves three problems:
 
 ### Role-Specific Views
 
-| View | Roles |
-|---|---|
-| **Teacher view** | Teacher — TPD tracker (38/50 hrs, 7-day trend), Classroom Pulse (students at risk), evaluation status |
+| View               | Roles                                                                                                                                                                              |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Teacher view**   | Teacher — TPD tracker (38/50 hrs, 7-day trend), Classroom Pulse (students at risk), evaluation status                                                                              |
 | **Principal view** | Principal — School vs State comparison, GSQAC scoreboard, compliance benchmarks (PTR, class capacity, enrolment, chronic absence), attendance-gap detector with **Download Names** |
 
 ### Bilingual Support
@@ -99,22 +99,22 @@ The product solves three problems:
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **Frontend framework** | React 18.3.1 |
-| **Language** | TypeScript 5.6.3 (strict mode, `noUnusedLocals`, `noUnusedParameters`) |
-| **Build tool** | Vite 5.4.11 |
-| **Styling** | Tailwind CSS 3.4.15 (custom design system) |
-| **Charts** | Recharts 2.13.3 |
-| **Routing** | React Router DOM v6.28 |
-| **State management** | Zustand 5.0.1 + localStorage persistence |
-| **Icons** | Lucide React |
-| **Fonts** | Montserrat (Latin), Mukta (Gujarati) |
-| **Testing** | Playwright (E2E, configured; no unit test framework) |
-| **Database (live)** | Supabase (PostgreSQL + RLS) — stub wired, not active |
-| **Data (demo)** | Deterministic MockProvider (seeded PRNG, per-level anchored) |
-| **Deployment** | Vercel (SPA rewrite rules via `vercel.json`) |
-| **Package manager** | npm |
+| Layer                  | Technology                                                             |
+| ---------------------- | ---------------------------------------------------------------------- |
+| **Frontend framework** | React 18.3.1                                                           |
+| **Language**           | TypeScript 5.6.3 (strict mode, `noUnusedLocals`, `noUnusedParameters`) |
+| **Build tool**         | Vite 5.4.11                                                            |
+| **Styling**            | Tailwind CSS 3.4.15 (custom design system)                             |
+| **Charts**             | Recharts 2.13.3                                                        |
+| **Routing**            | React Router DOM v6.28                                                 |
+| **State management**   | Zustand 5.0.1 + localStorage persistence                               |
+| **Icons**              | Lucide React                                                           |
+| **Fonts**              | Montserrat (Latin), Mukta (Gujarati)                                   |
+| **Testing**            | Playwright (E2E, configured; no unit test framework)                   |
+| **Database (live)**    | Supabase (PostgreSQL + RLS) — stub wired, not active                   |
+| **Data (demo)**        | Deterministic MockProvider (seeded PRNG, per-level anchored)           |
+| **Deployment**         | Vercel (SPA rewrite rules via `vercel.json`)                           |
+| **Package manager**    | npm                                                                    |
 
 ---
 
@@ -153,10 +153,10 @@ The product solves three problems:
 
 The `DataProvider` interface (`src/data/provider/types.ts`) is the single seam between UI and storage. Swap providers by setting `VITE_DATA_PROVIDER`:
 
-| Provider | When to use |
-|---|---|
-| `mock` (default) | Development, demo, CI — no backend needed |
-| `supabase` | Production — requires `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` |
+| Provider         | When to use                                                          |
+| ---------------- | -------------------------------------------------------------------- |
+| `mock` (default) | Development, demo, CI — no backend needed                            |
+| `supabase`       | Production — requires `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` |
 
 **MockProvider** loads bundled seed JSON (real Gujarat entity names + GSQAC scores), then derives per-entity values deterministically from a per-entity `anchor` (0..1) so averages at every level match published figures while individual entities vary for RAG/leaderboard purposes.
 
@@ -181,6 +181,7 @@ GSQAC (School Quality) = published aggregate, shown as-is, not averaged into Inp
 ### Auth / Permissions Model
 
 Login is ID-digit-length-based (no role selector):
+
 - Role is inferred from the digit count of the primary ID.
 - A second credential (PIN or School ID) is required.
 - The session store (`useScope`) enforces that a user can only view entities within their own subtree (read-side clamp + write-side guard).
@@ -334,72 +335,72 @@ app/
 
 ### Attendance
 
-| ID | Name | Unit | Frequency | Multi-metric |
-|---|---|---|---|---|
-| `att_teacher` | Teacher Attendance | % | Daily | — |
-| `att_student` | Student Attendance | % | Daily | — |
-| `att_mdm` | Mid-Day Meal coverage | % | Daily | — |
-| `att_chronic` | Chronic Absenteeism | % | Monthly | — |
-| `att_report` | SAT reports downloaded in classrooms | count | Monthly | — |
+| ID            | Name                                 | Unit  | Frequency | Multi-metric |
+| ------------- | ------------------------------------ | ----- | --------- | ------------ |
+| `att_teacher` | Teacher Attendance                   | %     | Daily     | —            |
+| `att_student` | Student Attendance                   | %     | Daily     | —            |
+| `att_mdm`     | Mid-Day Meal coverage                | %     | Daily     | —            |
+| `att_chronic` | Chronic Absenteeism                  | %     | Monthly   | —            |
+| `att_report`  | SAT reports downloaded in classrooms | count | Monthly   | —            |
 
 ### Assessment
 
-| ID | Name | Unit | Frequency | Sub-metrics |
-|---|---|---|---|---|
-| `asm_sat1` | SAT 1 Results | % | Twice a Year (Sep) | Avg score · Below hierarchy avg · Participation |
-| `asm_sat2` | SAT 2 Results | % | Twice a Year (Mar) | Avg score · Below hierarchy avg · Participation |
-| `asm_orf` | Oral Reading Fluency (ORF) | score | Twice a Year | CWPM · Below hierarchy avg · Participation |
-| `asm_cet` | CET Results | % | Yearly | Result · Participation |
-| `asm_cgms` | NMMS / CGMS Results | % | Yearly | Result · Participation |
-| `asm_remediation` | SAT reports downloaded in classrooms | count | Monthly | — (as-on display) |
+| ID                | Name                                 | Unit  | Frequency          | Sub-metrics                                     |
+| ----------------- | ------------------------------------ | ----- | ------------------ | ----------------------------------------------- |
+| `asm_sat1`        | SAT 1 Results                        | %     | Twice a Year (Sep) | Avg score · Below hierarchy avg · Participation |
+| `asm_sat2`        | SAT 2 Results                        | %     | Twice a Year (Mar) | Avg score · Below hierarchy avg · Participation |
+| `asm_orf`         | Oral Reading Fluency (ORF)           | score | Twice a Year       | CWPM · Below hierarchy avg · Participation      |
+| `asm_cet`         | CET Results                          | %     | Yearly             | Result · Participation                          |
+| `asm_cgms`        | NMMS / CGMS Results                  | %     | Yearly             | Result · Participation                          |
+| `asm_remediation` | SAT reports downloaded in classrooms | count | Monthly            | — (as-on display)                               |
 
 ### Administration (4 sub-domains)
 
 **School Observation**
 
-| ID | Name | Unit | Frequency |
-|---|---|---|---|
-| `vis_crc_count` | CRC Visits | count | Monthly |
-| `vis_obs_completion` | Observation Completion | % | Monthly |
-| `vis_ict` | ICT Lab Utilisation | % | Monthly |
-| `vis_library` | Library Utilisation | % | Monthly |
-| `vis_urinals` | Urinals Functional | % | Monthly |
-| `vis_handwash` | Handwash Stations Functional | % | Monthly |
-| `vis_water` | Safe Drinking Water | % | Monthly |
-| `vis_smc` | SMC Meetings Conducted | % | Monthly |
+| ID                   | Name                         | Unit  | Frequency |
+| -------------------- | ---------------------------- | ----- | --------- |
+| `vis_crc_count`      | CRC Visits                   | count | Monthly   |
+| `vis_obs_completion` | Observation Completion       | %     | Monthly   |
+| `vis_ict`            | ICT Lab Utilisation          | %     | Monthly   |
+| `vis_library`        | Library Utilisation          | %     | Monthly   |
+| `vis_urinals`        | Urinals Functional           | %     | Monthly   |
+| `vis_handwash`       | Handwash Stations Functional | %     | Monthly   |
+| `vis_water`          | Safe Drinking Water          | %     | Monthly   |
+| `vis_smc`            | SMC Meetings Conducted       | %     | Monthly   |
 
 **Classroom Observation**
 
-| ID | Name | Unit | Frequency |
-|---|---|---|---|
-| `vis_classroom_obs` | Classroom Observations | count | Monthly |
-| `vis_lesson_plan` | Lesson Plan Completion | % | Monthly |
-| `vis_teacher_diary` | Teacher Diary Completion | % | Monthly |
+| ID                  | Name                     | Unit  | Frequency |
+| ------------------- | ------------------------ | ----- | --------- |
+| `vis_classroom_obs` | Classroom Observations   | count | Monthly   |
+| `vis_lesson_plan`   | Lesson Plan Completion   | %     | Monthly   |
+| `vis_teacher_diary` | Teacher Diary Completion | %     | Monthly   |
 
 **Student Retention**
 
-| ID | Name | Unit | Frequency |
-|---|---|---|---|
-| `ret_dropout` | Drop-out Rate | % | Yearly |
-| `ret_reenroll` | Re-enrolment Rate | % | Yearly |
+| ID             | Name              | Unit | Frequency |
+| -------------- | ----------------- | ---- | --------- |
+| `ret_dropout`  | Drop-out Rate     | %    | Yearly    |
+| `ret_reenroll` | Re-enrolment Rate | %    | Yearly    |
 
 **CPD (Continuous Professional Development)**
 
-| ID | Name | Unit | Frequency |
-|---|---|---|---|
-| `cpd_hours` | Teacher Training Hours | hours | Monthly |
-| `cpd_50` | Teachers with ≥50h Training | % | Yearly |
+| ID          | Name                        | Unit  | Frequency |
+| ----------- | --------------------------- | ----- | --------- |
+| `cpd_hours` | Teacher Training Hours      | hours | Monthly   |
+| `cpd_50`    | Teachers with ≥50h Training | %     | Yearly    |
 
 ### School Quality (GSQAC Output)
 
-| ID | Name | Description |
-|---|---|---|
-| `sq_gsqac` | GSQAC Overall Score | Composite school quality accreditation score |
-| `sq_d1` | D1 — Learning & Teaching | Pedagogy, FLN, classroom practices |
-| `sq_d2` | D2 — School Administration | Leadership, records, governance |
-| `sq_d3` | D3 — Co-curricular Activities | Sports, arts, clubs |
-| `sq_d4` | D4 — Resources & their Use | Infrastructure, ICT, library |
-| `sq_d5` | D5 — Participation in Scholarships | Scholarship uptake and outreach |
+| ID         | Name                               | Description                                  |
+| ---------- | ---------------------------------- | -------------------------------------------- |
+| `sq_gsqac` | GSQAC Overall Score                | Composite school quality accreditation score |
+| `sq_d1`    | D1 — Learning & Teaching           | Pedagogy, FLN, classroom practices           |
+| `sq_d2`    | D2 — School Administration         | Leadership, records, governance              |
+| `sq_d3`    | D3 — Co-curricular Activities      | Sports, arts, clubs                          |
+| `sq_d4`    | D4 — Resources & their Use         | Infrastructure, ICT, library                 |
+| `sq_d5`    | D5 — Participation in Scholarships | Scholarship uptake and outreach              |
 
 ### Multi-metric Architecture
 
@@ -409,11 +410,11 @@ For indicators with `metrics: KpiMetricDef[]`, sub-metric data is anchored separ
 
 ## Environment Variables
 
-| Variable | Required | Description | Example |
-|---|---|---|---|
-| `VITE_DATA_PROVIDER` | No | Which data provider to use. Defaults to `mock`. | `mock` or `supabase` |
-| `VITE_SUPABASE_URL` | Only with `supabase` | Supabase project URL | `https://xxxx.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Only with `supabase` | Supabase anonymous public key | `eyJhbGci...` |
+| Variable                 | Required             | Description                                     | Example                    |
+| ------------------------ | -------------------- | ----------------------------------------------- | -------------------------- |
+| `VITE_DATA_PROVIDER`     | No                   | Which data provider to use. Defaults to `mock`. | `mock` or `supabase`       |
+| `VITE_SUPABASE_URL`      | Only with `supabase` | Supabase project URL                            | `https://xxxx.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Only with `supabase` | Supabase anonymous public key                   | `eyJhbGci...`              |
 
 Copy `.env.example` to `.env.local` and fill in values. In development the `mock` provider requires no credentials.
 
@@ -481,16 +482,16 @@ node scripts/smoke.mjs    # runtime engine sanity checks
 
 ## Available Scripts
 
-| Script | Command | Description |
-|---|---|---|
-| **Dev server** | `npm run dev` | Start Vite dev server on port 5173 with HMR |
-| **Build** | `npm run build` | TypeScript check + Vite production bundle → `dist/` |
-| **Type-check** | `npm run typecheck` | Run `tsc --noEmit` (strict, no build artefacts) |
-| **Seed** | `npm run seed` | Regenerate `src/data/provider/seed/*.json` from GSQAC CSV |
-| **Verify** | `npm run verify` | Runtime config + data integrity assertions |
-| **Smoke** | `node scripts/smoke.mjs` | Engine sanity checks (no test framework needed) |
-| **Preview** | `npm run preview` | Serve the production build locally |
-| **E2E tests** | `npx playwright test` | Run Playwright end-to-end tests |
+| Script         | Command                  | Description                                               |
+| -------------- | ------------------------ | --------------------------------------------------------- |
+| **Dev server** | `npm run dev`            | Start Vite dev server on port 5173 with HMR               |
+| **Build**      | `npm run build`          | TypeScript check + Vite production bundle → `dist/`       |
+| **Type-check** | `npm run typecheck`      | Run `tsc --noEmit` (strict, no build artefacts)           |
+| **Seed**       | `npm run seed`           | Regenerate `src/data/provider/seed/*.json` from GSQAC CSV |
+| **Verify**     | `npm run verify`         | Runtime config + data integrity assertions                |
+| **Smoke**      | `node scripts/smoke.mjs` | Engine sanity checks (no test framework needed)           |
+| **Preview**    | `npm run preview`        | Serve the production build locally                        |
+| **E2E tests**  | `npx playwright test`    | Run Playwright end-to-end tests                           |
 
 ---
 
@@ -498,25 +499,25 @@ node scripts/smoke.mjs    # runtime engine sanity checks
 
 Role is inferred from the digit length of the user's primary ID — no role picker in the UI.
 
-| Role | ID Digits | Scope | Drill-down |
-|---|---|---|---|
-| `state` | 2 | Entire state | → Districts |
-| `deo` (District) | 4 | One district | → Blocks |
-| `brc` (Block) | 6 | One block | → Clusters |
-| `crc` (Cluster) | 10 | One cluster | → Schools |
-| `principal` | 11 (school UDISE) | One school | → Grades → Sections |
-| `teacher` | 8 | One classroom | Section only |
+| Role             | ID Digits         | Scope         | Drill-down          |
+| ---------------- | ----------------- | ------------- | ------------------- |
+| `state`          | 2                 | Entire state  | → Districts         |
+| `deo` (District) | 4                 | One district  | → Blocks            |
+| `brc` (Block)    | 6                 | One block     | → Clusters          |
+| `crc` (Cluster)  | 10                | One cluster   | → Schools           |
+| `principal`      | 11 (school UDISE) | One school    | → Grades → Sections |
+| `teacher`        | 8                 | One classroom | Section only        |
 
 ### Demo Accounts
 
-| Level | Demo ID | Second credential |
-|---|---|---|
-| State | `24` | PIN `0000` |
-| District (DEO) | `2401` | PIN `3456` |
-| Block (BRC) | `240101` | PIN `2345` |
-| Cluster (CRC) | `2401010001` | PIN `1234` |
-| School / Principal | `24010100011` | PIN `1111` |
-| Teacher | `24000009` | School ID `24010100011` |
+| Level              | Demo ID       | Second credential       |
+| ------------------ | ------------- | ----------------------- |
+| State              | `24`          | PIN `0000`              |
+| District (DEO)     | `2401`        | PIN `3456`              |
+| Block (BRC)        | `240101`      | PIN `2345`              |
+| Cluster (CRC)      | `2401010001`  | PIN `1234`              |
+| School / Principal | `24010100011` | PIN `1111`              |
+| Teacher            | `24000009`    | School ID `24010100011` |
 
 Use the **"Demo logins ▾"** helper on the login screen to prefill any account.
 
@@ -569,6 +570,7 @@ flowchart LR
 ### PM SHRI Filter
 
 Available in the top navigation for Cluster-and-above roles:
+
 - **All** — aggregates include all schools in scope.
 - **PM SHRI** — aggregates scoped to PM SHRI-flagged schools only.
 - **Non-PM SHRI** — aggregates scoped to non-PM SHRI schools.
@@ -684,11 +686,11 @@ The SPA rewrite rule ensures deep links (`/app/kpi/att_teacher`) work on direct 
 
 Set these in the Vercel project dashboard (Settings → Environment Variables):
 
-| Variable | Value |
-|---|---|
-| `VITE_DATA_PROVIDER` | `supabase` (production) or `mock` (staging/preview) |
-| `VITE_SUPABASE_URL` | Your Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
+| Variable                 | Value                                               |
+| ------------------------ | --------------------------------------------------- |
+| `VITE_DATA_PROVIDER`     | `supabase` (production) or `mock` (staging/preview) |
+| `VITE_SUPABASE_URL`      | Your Supabase project URL                           |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key                              |
 
 ### Switching to Live Supabase Data
 
@@ -717,6 +719,7 @@ node scripts/verify.mjs
 ### `npm install` fails or hangs on Windows
 
 If PowerShell blocks npm:
+
 ```powershell
 npm.cmd install
 ```
@@ -778,7 +781,7 @@ chore: add .gitattributes for GitHub Linguist
 - TypeScript strict mode — no `any`, no unused vars/params (enforced by `tsc`).
 - No hardcoded KPI IDs in component code — all metadata lives in `src/config/`.
 - No hardcoded copy strings — all UI text goes through `useT()` from `src/i18n/`.
-- No comments explaining *what* the code does — only *why* (hidden constraints, non-obvious invariants).
+- No comments explaining _what_ the code does — only _why_ (hidden constraints, non-obvious invariants).
 - No card-level graphs — trend charts belong only on `KpiDetail.tsx`.
 - Do not change: KPI values, KPI formulas, KPI names, delta logic, N+1 logic, date/frequency logic, source values, access control, routing, Compare behaviour, Export behaviour, KPI detail charts, homepage navigation, GSQAC logic, or provider architecture — without explicit sign-off.
 
