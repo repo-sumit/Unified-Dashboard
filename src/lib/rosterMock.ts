@@ -5,7 +5,6 @@
  * renders the same list. Names appear ONLY for teacher/principal scope (§23); officers
  * see counts per child unit, never names.
  */
-import type { Entity } from "@/types";
 
 function h(s: string): number {
   let x = 2166136261;
@@ -37,11 +36,6 @@ export interface GradeCount {
   n: number;
   students: AbsentStudent[];
 }
-export interface UnitCount {
-  name: string;
-  n: number;
-}
-
 /** A teacher's own-class absentee list — the brief's Grade 5 sample, verbatim. */
 export const TEACHER_ABSENTEES: AbsentStudent[] = [
   { name: "Aarav Patel", section: "Section A", days: 8, lastPresent: "3 Jun" },
@@ -91,9 +85,6 @@ export const UNTRACKED_BY_GRADE: { grade: string; n: number }[] = [
   { grade: "Grade 7", n: 7 }, { grade: "Grade 8", n: 5 },
 ];
 
-/** Officer N-1 list: a deterministic count per child unit, highest first (no names). */
-export function unitCounts(children: Entity[], seedKey: string): UnitCount[] {
-  return children
-    .map((c) => ({ name: c.name, n: 4 + (h(c.id + seedKey) % 26) }))
-    .sort((a, b) => b.n - a.n);
-}
+// NOTE: the officer N-1 list is NOT generated here. It reads the SAME canonical
+// provider series the comparison chart uses (`useKpiChildSeries`) so the detail list
+// and the compare bars always agree (§1). The old hash-based `unitCounts` was removed.

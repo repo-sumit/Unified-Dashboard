@@ -1,21 +1,17 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { cn } from "@/lib/cn";
-import { rag } from "@/lib/colors";
-import { locNum } from "@/lib/format";
 import { useT } from "@/i18n";
-import { gsqacSubdomainById, gsqacGrade, gsqacStatus } from "@/config/gsqac";
+import { gsqacSubdomainById } from "@/config/gsqac";
 import { Card } from "@/components/ui/atoms";
-import { RatingBadge } from "@/components/ui/RatingBadge";
 import { GsqacIndicatorCard } from "@/components/ui/GsqacCards";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { BackLink } from "@/components/layout/PageHeader";
 import { PageSection } from "@/components/layout/PageSection";
 
 /**
- * GSQAC sub-domain page — tier-4 of the School Quality drill (Domain → Area →
- * Sub-domain → Indicators). Header shows the sub-domain score/grade; each indicator
- * is its own card (score · chevron) that supports embedded Compare and drills to the
- * KPI detail page. Self-contained GSQAC demo dataset (config/gsqac).
+ * GSQAC sub-domain page — indicator cards only. The sub-domain is already known from
+ * the back link + title, so there is NO redundant top score summary card (§4). Each
+ * indicator card shows its score and, after Compare is applied, its own grade-coloured
+ * comparison chart; tapping opens the KPI detail page.
  */
 export default function GsqacSubDomainView() {
   const { areaKey, subId } = useParams();
@@ -33,25 +29,13 @@ export default function GsqacSubDomainView() {
   }
 
   const { area, sub } = found;
-  const c = rag(gsqacStatus(sub.score));
-  const grade = gsqacGrade(sub.score);
-  const n = sub.indicators.length;
 
   return (
     <ScreenContainer>
       <BackLink label={tn(area.name, area.name_gu)} onClick={() => navigate(`/app/gsqac/${area.key}`)} />
+      {/* lightweight title only — not a score summary card */}
+      <h1 className="pb-1 text-lg font-extrabold leading-snug text-neutral-900">{tn(sub.name, sub.name_gu ?? sub.name)}</h1>
 
-      {/* sub-domain headline — score · grade · indicator count */}
-      <Card className="card-pad">
-        <h1 className="text-lg font-extrabold leading-snug text-neutral-900">{tn(sub.name, sub.name_gu ?? sub.name)}</h1>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
-          <span className={cn("text-3xl font-extrabold tnum leading-none", c.text)}>{locNum(sub.score, lang)}%</span>
-          <RatingBadge grade={grade} size="md" />
-          <span className="text-2xs font-medium text-neutral-400">{locNum(n, lang)} {t("scorecard.indicators")}</span>
-        </div>
-      </Card>
-
-      {/* one card per indicator → KPI detail; Compare bars appear inside after Apply */}
       <PageSection title={t("scorecard.indicators")}>
         <div className="flex flex-col gap-2.5">
           {sub.indicators.map((ind) => (

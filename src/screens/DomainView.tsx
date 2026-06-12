@@ -8,7 +8,7 @@ import { Card, StatusDot } from "@/components/ui/atoms";
 import { KpiCardAuto } from "@/components/ui/MultiMetricKpiCard";
 import { BalancedKpiGrid, getKpiCardLayoutWeight } from "@/components/ui/BalancedKpiGrid";
 import { GsqacGradeLegend } from "@/components/ui/GsqacGradeLegend";
-import { GsqacOverallCard, GsqacAreaCard } from "@/components/ui/GsqacCards";
+import { GsqacAreaCard } from "@/components/ui/GsqacCards";
 import { CardChevron } from "@/components/ui/kpiCardParts";
 import { ParakhSurveyCard } from "@/components/ui/ParakhSurveyCard";
 import { BoardCard } from "@/components/ui/ParakhCards";
@@ -57,9 +57,8 @@ export default function DomainView() {
       <BackLink label={t("nav.home")} onClick={() => navigate("/app")} />
 
       {isGsqac ? (
-        /* ── School Quality (GSQAC) — score-card drilldown ── */
+        /* ── School Quality (GSQAC) — area cards only (no redundant overall card, §2) ── */
         <>
-          <GsqacOverallCard lang={lang} />
           <PageSection title={t("gsqac.areas")}>
             <PageGrid cols="domain">
               {GSQAC_AREAS.map((a) => (

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { rag } from "@/lib/colors";
+import { rag, GSQAC_BAND_HEX } from "@/lib/colors";
 import { locNum } from "@/lib/format";
 import { useT, type Lang } from "@/i18n";
 import { GSQAC_OVERALL, gsqacGrade, gsqacStatus, gsqacCompareValue, type GsqacArea, type GsqacSubdomain, type GsqacIndicator } from "@/config/gsqac";
@@ -31,7 +31,16 @@ export function GsqacCompareSection({ seedKey, base, lang, className }: { seedKe
   if (!bars.length) return null;
   return (
     <div className={cn("mt-3 border-t border-line/60 pt-3", className)}>
-      <ChildComparisonBars title={t("compare.chartTitle", { level: t(`levels.${childLevel}`) })} bars={bars} unit="%" lang={lang} maxValue={100} />
+      {/* §6 — GSQAC bars use the grade-scale colour of each bar's score (green→red),
+          not the neutral brand fill that non-GSQAC domains use. */}
+      <ChildComparisonBars
+        title={t("compare.chartTitle", { level: t(`levels.${childLevel}`) })}
+        bars={bars}
+        unit="%"
+        lang={lang}
+        maxValue={100}
+        fillFor={(b) => GSQAC_BAND_HEX[gsqacGrade(b.value as number)]}
+      />
     </div>
   );
 }

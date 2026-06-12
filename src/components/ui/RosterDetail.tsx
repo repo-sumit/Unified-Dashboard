@@ -3,12 +3,13 @@ import type { Entity, Level, Role } from "@/types";
 import { cn } from "@/lib/cn";
 import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { formatValue } from "@/lib/format";
+import { useKpiChildSeries } from "@/hooks";
 import { useT, type Lang } from "@/i18n";
 import { Card } from "./atoms";
 import { ChevronDown } from "./Icon";
 import {
   TEACHER_ABSENTEES, ABSENT_BY_GRADE, TEACHER_UNTRACKED, UNTRACKED_BY_GRADE,
-  unitCounts, type AbsentStudent,
+  type AbsentStudent,
 } from "@/lib/rosterMock";
 
 /**
@@ -68,7 +69,7 @@ export function RosterDetail({
       ) : isPrincipal ? (
         <PrincipalList kind={kind} />
       ) : (
-        <OfficerList kind={kind} childLevel={childLevel} units={units} />
+        <OfficerList kind={kind} childLevel={childLevel} units={units} lang={lang} />
       )}
     </div>
   );
@@ -162,16 +163,25 @@ function AbsentRow({ s, first }: { s: AbsentStudent; first?: boolean }) {
   );
 }
 
-/** officer → N-1 hierarchy counts, no names (§23). */
+/** officer → N-1 hierarchy counts, no names (§23). Values come from the SAME canonical
+ *  provider series the domain card's comparison chart uses (`useKpiChildSeries`), so the
+ *  detail list and the compare bars never disagree (§1 Rule 2). */
 function OfficerList({
-  kind, childLevel, units,
+  kind, childLevel, units, lang,
 }: {
   kind: "absent" | "untracked";
   childLevel: Level | null;
   units: Entity[];
+  lang: Lang;
 }) {
-  const { t } = useT();
-  const rows = unitCounts(units, kind);
+  const { t, tn } = useT();
+  const kpiId = kind === "absent" ? "att_chronic" : "ret_dropout";
+  const series = useKpiChildSeries(kpiId, units.map((u) => u.id));
+  const valueById = new Map(series.map((s) => [s.id, s.value]));
+  const rows = units
+    .map((u) => ({ id: u.id, name: tn(u.name, u.name_gu), value: valueById.get(u.id) ?? null }))
+    .filter((r) => r.value != null)
+    .sort((a, b) => (b.value as number) - (a.value as number));
   const unitWord = childLevel ? `${t(`levels.${childLevel}`)}s` : t("scorecard.subDomains");
   const heading = kind === "absent"
     ? t("roster.unitsWithAbsent", { unit: unitWord })
@@ -184,9 +194,9 @@ function OfficerList({
       <div className="mb-1 text-sm font-bold text-neutral-900">{heading}</div>
       <div>
         {rows.map((r, i) => (
-          <div key={r.name} className={cn("flex items-center gap-3 py-2.5", i && "border-t border-line/60")}>
+          <div key={r.id} className={cn("flex items-center gap-3 py-2.5", i && "border-t border-line/60")}>
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-900">{r.name}</span>
-            <span className="shrink-0 text-base font-extrabold tnum text-neutral-900">{r.n}</span>
+            <span className="shrink-0 text-base font-extrabold tnum text-neutral-900">{formatValue(r.value, "count", lang)}</span>
           </div>
         ))}
       </div>

@@ -33,7 +33,7 @@ function abbrev(label: string): string {
  * "scroll ›" hint. Tapping a bar drills into that unit. Unit-consistent.
  */
 export function ChildComparisonBars({
-  title, bars, unit = "%", lang = "en", height = 88, lowerBetter = false, maxValue, onOpen, noSort = false,
+  title, bars, unit = "%", lang = "en", height = 88, lowerBetter = false, maxValue, onOpen, noSort = false, fillFor,
 }: {
   title?: string;
   bars: ChildBar[];
@@ -45,6 +45,9 @@ export function ChildComparisonBars({
   onOpen?: (id: string) => void;
   /** keep the given bar order (e.g. School · District · State) instead of worst-first. */
   noSort?: boolean;
+  /** per-bar fill colour (hex) — used by GSQAC for grade-scale colouring (§6). When it
+   *  returns undefined the default neutral brand fill applies (non-GSQAC, §10). */
+  fillFor?: (b: ChildBar) => string | undefined;
 }) {
   const { t } = useT();
   const valued = bars.filter((b) => b.value != null);
@@ -88,6 +91,7 @@ export function ChildComparisonBars({
         {sorted.map((b) => {
           const v = b.value as number;
           const h = Math.max(6, (v / top) * height);
+          const fill = fillFor?.(b);
           return (
             <button
               key={b.id}
@@ -97,12 +101,13 @@ export function ChildComparisonBars({
               className="flex shrink-0 flex-col items-center gap-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
               style={{ width: ITEM_W, cursor: onOpen ? "pointer" : "default" }}
             >
-              {/* value label — single line, fixed height. Neutral (§10): comparison bars
-                  use ONE brand colour, no RAG coding outside GSQAC/delta. */}
-              <span className="h-3.5 text-2xs font-bold tnum leading-none text-neutral-500">{formatValue(v, unit, lang)}</span>
-              {/* bar track — fixed height; fill bottom-aligned to the shared baseline */}
+              {/* value label — single line, fixed height. Neutral by default (§10); GSQAC
+                  tints it with the bar's grade colour for a consistent read (§6). */}
+              <span className="h-3.5 text-2xs font-bold tnum leading-none text-neutral-500" style={fill ? { color: fill } : undefined}>{formatValue(v, unit, lang)}</span>
+              {/* bar track — fixed height; fill bottom-aligned to the shared baseline.
+                  `fillFor` (GSQAC grade colour) overrides the neutral brand fill. */}
               <span className="flex w-full items-end justify-center" style={{ height }}>
-                <span className="origin-bottom animate-bar-grow bg-primary-400" style={{ width: BAR_W, height: h, borderRadius: "5px 5px 2px 2px" }} />
+                <span className="origin-bottom animate-bar-grow bg-primary-400" style={{ width: BAR_W, height: h, borderRadius: "5px 5px 2px 2px", background: fill }} />
               </span>
               {/* unit label — below the baseline, up to 2 lines (reserved height), never moves the bar */}
               <span className="line-clamp-2 block min-h-[2.4em] w-full break-words text-center text-2xs font-semibold leading-tight text-neutral-400" title={b.label}>

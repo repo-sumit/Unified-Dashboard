@@ -1,5 +1,74 @@
 # Pocket VSK — QA Report
 
+## Data consistency + GSQAC redundant-card removal + grade-coloured bars (Pass 34)
+
+Three focused fixes: make the KPI detail child list read the same canonical source as the
+comparison chart, strip the redundant top summary cards from the GSQAC drill, and colour GSQAC
+comparison bars by grade.
+
+### 1. Data consistency — detail N-1 list now matches the comparison chart (§1)
+
+**Bug:** the role-aware detail for "students absent 7+ days" / "untracked students" rendered its
+officer N-1 hierarchy list from a **separate hash generator** (`rosterMock.unitCounts`), so the
+detail list showed unrelated values (e.g. `Anjar 25, Lakhpat 18`) while the domain card's compare
+chart showed the real provider values (e.g. `Anjar 208, Lakhpat 225`).
+
+**Fix:** `RosterDetail`'s `OfficerList` now reads the **same canonical provider series** the
+compare chart uses — `useKpiChildSeries(kpiId, childIds)` — keyed by `att_chronic` / `ret_dropout`,
+formatted in the metric's own unit (count). Card value, detail headline, compare chart, and the
+detail N-1 list all resolve from the provider for the same scope/filter, so they agree (Rules 1–3).
+PM SHRI / filter state already flows through `useKpiChildSeries`, so all surfaces stay in sync.
+The dead `unitCounts` generator (and its `UnitCount` type / `Entity` import) was **removed** from
+`rosterMock.ts` (§8).
+
+### 2. Removed the Overall GSQAC card from the domain page (§2)
+
+`/app/domain/school_quality` no longer renders the big "Overall GSQAC · 68.1% · 680.7/1000" card.
+The page starts at **GSQAC AREAS** (area cards), which still show score · grade · sub-domain count
+and a compare chart when Compare is applied.
+
+### 3. Removed redundant top summary cards from the GSQAC area & sub-domain pages (§3, §4)
+
+- **Area page** (`/app/gsqac/:areaKey`): dropped the area score/grade/marks + static
+  District·State summary card. Now: back link + a lightweight area **title** (name only) + the
+  **SUB-DOMAINS** cards (each with its own compare chart).
+- **Sub-domain page** (`/app/gsqac/:areaKey/:subId`): dropped the sub-domain score summary card.
+  Now: back link + lightweight sub-domain **title** + the **INDICATORS** cards.
+- **Indicator detail** (`/app/kpi/:id`, §5): already shows title + meta + value in the page
+  header, then the trend chart + "How it's calculated" — no separate redundant summary card.
+  Compare stays hidden on `/app/kpi/*`.
+
+### 4. GSQAC comparison bars use the grade-scale colour (§6)
+
+`ChildComparisonBars` gained an optional `fillFor(bar)` prop (per-bar hex). Non-GSQAC charts
+omit it and keep the neutral brand fill (§10); **GSQAC** charts pass
+`fillFor={(b) => GSQAC_BAND_HEX[gsqacGrade(b.value)]}`, so each bar is coloured by its own score's
+grade band — green (A-range) → lime (A2/A1) → amber (B) → orange (C) → red (D). Applies to the
+GSQAC area / sub-domain / indicator compare charts. Baseline, fixed tracks, 2-line labels,
+percent units, and chart-strip-only scroll are unchanged (§7).
+
+### Files changed
+
+`components/ui/RosterDetail.tsx` (officer list → `useKpiChildSeries`), `lib/rosterMock.ts`
+(removed `unitCounts`), `components/ui/ComparisonBars.tsx` (`fillFor` prop),
+`components/ui/GsqacCards.tsx` (grade-colour `fillFor`), `screens/DomainView.tsx` (removed
+Overall GSQAC card), `screens/GsqacAreaView.tsx` (no summary card), `screens/GsqacSubDomainView.tsx`
+(no summary card).
+
+### Build
+
+`tsc --noEmit` ✓ · `vite build` ✓ (`built in 12.37s`; only the pre-existing `entities` seed
+chunk-size warning). Playwright not run, per standing instruction.
+
+### Deviation
+
+`GsqacOverallCard` is now unused (kept exported in `GsqacCards.tsx`, harmless) since the overall
+score is no longer shown on the listing page. Area/sub-domain pages keep a one-line **title** for
+orientation — the spec allows the page title to carry context; only the large *score/comparison
+summary cards* were removed.
+
+---
+
 ## GSQAC drill: Area → Sub-domain page → Indicator cards → KPI detail, all Compare-enabled (Pass 33)
 
 Extended the GSQAC / School Quality flow to a full domain-style drill, so every level lists
