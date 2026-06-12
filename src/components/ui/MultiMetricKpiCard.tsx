@@ -77,7 +77,7 @@ function MetricRow({
       label={label}
       value={na ? "—" : formatValue(rec.value, kpi.unit, lang)}
       valueTone={tone}
-      peerLabel={parentName && peer != null && parentLevel ? `${t("common.vs")} ${t(`levels.${parentLevel}`)}${peerIsAvg ? ` ${t("common.avg")}` : ""} · ${formatValue(peer, kpi.unit, lang)}` : null}
+      peerLabel={parentName && peer != null && parentLevel ? `${t(`levels.${parentLevel}`)}${peerIsAvg ? ` ${t("common.avg")}` : ""} · ${formatValue(peer, kpi.unit, lang)}` : null}
       delta={delta != null && delta !== 0 ? (
         <FrequencyDelta delta={delta} unit={kpi.unit} direction={kpi.direction} cadence={trend!.cadence} lang={lang} />
       ) : null}

@@ -42,7 +42,7 @@ export function KpiCard({
   const hasPeer = !na && !!parentName && peerScore != null && !!parentLevel;
   // §22: percentage/score comparisons are averages → append "avg"; counts are not.
   const peerIsAvg = kpi.unit !== "count";
-  const peerStr = hasPeer ? `${t("common.vs")} ${t(`levels.${parentLevel}`)}${peerIsAvg ? ` ${t("common.avg")}` : ""} · ${formatValue(peerScore, kpi.unit, lang)}` : "";
+  const peerStr = hasPeer ? `${t(`levels.${parentLevel}`)}${peerIsAvg ? ` ${t("common.avg")}` : ""} · ${formatValue(peerScore, kpi.unit, lang)}` : "";
   // short suffix (count KPIs) or "" (percent/score/visits show the bare value) —
   // never the full title, which already sits in the header.
   const suffix = getSingleMetricValueSuffix(kpi.id, lang);

@@ -8,6 +8,7 @@ import { gradeFor } from "@/config/ratingBands";
 import { OUTPUT_DOMAIN_ID } from "@/config/frameworks";
 import { statusFromGrade } from "@/engine";
 import { DomainInsightCard } from "@/components/ui/DomainInsightCard";
+import { UntrackedHomeCard } from "@/components/ui/UntrackedHomeCard";
 import type { ChildBar } from "@/components/ui/ComparisonBars";
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { PageSection, PageGrid } from "@/components/layout/PageSection";
@@ -20,8 +21,12 @@ import { PageSection, PageGrid } from "@/components/layout/PageSection";
  * comparison strip; filters, Compare, Export and the navigator live in the shell.
  */
 export default function ScorecardHome() {
-  const { user, entity, currentId, setScope } = useScope();
+  const { user, entity, currentId, homeId, setScope } = useScope();
   const sc = useScorecard(currentId);
+  // School-level scorecard (the user's home entity) — Teacher/Principal GSQAC is a
+  // school-level team metric, so it falls back to this when the current grade/section
+  // scope has no GSQAC of its own (§1).
+  const homeSc = useScorecard(homeId);
   const childEntries = useChildLeaderboard(currentId);
   const fw = useFramework();
   const { childLevel, applied, selectedIds } = useCompare();
@@ -30,8 +35,22 @@ export default function ScorecardHome() {
 
   if (!entity || !sc) return null;
 
-  const inputs = sc.domainScores.filter((d) => d.domain.kind === "input" && d.records.length > 0);
+  const isTP = user?.role === "teacher" || user?.role === "principal";
+  const allInputs = sc.domainScores.filter((d) => d.domain.kind === "input" && d.records.length > 0);
+  // Teacher/Principal home replaces the "Administration" domain card with a dedicated
+  // "Untracked Students" card (§2/§4); officers keep the full input set.
+  const inputs = isTP ? allInputs.filter((d) => d.domain.id !== "administration") : allInputs;
+
+  // School Quality (GSQAC): current scope's output, else the school-level output for
+  // Teacher/Principal so the card never disappears at grade/section (§1).
   const output = sc.domainScores.find((d) => d.domain.id === OUTPUT_DOMAIN_ID);
+  const currentOutput = output && output.percent != null ? output : null;
+  const homeOutput = (() => {
+    const o = homeSc?.domainScores.find((d) => d.domain.id === OUTPUT_DOMAIN_ID);
+    return o && o.percent != null ? o : null;
+  })();
+  const gsqacOutput = currentOutput ?? (isTP ? homeOutput : null);
+  const gsqacSc = currentOutput ? sc : homeSc;
   const parent = sc.parent;
   const parentName = parent ? tn(parent.entity.name, parent.entity.name_gu) : undefined;
   const levelLabel = t(`levels.${entity.level}`);
@@ -70,6 +89,12 @@ export default function ScorecardHome() {
         <PageGrid cols="domain">
           {inputs.map((d) => {
             const hero = d.records.find((r) => r.kpi.hero) ?? null;
+            // Administration (officers only — teachers have no access to this domain):
+            // show No. of CRC/URC visits below the untracked-students hero, separated by
+            // a divider. Sourced from the same scorecard record as the domain detail.
+            const secondary = d.domain.id === "administration"
+              ? d.records.find((r) => r.kpi.id === "vis_CRCC_count") ?? null
+              : null;
             return (
               <DomainInsightCard
                 key={d.domain.id}
@@ -77,6 +102,7 @@ export default function ScorecardHome() {
                 name={tn(d.domain.name, d.domain.name_gu)}
                 level={entity.level}
                 heroRec={hero}
+                secondaryRec={secondary}
                 parentName={parentName}
                 comparable={comparable}
                 comparing={applied}
@@ -88,23 +114,33 @@ export default function ScorecardHome() {
             );
           })}
 
-          {/* School Quality (GSQAC) — hidden where it isn't tracked (grade/section → NA),
-              so a teacher's Grade/Section view shows only Attendance + Assessment. */}
-          {output && output.percent != null && (
+          {/* School Quality (GSQAC). Officers: shown when the current scope has a score.
+              Teacher/Principal: always shown, falling back to the school-level score so it
+              persists at Grade/Section view too — GSQAC is a school-level team metric (§1). */}
+          {gsqacOutput && (
             <DomainInsightCard
-              ds={output}
-              name={tn(output.domain.name, output.domain.name_gu)}
-              level={entity.level}
+              ds={gsqacOutput}
+              name={tn(gsqacOutput.domain.name, gsqacOutput.domain.name_gu)}
+              level={gsqacOutput === output ? entity.level : "school"}
               parentName={parentName}
               gsqacImprovement={entity.meta.gsqac?.improvement ?? null}
-              outputPercent={output.percent}
-              parentPercent={parent?.domainPercents[OUTPUT_DOMAIN_ID] ?? null}
-              comparable={comparable}
+              outputPercent={gsqacOutput.percent}
+              parentPercent={gsqacSc?.parent?.domainPercents[OUTPUT_DOMAIN_ID] ?? null}
+              comparable={gsqacOutput === output && comparable}
               comparing={applied}
-              bars={childBars(OUTPUT_DOMAIN_ID)}
+              bars={gsqacOutput === output ? childBars(OUTPUT_DOMAIN_ID) : []}
               chartTitle={chartTitle}
               onDrill={() => navigate(`/app/domain/${OUTPUT_DOMAIN_ID}`)}
               onOpenChild={drillChild}
+            />
+          )}
+
+          {/* Untracked Students — dedicated Teacher/Principal card (§1/§2): purple icon,
+              untracked + re-enrolled counts, N+1 pill; drills to the role-aware detail. */}
+          {isTP && user && (
+            <UntrackedHomeCard
+              role={user.role as "teacher" | "principal"}
+              onOpen={() => navigate("/app/kpi/ret_dropout")}
             />
           )}
         </PageGrid>

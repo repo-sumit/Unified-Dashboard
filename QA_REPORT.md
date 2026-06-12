@@ -1,5 +1,278 @@
 # Pocket VSK — QA Report
 
+## Untracked card cleanup + drop "vs" prefix + CRC/URC visits metric (Pass 40)
+
+Three focused homepage tweaks:
+
+1. **Remove "re-enrolled this year" from the Untracked card.** `UntrackedHomeCard` no longer
+   renders the secondary re-enrolled line. (The re-enrolled count is still shown in the *detail*
+   summary, and `UNTRACKED_SUMMARY.reenrolled` is kept — only the home card line was dropped.)
+
+2. **Drop the "vs" prefix from every N+1 hierarchy comparison pill.** The pills now read
+   "School 18", "District 790", "District avg 82%" instead of "vs School 18", etc. Removed the
+   `t("common.vs")` token from all six render sites:
+   - `components/ui/DomainInsightCard.tsx` (`N1Chip` — home domain cards)
+   - `components/ui/KpiCard.tsx` and `components/ui/MultiMetricKpiCard.tsx` (KPI-listing peer label)
+   - `components/ui/RosterDetail.tsx` (both the untracked and the count comparison pills)
+   - `components/ui/UntrackedHomeCard.tsx`
+   The `common.vs` i18n key is left defined (harmless, keeps the en/gu shape aligned) but is now
+   unused. The "avg" suffix on percent/score comparisons (§22) is unchanged.
+
+3. **Add "No. of CRC/URC visits" to the Untracked card with a line separator.** Below a divider,
+   the card now shows the school's CRC/URC school-observation count for the month
+   (`vis_CRCC_count` semantics — max 3/month), e.g. `2 / 3 CRC/URC visits this month`. Driven by
+   two new fields on the shared `UNTRACKED_SUMMARY` mock (`crcVisits`, `crcVisitsMax`) — a
+   school-level metric, so identical for the teacher and principal of one school. Added the
+   `roster.crcVisitsLabel` i18n key (en + gu). The whole card still navigates to the untracked
+   detail (`/app/kpi/ret_dropout`); the officer Administration card is unchanged.
+
+### Files changed
+
+- `src/components/ui/UntrackedHomeCard.tsx` — removed re-enrolled line + "vs"; added CRC/URC visits row.
+- `src/components/ui/DomainInsightCard.tsx`, `KpiCard.tsx`, `MultiMetricKpiCard.tsx`, `RosterDetail.tsx` — dropped "vs".
+- `src/lib/rosterMock.ts` — `crcVisits` / `crcVisitsMax` on `UNTRACKED_SUMMARY`.
+- `src/i18n/en.ts`, `src/i18n/gu.ts` — `roster.crcVisitsLabel`.
+
+### Verification
+
+- `npx tsc --noEmit` ✓ clean · `npm run build` ✓ (`built in 10.85s`; only the pre-existing
+  >1.5 MB `entities` chunk-size warning).
+- Grep confirms **zero** remaining `common.vs` usages in `src/`.
+- No changes to login/routing, header, filter/compare sheets, GSQAC, assessment ordering, or Parakh.
+
+---
+
+## Blank-screen-after-login crash fix — untracked roster generator (Pass 39)
+
+### Root cause
+
+After login the app crashed with `Uncaught TypeError: Cannot read properties of undefined
+(reading '0')` originating in `lib/rosterMock.ts` inside `genUntracked`, on the line that builds
+the surname initial:
+
+```ts
+name: `${FIRST[hv % FIRST.length]} ${LAST[(hv >> 4) % LAST.length][0]}.`
+```
+
+The hash `h()` returns an **unsigned** 32-bit int (`x >>> 0`, up to ~4.29B). But `hv >> 4` is an
+**arithmetic (signed)** shift: when `hv ≥ 2³¹`, JS first coerces it to a negative Int32, so the
+shift result is negative. In JS a negative dividend yields a negative modulo (`-13 % 8 === -5`),
+so `LAST[-5]` is `undefined`, and the trailing `[0]` (first char of the surname) threw.
+
+Because `UNTRACKED_BY_GRADE` is built at **module top-level** (`.map(g => genUntracked(...))`),
+this threw during import — so the whole React tree failed to mount and the user saw a blank
+screen. Empirically **41 of the 82** generated rows hit the negative index; the first one is
+enough to crash. (`genStudents` had the same signed-shift footgun but only interpolated the
+`undefined` as the string `"undefined"` rather than calling `[0]`, so it never crashed.)
+
+### Fix (`lib/rosterMock.ts`) — defensive + deterministic
+
+- Added a safe `pick<T>(arr, index, fallback)` helper that normalises **any** integer index
+  (including the negative signed-shift values) to a valid slot via `((i % len) + len) % len`,
+  and falls back if the array is empty or the slot is `undefined`.
+- `genUntracked` and `genStudents` now route every array lookup through `pick`; the surname
+  initial is taken with `pick(LAST, hv >> 4, "K").charAt(0).toUpperCase()` (always a real string,
+  so `.charAt(0)` can never throw). Both generators also clamp the length to `Math.max(0, n)`.
+- Output is still fully deterministic — same scope → same list — so the homepage card and detail
+  summary continue to match (§2). No values, counts, or role behaviour changed.
+
+### Verification
+
+- `npx tsc --noEmit` ✓ clean.
+- `npm run build` ✓ (`built in 11.18s`; only the pre-existing >1.5 MB `entities` chunk-size warning).
+- Standalone node replay of the exact hash + `pick` logic across all 82 untracked students:
+  `negative hv>>4` rows = 48, rows the **old** code would crash on = **41**, **new** invalid/undefined
+  names = **0**.
+- Role flows (unchanged): teacher home → student-list detail; principal home → grade accordion →
+  expand → student rows; officer → N-1 count list (no names). Untracked card shows for
+  teacher/principal only. No login/routing/header/compare/GSQAC/assessment changes.
+
+### Files changed
+
+- `src/lib/rosterMock.ts` — `pick` helper; hardened `genUntracked` + `genStudents`.
+
+---
+
+## Untracked Students card + role-aware drilldown for Teacher/Principal (Pass 38)
+
+Upgraded the Teacher/Principal **Untracked Students** homepage card to the latest design and made
+its drilldown fully role-aware, all from one central deterministic mock so card and detail agree.
+
+### Central mock (`lib/rosterMock.ts`)
+
+- `UNTRACKED_SUMMARY` — role-scoped summary that drives **both** the homepage card and the detail
+  summary so they always match (§2): teacher `5 untracked / 2 re-enrolled · vs School 18`,
+  principal `82 untracked / 43 re-enrolled · vs State 1.2K`.
+- `UNTRACKED_BY_GRADE` now carries a generated student roster per grade (counts sum to the
+  school's 82), so each grade row can expand to students (§4). Teacher list (`TEACHER_UNTRACKED`)
+  unchanged (the §3 sample).
+
+### Homepage card (`components/ui/UntrackedHomeCard.tsx`, new)
+
+Dedicated Teacher/Principal card matching the design: **purple/lavender icon**, title
+"Untracked Students", subtitle "Updated 12 Jun", big neutral count + "untracked students", a
+secondary "{n} re-enrolled this year", the **vs State/School** N+1 pill, right-side chevron only
+(no "Know more", no compare hint). Tapping opens `/app/kpi/ret_dropout`. `ScorecardHome` now
+renders this for teacher/principal (replacing the prior generic domain-card reuse); officers keep
+the Administration domain card unchanged. Card order stays Attendance · Assessment · School
+Quality · Untracked Students.
+
+### Role-aware drilldown (`components/ui/RosterDetail.tsx`)
+
+- **Summary** for untracked teacher/principal now shows **two values** (untracked + re-enrolled)
+  from `UNTRACKED_SUMMARY` with the matching N+1 pill — identical to the card.
+- **Teacher** → student list (avatar · name · grade·section · status pill `Untracked`/`Re-enrolled`),
+  no last-seen clutter, data-only.
+- **Principal** → **grade-wise accordion** (new `UntrackedClassAccordion`): each grade row shows a
+  count + chevron and expands to its student rows (§4) — previously a flat count list.
+- **Officer** → unchanged N-1 hierarchy counts from the canonical provider series
+  (`useKpiChildSeries`), no names (§5).
+
+### Files changed
+
+`lib/rosterMock.ts` (UNTRACKED_SUMMARY + grade rosters), `components/ui/UntrackedHomeCard.tsx`
+(new), `components/ui/RosterDetail.tsx` (two-value summary + principal accordion + shared row),
+`screens/ScorecardHome.tsx` (use the new card), `i18n/en.ts` + `i18n/gu.ts` (5 roster keys).
+
+### Build
+
+`tsc --noEmit` ✓ · `vite build` ✓ (`built in 11.52s`; only the pre-existing `entities` seed
+chunk-size warning). Playwright not run, per standing instruction.
+
+### Deviation
+
+§3's literal teacher-detail header showed `82 / 43`, which conflicts with §2's teacher card values
+`5 / 2` and the "card value must match detail summary" rule. Resolved in favour of consistency:
+teacher card **and** detail header both show `5 / 2` (school-scoped principal shows `82 / 43`).
+
+---
+
+## Homepage domain card shows the hero KPI's full name (Pass 37)
+
+The home **Attendance** card read "936 **students absent**" (a clipped suffix). It now reads
+"936 **students absent from past 7+ consecutive days**" — the hero KPI's full name.
+
+### Change
+
+`DomainInsightCard` → `InputHead` (`components/ui/DomainInsightCard.tsx`) now renders the hero's
+full name via `formatKpiCardTitlePhrase(kpi.name, …)` instead of the short
+`getSingleMetricValueSuffix`. The home card's title is the **domain** name ("Attendance"), so the
+full sentence in the value row is not a duplicate (unlike the KPI-listing card, whose title IS the
+KPI name — that card is unchanged and keeps its short suffix). Count KPIs keep the lower-cased
+leading word so it reads as a sentence; the number stays neutral black; the N+1 pill is unchanged.
+
+Side effect (benign): the Teacher/Principal **Untracked Students** home card hero (`ret_dropout`)
+now reads "… untracked students" (full name) instead of "… students untracked". The Assessment
+hero already used its full name.
+
+### Files changed
+
+`components/ui/DomainInsightCard.tsx`.
+
+### Build
+
+`tsc --noEmit` ✓ · `vite build` ✓ (`built in 10.10s`; only the pre-existing `entities` seed
+chunk-size warning). Playwright not run, per standing instruction.
+
+---
+
+## GSQAC indicator cards now match the sub-domain card style (Pass 36)
+
+The GSQAC **Indicators** list (`/app/gsqac/:areaKey/:subId`) rendered each indicator as a thin
+single-row item (status dot · name · score · chevron), inconsistent with the **Sub-domains** page
+which uses full score cards. Made them match.
+
+### Change
+
+`GsqacIndicatorCard` (`components/ui/GsqacCards.tsx`) now uses the **same layout as
+`GsqacSubdomainCard`**: full-width white `card-pad` card, title top-left with the right-side
+chevron, then a large score (`text-2xl`) + GSQAC **grade badge** (`RatingBadge` via the shared
+`gsqacGrade` helper) below. Long indicator names wrap to two lines (`line-clamp-2`); the card
+height adapts naturally. No indicator count line (not useful here), no status-dot row.
+
+### Preserved
+
+- **Compare** unchanged — the card still renders the shared `GsqacCompareSection` (grade-coloured
+  bars via `fillFor`, baseline-aligned, chart-strip-only scroll); nothing before Compare is
+  applied, no "Tap Compare…" hint.
+- **Navigation** unchanged — tapping still opens `/app/kpi/:indicatorId`; the chevron stays; no
+  "Know more" text.
+- The sub-domain page header is unchanged — back link + lightweight title + `INDICATORS`, no
+  redundant top summary card (§7, kept from Pass 34).
+
+Only `GsqacIndicatorCard` changed; the sub-domain and area cards already used this pattern, so the
+three GSQAC card types now share one consistent visual language.
+
+### Files changed
+
+`components/ui/GsqacCards.tsx` (GsqacIndicatorCard layout).
+
+### Build
+
+`tsc --noEmit` ✓ · `vite build` ✓ (`built in 12.51s`; only the pre-existing `entities` seed
+chunk-size warning). Playwright not run, per standing instruction.
+
+---
+
+## Teacher/Principal homepage: add School Quality + Untracked Students cards (Pass 35)
+
+Teacher and Principal homepages now show **four** primary cards in order — Attendance, Assessment,
+**School Quality**, **Untracked Students** — instead of just Attendance + Assessment.
+
+### 1. School Quality (GSQAC) now visible to teachers (§1)
+
+Root cause: `sq_gsqac` carried `roleVisibility: [...NON_TEACHER]`, which hid the entire output
+(School Quality) domain from teachers (principals already saw it). Removed that restriction —
+GSQAC is a school-level **team** metric, so it's visible to teachers too (`config/kpiCatalog.ts`).
+Now the teacher's School Quality card shows the real GSQAC score + grade (not `NA`), and the
+GSQAC drilldown page renders for teachers.
+
+### 2. School Quality always shown for Teacher/Principal, with school-level fallback (§1)
+
+`ScorecardHome` now pulls a second, school-level scorecard (`useScorecard(homeId)`). For
+Teacher/Principal the School Quality card uses the current scope's GSQAC when present, else falls
+back to the **school-level** score — so the card persists at Grade/Section view (GSQAC is a
+school-level metric). Officers keep the exact previous behaviour (current-scope output only).
+
+### 3. Dedicated Untracked Students card for Teacher/Principal (§2/§4)
+
+For Teacher/Principal the generic **Administration** domain card is replaced by a dedicated
+**Untracked Students** card (reusing the same `DomainInsightCard` style with the `ret_dropout`
+hero: `Daily · 1st Oct`, neutral count, N+1 pill). It drills to `/app/kpi/ret_dropout`, the
+role-aware detail (§3): teacher → student list · principal → grade-wise list · officer → N-1
+hierarchy counts (Pass 33/34). Card order is Attendance · Assessment · School Quality · Untracked
+Students. Officers keep the full domain set (Attendance, Assessment, Administration, School
+Quality) unchanged.
+
+### Data consistency (§6)
+
+The Untracked card value and the detail-page headline both read the canonical provider
+`ret_dropout` value for the same scope — no hardcoded divergence. (The teacher's own-class roster
+list inside the detail remains the same demo list pattern used for "absent 7+ days".)
+
+### Files changed
+
+`config/kpiCatalog.ts` (sq_gsqac visible to teachers), `screens/ScorecardHome.tsx` (role-aware
+cards: school-level GSQAC fallback + dedicated Untracked card, Administration card hidden for
+Teacher/Principal). No card component redesign; no change to login/header/filter/share/compare,
+GSQAC nested pages, Assessment ordering, PARAKH, or officer homepages (§8).
+
+### Build
+
+`tsc --noEmit` ✓ · `vite build` ✓ (`built in 10.70s`; only the pre-existing `entities` seed
+chunk-size warning). Playwright not run, per standing instruction.
+
+### Deviations
+
+- The Untracked card shows the **school-level** untracked count from the provider (the canonical
+  value, matching the detail headline per §6), not a role-scoped `4`/`18` — the provider tracks
+  untracked at school level, and forcing different per-role numbers would re-introduce the
+  card↔detail divergence this codebase just fixed. Same pattern as the "absent 7+ days" card.
+- Re-enrolment secondary text ("43 re-enrolled") was left off to keep the card compact and avoid
+  a card-component change; it remains available on the Untracked detail/Administration sub-domain.
+
+---
+
 ## Data consistency + GSQAC redundant-card removal + grade-coloured bars (Pass 34)
 
 Three focused fixes: make the KPI detail child list read the same canonical source as the

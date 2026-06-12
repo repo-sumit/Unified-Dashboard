@@ -248,6 +248,12 @@ export const gu: Dict = {
     lastSeen: "છેલ્લે જોયા {date}",
     unitsWithAbsent: "{unit} — 7+ દિવસથી ગેરહાજર વિદ્યાર્થીઓ સાથે",
     unitsWithUntracked: "{unit} — અનટ્રેક વિદ્યાર્થીઓ સાથે",
+    untrackedTitle: "અનટ્રેક કરેલા વિદ્યાર્થીઓ",
+    updatedOn: "અપડેટ {date}",
+    untrackedStudentsLabel: "અનટ્રેક વિદ્યાર્થીઓ",
+    reEnrolledThisYear: "આ વર્ષે પુનઃનોંધાયેલ",
+    crcVisitsLabel: "આ મહિને CRC/URC મુલાકાતો",
+    gradeWise: "ધોરણ મુજબ વિદ્યાર્થી યાદી",
   },
   // embedded child-unit comparison (home + domain pages) — NOT the old Compare feature
   compare: {

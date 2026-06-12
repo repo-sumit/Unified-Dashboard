@@ -124,17 +124,24 @@ export function GsqacSubdomainCard({ sub, lang, onOpen }: { sub: GsqacSubdomain;
   );
 }
 
-/** A GSQAC indicator card — name · score · chevron, with embedded Compare. Tapping
- *  opens the KPI detail page (/app/kpi/:id). Same visual language as other KPI cards. */
+/** A GSQAC indicator card — SAME layout as the sub-domain card (title top-left ·
+ *  chevron top-right · large score + grade badge below), so the Indicators list reads
+ *  as full cards, not thin rows. Tapping opens the KPI detail page (/app/kpi/:id).
+ *  Supports the same embedded grade-coloured Compare chart. */
 export function GsqacIndicatorCard({ indicator, lang, onOpen }: { indicator: GsqacIndicator; lang: Lang; onOpen: () => void }) {
   const c = rag(gsqacStatus(indicator.score));
+  const grade = gsqacGrade(indicator.score);
   return (
     <Card className="card-pad">
-      <button onClick={onOpen} className="group flex w-full items-center gap-3 text-left">
-        <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", c.bg)} aria-hidden />
-        <span className="min-w-0 flex-1 text-sm font-semibold text-neutral-900">{indicator.name}</span>
-        <span className={cn("shrink-0 text-base font-extrabold tnum", c.text)}>{locNum(indicator.score, lang)}%</span>
-        <CardChevron />
+      <button onClick={onOpen} className="group flex w-full flex-col text-left">
+        <div className="flex items-start justify-between gap-2">
+          <span className="line-clamp-2 min-w-0 text-sm font-bold leading-snug text-neutral-900">{indicator.name}</span>
+          <CardChevron className="mt-0.5" />
+        </div>
+        <div className="mt-2 flex items-center gap-2.5">
+          <span className={cn("text-2xl font-extrabold tnum leading-none", c.text)}>{locNum(indicator.score, lang)}%</span>
+          <RatingBadge grade={grade} size="sm" />
+        </div>
       </button>
       <GsqacCompareSection seedKey={indicator.id} base={indicator.score} lang={lang} />
     </Card>

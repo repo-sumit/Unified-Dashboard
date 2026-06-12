@@ -4,7 +4,7 @@ import { accent } from "@/lib/colors";
 import { peerAvg, peerLevelOf } from "@/lib/peer";
 import { getLastUpdatedLabel } from "@/lib/trend";
 import { displayFrequency } from "@/lib/displayPolicy";
-import { formatKpiCardTitlePhrase, formatValue, getSingleMetricValueSuffix } from "@/lib/format";
+import { formatKpiCardTitlePhrase, formatValue } from "@/lib/format";
 import { useT, type Lang } from "@/i18n";
 import { Card } from "./atoms";
 import { Icon } from "./Icon";
@@ -38,7 +38,7 @@ function N1Chip({
   return (
     <span className="mt-2.5 inline-flex w-fit items-center gap-2 rounded-full bg-primary-50 px-3 py-1.5 ring-1 ring-primary-200">
       <span className="text-xs font-bold text-primary-700">
-        {t("common.vs")} {label}
+        {label}
         {avg ? ` ${t("common.avg")}` : ""}
       </span>
       <span className="text-base font-extrabold tnum text-primary-700">
@@ -65,6 +65,7 @@ export function DomainInsightCard({
   name,
   level,
   heroRec,
+  secondaryRec,
   parentName,
   gsqacImprovement,
   outputPercent,
@@ -80,6 +81,9 @@ export function DomainInsightCard({
   name: string;
   level: Level;
   heroRec?: KpiRecord | null;
+  /** optional second metric shown below a divider (e.g. Administration → No. of
+   *  CRC/URC visits, beneath the untracked-students hero). Input domains only. */
+  secondaryRec?: KpiRecord | null;
   parentName?: string;
   /** GSQAC (output) only: */
   gsqacImprovement?: number | null;
@@ -151,6 +155,16 @@ export function DomainInsightCard({
             lang={lang}
           />
         )}
+
+        {/* optional second metric below a divider (Administration → CRC/URC visits) */}
+        {!isOutput && secondaryRec && (
+          <p className="mt-1 line-clamp-2 min-w-0 border-t border-line/60 pt-2.5 text-sm font-semibold leading-snug text-neutral-700">
+            <span className="mr-1.5 align-baseline text-2xl font-extrabold tnum text-neutral-900">
+              {formatValue(secondaryRec.value, secondaryRec.kpi.unit, lang)}
+            </span>
+            {formatKpiCardTitlePhrase(secondaryRec.kpi.name, secondaryRec.kpi.name_gu, secondaryRec.kpi.unit, lang)}
+          </p>
+        )}
       </button>
 
       {/* ── embedded comparison — only after Compare is applied (no hint before; card stays compact) ── */}
@@ -194,10 +208,10 @@ function InputHead({
   const value = heroRec.value;
   const unit = kpi.unit;
   const peerScore = level ? peerAvg(kpi.id, level) : null;
-  // §5: short descriptor ("225 students absent") where defined; otherwise the
-  // sentence phrase. §10: the number stays neutral black (no RAG colour on values).
-  const suffix = getSingleMetricValueSuffix(kpi.id, lang);
-  const phrase = suffix || formatKpiCardTitlePhrase(kpi.name, kpi.name_gu, unit, lang);
+  // The home card's title is the DOMAIN name, so the value row describes the hero by
+  // its FULL KPI name — e.g. "936 students absent from past 7+ consecutive days" — not
+  // a clipped suffix. §10: the number stays neutral black (no RAG colour on values).
+  const phrase = formatKpiCardTitlePhrase(kpi.name, kpi.name_gu, unit, lang);
 
   return (
     <>

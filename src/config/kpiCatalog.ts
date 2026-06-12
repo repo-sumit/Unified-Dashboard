@@ -1021,7 +1021,8 @@ const RAW: Array<
     displayStrategy: "snapshot_latest",
     hero: true,
     lowestLevel: "school",
-    roleVisibility: [...NON_TEACHER],
+    // GSQAC is a school-level TEAM metric — visible to teachers too (no roleVisibility
+    // restriction), so the School Quality score/grade shows on the teacher homepage (§1).
     formula:
       "Latest GSQAC school score; averaged per level. Colour by GSQAC grade. 5 GSQAC domains converge into the overall score.",
   },

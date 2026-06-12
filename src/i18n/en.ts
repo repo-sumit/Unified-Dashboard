@@ -230,7 +230,7 @@ export const en = {
   },
   // role-aware list detail (absentees / untracked) — §6, §18, §19
   roster: {
-    studentsAbsent: "students absent",
+    studentsAbsent: "Students absent from past 7+ consecutive days",
     absentInClass: "Absent students in your class",
     classWise: "Class-wise absent students",
     absentForDays: "Absent for {n} days",
@@ -247,6 +247,12 @@ export const en = {
     lastSeen: "Last seen {date}",
     unitsWithAbsent: "{unit} with students absent 7+ days",
     unitsWithUntracked: "{unit} with untracked students",
+    untrackedTitle: "Untracked Students",
+    updatedOn: "Updated {date}",
+    untrackedStudentsLabel: "untracked students",
+    reEnrolledThisYear: "re-enrolled this year",
+    crcVisitsLabel: "CRC/URC visits this month",
+    gradeWise: "Grade-wise student list",
   },
   // Compare action — n-1 child-unit selection that reveals the embedded bar charts
   compare: {

@@ -5,6 +5,7 @@
  * renders the same list. Names appear ONLY for teacher/principal scope (§23); officers
  * see counts per child unit, never names.
  */
+import type { Level } from "@/types";
 
 function h(s: string): number {
   let x = 2166136261;
@@ -17,7 +18,21 @@ function h(s: string): number {
 
 const FIRST = ["Aarav", "Riya", "Dev", "Meera", "Kabir", "Anaya", "Vivaan", "Naina", "Yash", "Diya", "Ishaan", "Sara"];
 const LAST = ["Patel", "Sharma", "Joshi", "Chauhan", "Desai", "Mehta", "Solanki", "Rana"];
+const SECTIONS = ["A", "B", "C"];
 const LAST_DATES = ["31 May", "1 Jun", "2 Jun", "3 Jun", "4 Jun"];
+
+/**
+ * Safe deterministic array pick. `index` may be any integer — including the negative
+ * values JS produces from a signed `>>` shift on a hash ≥ 2³¹ — so we normalise to a
+ * non-negative slot (`((i % len) + len) % len`) and fall back if the array is empty or
+ * the slot is somehow undefined. This is what prevents a bad index from reading `[0]`
+ * off `undefined` and crashing the whole app at module-import time.
+ */
+function pick<T>(arr: readonly T[] | undefined, index: number, fallback: T): T {
+  if (!arr || arr.length === 0) return fallback;
+  const i = ((Math.trunc(index) % arr.length) + arr.length) % arr.length;
+  return arr[i] ?? fallback;
+}
 
 export interface AbsentStudent {
   name: string;
@@ -45,13 +60,13 @@ export const TEACHER_ABSENTEES: AbsentStudent[] = [
 ];
 
 function genStudents(grade: string, n: number): AbsentStudent[] {
-  return Array.from({ length: n }, (_, i) => {
+  return Array.from({ length: Math.max(0, n) }, (_, i) => {
     const hv = h(grade + "abs" + i);
     return {
-      name: `${FIRST[hv % FIRST.length]} ${LAST[(hv >> 4) % LAST.length]}`,
+      name: `${pick(FIRST, hv, "Student")} ${pick(LAST, hv >> 4, "K")}`,
       section: hv % 2 ? "Section A" : "Section B",
       days: 7 + (hv % 7),
-      lastPresent: LAST_DATES[hv % LAST_DATES.length],
+      lastPresent: pick(LAST_DATES, hv, "1 Jun"),
     };
   });
 }
@@ -69,7 +84,7 @@ export const ABSENT_BY_GRADE: GradeCount[] = [
   students: c.grade === "Grade 5" ? TEACHER_ABSENTEES : genStudents(c.grade, c.n),
 }));
 
-/** Teacher's own-class untracked / re-enrolled list (demo). */
+/** Teacher's own-class untracked / re-enrolled list (demo, §3). */
 export const TEACHER_UNTRACKED: UntrackedStudent[] = [
   { name: "Rohan B.", section: "Grade 6 · A", status: "untracked", lastSeen: "12 Apr" },
   { name: "Sara K.", section: "Grade 4 · B", status: "untracked", lastSeen: "28 Mar" },
@@ -78,12 +93,46 @@ export const TEACHER_UNTRACKED: UntrackedStudent[] = [
   { name: "Yash G.", section: "Grade 8 · A", status: "reenrolled", lastSeen: "07 May" },
 ];
 
-/** Principal's grade-wise untracked counts (demo). */
-export const UNTRACKED_BY_GRADE: { grade: string; n: number }[] = [
-  { grade: "Grade 1", n: 4 }, { grade: "Grade 2", n: 2 }, { grade: "Grade 3", n: 6 },
-  { grade: "Grade 4", n: 3 }, { grade: "Grade 5", n: 5 }, { grade: "Grade 6", n: 8 },
-  { grade: "Grade 7", n: 7 }, { grade: "Grade 8", n: 5 },
-];
+/** Deterministic per-grade untracked roster (demo) — name · section · status. */
+function genUntracked(grade: string, n: number): UntrackedStudent[] {
+  return Array.from({ length: Math.max(0, n) }, (_, i) => {
+    const hv = h(grade + "unt" + i);
+    // surname → single initial. `pick` guarantees a real surname, so `.charAt(0)` is
+    // always safe — this is the line that used to crash via `LAST[negativeIndex][0]`.
+    const lastInitial = pick(LAST, hv >> 4, "K").charAt(0).toUpperCase();
+    return {
+      name: `${pick(FIRST, hv, "Student")} ${lastInitial}.`,
+      section: `Section ${pick(SECTIONS, hv, "A")}`,
+      status: hv % 4 === 0 ? "reenrolled" : "untracked",
+      lastSeen: pick(LAST_DATES, hv, "1 Jun"),
+    };
+  });
+}
+
+/** Principal's grade-wise untracked breakdown — counts sum to the school total (82, §4). */
+export interface UntrackedGrade { grade: string; n: number; students: UntrackedStudent[] }
+export const UNTRACKED_BY_GRADE: UntrackedGrade[] = [
+  { grade: "Grade 1", n: 12 }, { grade: "Grade 2", n: 8 }, { grade: "Grade 3", n: 15 },
+  { grade: "Grade 4", n: 10 }, { grade: "Grade 5", n: 14 }, { grade: "Grade 6", n: 9 },
+  { grade: "Grade 7", n: 8 }, { grade: "Grade 8", n: 6 },
+].map((g) => ({ ...g, students: genUntracked(g.grade, g.n) }));
+
+/** Role-scoped Untracked summary (§2) — drives BOTH the homepage card and the detail
+ *  summary so they always match. Teacher sees their class; principal the whole school. */
+export interface UntrackedSummary {
+  untracked: number;
+  reenrolled: number;
+  compareLevel: Level;
+  compareValue: string;
+  /** No. of CRCC/URC visits to the school this month (max 3 — `vis_CRCC_count`). A
+   *  school-level metric, so identical for the teacher and principal of one school. */
+  crcVisits: number;
+  crcVisitsMax: number;
+}
+export const UNTRACKED_SUMMARY: Record<"teacher" | "principal", UntrackedSummary> = {
+  teacher: { untracked: 5, reenrolled: 2, compareLevel: "school", compareValue: "18", crcVisits: 2, crcVisitsMax: 3 },
+  principal: { untracked: 82, reenrolled: 43, compareLevel: "state", compareValue: "1.2K", crcVisits: 2, crcVisitsMax: 3 },
+};
 
 // NOTE: the officer N-1 list is NOT generated here. It reads the SAME canonical
 // provider series the comparison chart uses (`useKpiChildSeries`) so the detail list
